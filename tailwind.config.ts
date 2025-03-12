@@ -26,12 +26,22 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#0EA5E9",
+          DEFAULT: "#2D88FF",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#64748B",
+          DEFAULT: "#818CF8",
           foreground: "#FFFFFF",
+        },
+        // Razorpay inspired colors
+        razorpay: {
+          blue: "#2D88FF",
+          navy: "#0F2361",
+          lightblue: "#EBF5FF",
+          gray: "#666666",
+          lightgray: "#F5F5F5",
+          green: "#00C853",
+          red: "#FF5252",
         },
         card: {
           DEFAULT: "hsl(var(--card))",
@@ -71,3 +81,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+

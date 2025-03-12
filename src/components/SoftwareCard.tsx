@@ -3,6 +3,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
 
 interface SoftwareCardProps {
   id: string;
@@ -12,31 +13,67 @@ interface SoftwareCardProps {
   price: string;
   discount: string;
   image: string;
+  vendor?: string;
+  rating?: number;
+  reviewCount?: number;
+  color?: string;
 }
 
-const SoftwareCard = ({ id, name, description, category, price, discount, image }: SoftwareCardProps) => {
+const SoftwareCard = ({ 
+  id, 
+  name, 
+  description, 
+  category, 
+  price, 
+  discount, 
+  image,
+  vendor,
+  rating,
+  reviewCount,
+  color = "#2D88FF" 
+}: SoftwareCardProps) => {
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
-      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up">
-        <div className="relative aspect-video overflow-hidden bg-gray-100">
+      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border-0 shadow-sm">
+        <div className="relative aspect-video overflow-hidden" style={{ backgroundColor: color + '15' }}>
           <img
             src={image}
             alt={name}
             className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
           />
-          <Badge className="absolute top-2 right-2 bg-primary">{discount} OFF</Badge>
+          <Badge className="absolute top-2 right-2" style={{ backgroundColor: color }}>{discount} OFF</Badge>
         </div>
-        <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-3">
             <div>
-              <h3 className="font-semibold text-lg mb-1">{name}</h3>
-              <Badge variant="secondary" className="text-xs">
-                {category}
-              </Badge>
+              <h3 className="font-semibold text-lg mb-1 text-razorpay-navy">{name}</h3>
+              <div className="flex items-center mb-1">
+                <span className="text-xs text-razorpay-gray mr-2">by {vendor || 'Unknown vendor'}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {category}
+                </Badge>
+              </div>
+              {rating && (
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={12} 
+                      className={`${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} mr-0.5`} 
+                    />
+                  ))}
+                  <span className="text-xs text-razorpay-gray ml-1">
+                    {rating} ({reviewCount})
+                  </span>
+                </div>
+              )}
             </div>
-            <span className="text-primary font-semibold">{price}</span>
+            <div className="flex flex-col items-end">
+              <span className="font-semibold text-razorpay-blue">{price}</span>
+              <span className="text-xs text-razorpay-gray">per user/month</span>
+            </div>
           </div>
-          <p className="text-secondary text-sm line-clamp-2">{description}</p>
+          <p className="text-razorpay-gray text-sm line-clamp-2">{description}</p>
         </div>
       </Card>
     </Link>
