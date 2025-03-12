@@ -4,35 +4,49 @@ import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 
-const FEATURED_SOFTWARE = [
+// Mock data for the application
+export const FEATURED_SOFTWARE = [
   {
+    id: "google-workspace",
     name: "Google Workspace",
     description: "Business email, calendar, meeting tools and more - everything you need to get work done.",
     category: "Productivity",
     price: "$6/mo",
     discount: "5%",
     image: "https://placehold.co/600x400/e4e4e7/ffffff?text=Google+Workspace",
+    vendor: "Google",
+    rating: 4.8,
+    reviewCount: 2453,
   },
   {
+    id: "notion",
     name: "Notion",
     description: "All-in-one workspace for notes, documents, wikis, projects, and collaboration.",
     category: "Productivity",
     price: "$8/mo",
     discount: "3%",
     image: "https://placehold.co/600x400/e4e4e7/ffffff?text=Notion",
+    vendor: "Notion Labs",
+    rating: 4.7,
+    reviewCount: 1872,
   },
   {
+    id: "zendesk",
     name: "Zendesk",
     description: "Customer service software and support ticket system for better customer relationships.",
     category: "Support",
     price: "$49/mo",
     discount: "4%",
     image: "https://placehold.co/600x400/e4e4e7/ffffff?text=Zendesk",
+    vendor: "Zendesk Inc.",
+    rating: 4.5,
+    reviewCount: 1564,
   },
 ];
 
-const CATEGORIES = [
+export const CATEGORIES = [
   { name: "Productivity", count: 145 },
   { name: "Marketing", count: 89 },
   { name: "Finance", count: 67 },
@@ -74,14 +88,14 @@ const Index = () => {
           <h2 className="text-2xl font-semibold mb-8">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {CATEGORIES.map((category) => (
-              <a
+              <Link
                 key={category.name}
-                href={`/category/${category.name.toLowerCase()}`}
-                className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow text-center animate-fade-up"
+                to={`/category/${category.name.toLowerCase()}`}
+                className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow text-center animate-fade-up transform transition-transform hover:-translate-y-1"
               >
                 <h3 className="font-medium mb-1">{category.name}</h3>
                 <span className="text-sm text-secondary">{category.count} apps</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -91,7 +105,7 @@ const Index = () => {
           <h2 className="text-2xl font-semibold mb-8">Featured Software</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURED_SOFTWARE.map((software) => (
-              <SoftwareCard key={software.name} {...software} />
+              <SoftwareCard key={software.id} {...software} />
             ))}
           </div>
         </section>
