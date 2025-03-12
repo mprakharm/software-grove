@@ -34,14 +34,16 @@ const SoftwareCard = ({
 }: SoftwareCardProps) => {
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
-      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border-0 shadow-sm">
+      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm">
         <div className="relative aspect-video overflow-hidden" style={{ backgroundColor: color + '15' }}>
           <img
             src={image}
             alt={name}
             className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
           />
-          <Badge className="absolute top-2 right-2" style={{ backgroundColor: color }}>{discount} OFF</Badge>
+          {discount !== "0%" && (
+            <Badge className="absolute top-2 right-2" style={{ backgroundColor: color }}>{discount} OFF</Badge>
+          )}
         </div>
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
@@ -70,7 +72,9 @@ const SoftwareCard = ({
             </div>
             <div className="flex flex-col items-end">
               <span className="font-semibold text-razorpay-blue">{price}</span>
-              <span className="text-xs text-razorpay-gray">per user/month</span>
+              {!price.includes('%') && (
+                <span className="text-xs text-razorpay-gray">per user/month</span>
+              )}
             </div>
           </div>
           <p className="text-razorpay-gray text-sm line-clamp-2">{description}</p>

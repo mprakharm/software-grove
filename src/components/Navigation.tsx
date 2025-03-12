@@ -20,17 +20,23 @@ const Navigation = () => {
               SaaS Market
             </Link>
             <div className="hidden md:flex items-center space-x-6">
-              <Link to="/category/productivity" className="text-secondary hover:text-primary transition-colors">
+              <Link to="/category/productivity" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
                 Productivity
               </Link>
-              <Link to="/category/marketing" className="text-secondary hover:text-primary transition-colors">
+              <Link to="/category/marketing" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
                 Marketing
               </Link>
-              <Link to="/category/finance" className="text-secondary hover:text-primary transition-colors">
+              <Link to="/category/finance" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
                 Finance
               </Link>
-              <Link to="/category/support" className="text-secondary hover:text-primary transition-colors">
+              <Link to="/category/support" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
                 Support
+              </Link>
+              <Link to="/category/communication" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
+                Communication
+              </Link>
+              <Link to="/category/ai & automation" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
+                AI & Automation
               </Link>
             </div>
           </div>
@@ -42,17 +48,17 @@ const Navigation = () => {
                 placeholder="Search software..." 
                 className="pl-10 pr-4 bg-white/50"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-razorpay-gray" />
             </div>
             <Link to="/subscriptions" className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-              <ShoppingCart className="h-5 w-5 text-secondary" />
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              <ShoppingCart className="h-5 w-5 text-razorpay-gray" />
+              <span className="absolute -top-1 -right-1 bg-razorpay-blue text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 2
               </span>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <User className="h-5 w-5 text-secondary" />
+                <User className="h-5 w-5 text-razorpay-gray" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
