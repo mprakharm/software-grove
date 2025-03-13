@@ -769,4 +769,14 @@ export const FEATURED_SOFTWARE = [
   {
     id: "recurly",
     name: "Recurly",
-    description: "Subscription management and billing platform for recurring
+    description: "Subscription management and billing platform for recurring revenue businesses.",
+    category: "Finance",
+    price: "$199/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/4F46E5/ffffff?text=Recurly",
+    vendor: "Recurly, Inc.",
+    rating: 4.5,
+    reviewCount: 950,
+    color: "#4F46E5"
+  },
+];
