@@ -1,38 +1,41 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
-import './App.css';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import CategoryPage from "./pages/CategoryPage";
+import ProductPage from "./pages/ProductPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import ConfirmationPage from "./pages/ConfirmationPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import AccountPage from "./pages/AccountPage";
 
-// Import Pages
-import Index from './pages/Index';
-import ProductPage from './pages/ProductPage';
-import NotFound from './pages/NotFound';
-import CategoryPage from './pages/CategoryPage';
-import CheckoutPage from './pages/CheckoutPage';
-import ConfirmationPage from './pages/ConfirmationPage';
-import AccountPage from './pages/AccountPage';
-import SubscriptionsPage from './pages/SubscriptionsPage';
-import SubscriptionPage from './pages/SubscriptionPage';
-import SoftwareTablePage from './pages/SoftwareTablePage';
+const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/category/:categoryId" element={<CategoryPage />} />
-        <Route path="/product/:productId" element={<ProductPage />} />
-        <Route path="/checkout/:productId" element={<CheckoutPage />} />
-        <Route path="/confirmation/:orderId" element={<ConfirmationPage />} />
-        <Route path="/account" element={<AccountPage />} />
-        <Route path="/subscriptions" element={<SubscriptionsPage />} />
-        <Route path="/subscription/:subscriptionId" element={<SubscriptionPage />} />
-        <Route path="/software-table" element={<SoftwareTablePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
       <Toaster />
-    </Router>
-  );
-}
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/category/:categoryName" element={<CategoryPage />} />
+          <Route path="/product/:productId" element={<ProductPage />} />
+          <Route path="/subscription/:productId" element={<SubscriptionPage />} />
+          <Route path="/checkout/:productId/:planId" element={<CheckoutPage />} />
+          <Route path="/confirmation/:orderId" element={<ConfirmationPage />} />
+          <Route path="/subscriptions" element={<SubscriptionsPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
