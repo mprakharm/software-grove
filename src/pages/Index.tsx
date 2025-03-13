@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
 import { Percent, ListChecks, XCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 // Calculate and export category counts
 export const CATEGORY_COUNTS = {
@@ -784,9 +784,47 @@ export const FEATURED_SOFTWARE = [
 
 // Home page component
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [filteredSoftware, setFilteredSoftware] = useState(FEATURED_SOFTWARE);
+
+  useEffect(() => {
+    // Update URL when search changes
+    if (searchQuery) {
+      searchParams.set('search', searchQuery);
+      setSearchParams(searchParams);
+    } else {
+      searchParams.delete('search');
+      setSearchParams(searchParams);
+    }
+
+    // Filter software based on search query
+    if (searchQuery.trim() === '') {
+      setFilteredSoftware(FEATURED_SOFTWARE);
+    } else {
+      const query = searchQuery.toLowerCase().trim();
+      const filtered = FEATURED_SOFTWARE.filter(software => 
+        software.name.toLowerCase().includes(query) || 
+        software.description.toLowerCase().includes(query) || 
+        software.category.toLowerCase().includes(query) ||
+        software.vendor.toLowerCase().includes(query)
+      );
+      setFilteredSoftware(filtered);
+    }
+  }, [searchQuery, searchParams, setSearchParams]);
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleBannerSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Already handled in useEffect
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <Navigation searchQuery={searchQuery} onSearchChange={handleSearchChange} />
       
       {/* Imageon Banner Section with Circuit Board Pattern */}
       <div className="relative bg-blue-600 py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -819,7 +857,7 @@ const Index = () => {
             Save time and money with our exclusive subscription deals.
           </p>
           <div className="mt-10 max-w-xl mx-auto">
-            <div className="relative rounded-full shadow-sm">
+            <form onSubmit={handleBannerSearch} className="relative rounded-full shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -827,8 +865,10 @@ const Index = () => {
                 type="text"
                 className="form-input block w-full pl-10 py-6 text-lg rounded-full"
                 placeholder="Search for software, tools, and applications..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -899,13 +939,26 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Featured Software */}
+      {/* Search Results or Featured Software */}
       <div className="container mx-auto mt-16 px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          Featured Software
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Software"}
         </h2>
+        
+        {filteredSoftware.length === 0 && searchQuery && (
+          <div className="text-center py-12">
+            <p className="text-lg text-gray-600">No software found matching your search criteria.</p>
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {FEATURED_SOFTWARE.slice(0, 8).map((software) => (
+          {(searchQuery ? filteredSoftware : FEATURED_SOFTWARE.slice(0, 8)).map((software) => (
             <SoftwareCard 
               key={software.id}
               id={software.id}
@@ -922,14 +975,17 @@ const Index = () => {
             />
           ))}
         </div>
-        <div className="text-center mt-10">
-          <Link 
-            to="/category/all" 
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Browse All Software
-          </Link>
-        </div>
+        
+        {!searchQuery && (
+          <div className="text-center mt-10">
+            <Link 
+              to="/category/all" 
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Browse All Software
+            </Link>
+          </div>
+        )}
       </div>
       
       {/* Footer */}
