@@ -9,12 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { StarIcon } from 'lucide-react';
-import { getProductScreenshots } from '@/utils/productScreenshots';
 
 const ProductPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const product = FEATURED_SOFTWARE.find(item => item.id === productId);
-  const [activeImage, setActiveImage] = useState(0);
   
   if (!product) {
     return (
@@ -46,9 +44,6 @@ const ProductPage = () => {
   const currentPrice = parseInt(product.price.replace('$', ''));
   const originalPrice = Math.round(currentPrice / (1 - discountPercentage / 100));
   
-  // Get product screenshots
-  const screenshots = getProductScreenshots(product.id);
-  
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
@@ -61,20 +56,15 @@ const ProductPage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg overflow-hidden shadow-sm border">
               <img 
-                src={screenshots[activeImage]} 
-                alt={`${product.name} screenshot ${activeImage + 1}`} 
-                className="w-full h-auto object-cover aspect-video"
+                src={product.image} 
+                alt={product.name} 
+                className="w-full h-auto object-cover"
               />
-              <div className="grid grid-cols-5 gap-2 p-2">
-                {screenshots.map((screenshot, index) => (
-                  <img 
-                    key={index}
-                    src={screenshot} 
-                    alt={`${product.name} screenshot ${index + 1}`} 
-                    className={`rounded border cursor-pointer hover:border-primary transition-all ${index === activeImage ? 'border-primary border-2' : ''}`}
-                    onClick={() => setActiveImage(index)}
-                  />
-                ))}
+              <div className="grid grid-cols-4 gap-2 p-2">
+                <img src={product.image} alt="Screenshot 1" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.image} alt="Screenshot 2" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.image} alt="Screenshot 3" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.image} alt="Screenshot 4" className="rounded border cursor-pointer hover:border-primary" />
               </div>
             </div>
           </div>
