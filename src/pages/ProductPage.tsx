@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Breadcrumb from '@/components/Breadcrumb';
 import { FEATURED_SOFTWARE } from './Index';
+import { PRODUCT_CONTENT } from '@/data/productContent';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +14,7 @@ import { StarIcon } from 'lucide-react';
 const ProductPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const product = FEATURED_SOFTWARE.find(item => item.id === productId);
+  const productContent = productId ? PRODUCT_CONTENT[productId] : undefined;
   
   if (!product) {
     return (
@@ -120,49 +122,69 @@ const ProductPage = () => {
             <TabsContent value="description" className="mt-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <h2 className="text-xl font-semibold mb-4">About {product.name}</h2>
-                <p className="text-gray-700 mb-4">{product.description}</p>
-                <p className="text-gray-700 mb-4">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
-                </p>
-                <p className="text-gray-700">
-                  Suspendisse in orci enim. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
-                </p>
+                {productContent ? (
+                  <p className="text-gray-700 mb-4">{productContent.overview}</p>
+                ) : (
+                  <>
+                    <p className="text-gray-700 mb-4">{product.description}</p>
+                    <p className="text-gray-700 mb-4">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
+                    </p>
+                    <p className="text-gray-700">
+                      Suspendisse in orci enim. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
+                    </p>
+                  </>
+                )}
               </div>
             </TabsContent>
             
             <TabsContent value="features" className="mt-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <h2 className="text-xl font-semibold mb-4">Key Features</h2>
-                <ul className="space-y-4">
-                  <li className="flex">
-                    <span className="mr-2 text-primary">✓</span>
-                    <div>
-                      <h3 className="font-medium">Feature 1</h3>
-                      <p className="text-gray-600 text-sm">Description of feature 1 and what it can do for your business.</p>
-                    </div>
-                  </li>
-                  <li className="flex">
-                    <span className="mr-2 text-primary">✓</span>
-                    <div>
-                      <h3 className="font-medium">Feature 2</h3>
-                      <p className="text-gray-600 text-sm">Description of feature 2 and what it can do for your business.</p>
-                    </div>
-                  </li>
-                  <li className="flex">
-                    <span className="mr-2 text-primary">✓</span>
-                    <div>
-                      <h3 className="font-medium">Feature 3</h3>
-                      <p className="text-gray-600 text-sm">Description of feature 3 and what it can do for your business.</p>
-                    </div>
-                  </li>
-                  <li className="flex">
-                    <span className="mr-2 text-primary">✓</span>
-                    <div>
-                      <h3 className="font-medium">Feature 4</h3>
-                      <p className="text-gray-600 text-sm">Description of feature 4 and what it can do for your business.</p>
-                    </div>
-                  </li>
-                </ul>
+                {productContent && productContent.features ? (
+                  <ul className="space-y-4">
+                    {productContent.features.map((feature, index) => (
+                      <li key={index} className="flex">
+                        <span className="mr-2 text-primary">✓</span>
+                        <div>
+                          <h3 className="font-medium">{feature.name}</h3>
+                          <p className="text-gray-600 text-sm">{feature.description}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-4">
+                    <li className="flex">
+                      <span className="mr-2 text-primary">✓</span>
+                      <div>
+                        <h3 className="font-medium">Feature 1</h3>
+                        <p className="text-gray-600 text-sm">Description of feature 1 and what it can do for your business.</p>
+                      </div>
+                    </li>
+                    <li className="flex">
+                      <span className="mr-2 text-primary">✓</span>
+                      <div>
+                        <h3 className="font-medium">Feature 2</h3>
+                        <p className="text-gray-600 text-sm">Description of feature 2 and what it can do for your business.</p>
+                      </div>
+                    </li>
+                    <li className="flex">
+                      <span className="mr-2 text-primary">✓</span>
+                      <div>
+                        <h3 className="font-medium">Feature 3</h3>
+                        <p className="text-gray-600 text-sm">Description of feature 3 and what it can do for your business.</p>
+                      </div>
+                    </li>
+                    <li className="flex">
+                      <span className="mr-2 text-primary">✓</span>
+                      <div>
+                        <h3 className="font-medium">Feature 4</h3>
+                        <p className="text-gray-600 text-sm">Description of feature 4 and what it can do for your business.</p>
+                      </div>
+                    </li>
+                  </ul>
+                )}
               </div>
             </TabsContent>
             
