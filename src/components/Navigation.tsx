@@ -102,6 +102,9 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
               <Link to="/category/ai & automation" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
                 AI & Automation <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS["AI & Automation"]})</span>
               </Link>
+              <Link to="/bundles" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base font-medium">
+                Bundles
+              </Link>
             </div>
           </div>
           

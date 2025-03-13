@@ -13,6 +13,9 @@ import CheckoutPage from "./pages/CheckoutPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import AccountPage from "./pages/AccountPage";
+import BundlesPage from "./pages/BundlesPage";
+import BundleDetailPage from "./pages/BundleDetailPage";
+import BundleBuilderPage from "./pages/BundleBuilderPage";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,9 @@ const App = () => (
           <Route path="/confirmation/:orderId" element={<ConfirmationPage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/bundles" element={<BundlesPage />} />
+          <Route path="/bundles/:bundleId" element={<BundleDetailPage />} />
+          <Route path="/bundle-builder" element={<BundleBuilderPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
