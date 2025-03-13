@@ -18,27 +18,26 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-semibold text-primary flex items-center">
-              <img src="https://placehold.co/30x30/2D88FF/ffffff?text=R" alt="Razorpay Logo" className="h-8 w-8 mr-2 rounded" />
-              <span>Razorpay BizTools Nexus</span>
+              <span>Razorpay Nexus</span>
             </Link>
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/category/productivity" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Productivity ({CATEGORY_COUNTS.Productivity})
+            <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
+              <Link to="/category/productivity" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                Productivity <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS.Productivity})</span>
               </Link>
-              <Link to="/category/marketing" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Marketing ({CATEGORY_COUNTS.Marketing})
+              <Link to="/category/marketing" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                Marketing <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS.Marketing})</span>
               </Link>
-              <Link to="/category/finance" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Finance ({CATEGORY_COUNTS.Finance})
+              <Link to="/category/finance" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                Finance <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS.Finance})</span>
               </Link>
-              <Link to="/category/support" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Support ({CATEGORY_COUNTS.Support})
+              <Link to="/category/support" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                Support <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS.Support})</span>
               </Link>
-              <Link to="/category/communication" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Communication ({CATEGORY_COUNTS["Communication"]})
+              <Link to="/category/communication" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                Communication <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS["Communication"]})</span>
               </Link>
-              <Link to="/category/ai & automation" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                AI & Automation ({CATEGORY_COUNTS["AI & Automation"]})
+              <Link to="/category/ai & automation" className="text-razorpay-gray hover:text-[#2950DA] transition-colors whitespace-nowrap text-sm lg:text-base">
+                AI & Automation <span className="text-xs text-razorpay-gray">({CATEGORY_COUNTS["AI & Automation"]})</span>
               </Link>
             </div>
           </div>

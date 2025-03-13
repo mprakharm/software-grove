@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -811,7 +810,7 @@ export const FEATURED_SOFTWARE = [
   {
     id: "helpscout",
     name: "Help Scout",
-    description: "Customer service software for businesses that value customer relationships.",
+    description: "Customer service software that helps businesses value customer relationships.",
     category: "Support",
     price: "$20/mo",
     discount: "5%",
@@ -974,7 +973,6 @@ export const FEATURED_SOFTWARE = [
     image: "https://placehold.co/600x400/5468FF/ffffff?text=Dixa",
     vendor: "Dixa",
     rating: 4.4,
-    reviewCount: 420,
     color: "#5468FF"
   },
   
@@ -1430,8 +1428,8 @@ const Index = () => {
       <Navigation />
       
       <main className="pt-16">
-        {/* Hero Section */}
-        <section className="bg-razorpay-blue border-b">
+        {/* Hero Section - Change background color to #2950DA */}
+        <section className="bg-[#2950DA] border-b">
           <div className="container mx-auto px-4 py-16 md:py-24">
             <div className="flex flex-col md:flex-row items-center">
               <div className="w-full md:w-1/2 text-left text-white animate-fade-up mb-8 md:mb-0">
@@ -1452,9 +1450,9 @@ const Index = () => {
               </div>
               <div className="w-full md:w-1/2 flex justify-center">
                 <img 
-                  src="https://placehold.co/600x400/ffffff15/ffffff50?text=Connected+Ecosystem" 
+                  src="/lovable-uploads/97ab01bd-fcd1-4430-a732-eb75dcf82497.png" 
                   alt="Connected Business Ecosystem" 
-                  className="max-w-full rounded-lg shadow-xl"
+                  className="max-w-full h-auto rounded-lg"
                 />
               </div>
             </div>
@@ -1538,8 +1536,7 @@ const Index = () => {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="mb-6 md:mb-0">
                 <div className="flex items-center">
-                  <img src="https://placehold.co/40x40/2D88FF/ffffff?text=R" alt="Razorpay Logo" className="h-10 w-10 mr-3 rounded" />
-                  <h3 className="text-xl font-semibold">Razorpay BizTools Nexus</h3>
+                  <h3 className="text-xl font-semibold">Razorpay Nexus</h3>
                 </div>
                 <p className="mt-2 text-white/70 max-w-md">
                   Simplifying software discovery and management for businesses of all sizes.
