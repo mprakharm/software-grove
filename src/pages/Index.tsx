@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -861,7 +860,20 @@ const Index = () => {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {FEATURED_SOFTWARE.slice(0, 8).map((software) => (
-            <SoftwareCard key={software.id} software={software} />
+            <SoftwareCard 
+              key={software.id}
+              id={software.id}
+              name={software.name}
+              description={software.description}
+              category={software.category}
+              price={software.price}
+              discount={software.discount}
+              image={software.image}
+              vendor={software.vendor}
+              rating={software.rating}
+              reviewCount={software.reviewCount}
+              color={software.color}
+            />
           ))}
         </div>
         <div className="text-center mt-10">
