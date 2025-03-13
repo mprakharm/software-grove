@@ -34,8 +34,8 @@ const SoftwareCard = ({
 }: SoftwareCardProps) => {
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
-      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm">
-        <div className="relative aspect-video overflow-hidden" style={{ backgroundColor: color + '15' }}>
+      <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm hover:border-razorpay-blue">
+        <div className="relative aspect-video overflow-hidden group-hover:border-2 group-hover:border-razorpay-blue" style={{ backgroundColor: color + '15' }}>
           <img
             src={image}
             alt={name}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -5,8 +6,22 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 
+// Calculate and export category counts
+export const CATEGORY_COUNTS = {
+  "Productivity": 21,
+  "Marketing": 19,
+  "Finance": 18,
+  "Support": 15,
+  "Communication": 16,
+  "AI & Automation": 17,
+  "Automation": 29,
+  "HR": 34,
+  "Sales": 56,
+};
+
 // Mock data for the application
 export const FEATURED_SOFTWARE = [
+  // Productivity Category (21 apps)
   {
     id: "google-workspace",
     name: "Google Workspace",
@@ -34,32 +49,6 @@ export const FEATURED_SOFTWARE = [
     color: "#000000"
   },
   {
-    id: "zendesk",
-    name: "Zendesk",
-    description: "Customer service software and support ticket system for better customer relationships.",
-    category: "Support",
-    price: "$49/mo",
-    discount: "4%",
-    image: "https://placehold.co/600x400/03363D/ffffff?text=Zendesk",
-    vendor: "Zendesk Inc.",
-    rating: 4.5,
-    reviewCount: 1564,
-    color: "#03363D"
-  },
-  {
-    id: "zoom",
-    name: "Zoom",
-    description: "Video conferencing, online meetings, and group messaging in one platform.",
-    category: "Communication",
-    price: "$14.99/mo",
-    discount: "7%",
-    image: "https://placehold.co/600x400/2D8CFF/ffffff?text=Zoom",
-    vendor: "Zoom Video Communications",
-    rating: 4.6,
-    reviewCount: 3560,
-    color: "#2D8CFF"
-  },
-  {
     id: "asana",
     name: "Asana",
     description: "Project management tool that helps teams organize, track, and manage their work.",
@@ -71,58 +60,6 @@ export const FEATURED_SOFTWARE = [
     rating: 4.5,
     reviewCount: 2890,
     color: "#F06A6A"
-  },
-  {
-    id: "quickbooks",
-    name: "QuickBooks",
-    description: "Accounting software for managing expenses, invoices, and financial reporting.",
-    category: "Finance",
-    price: "$25/mo",
-    discount: "8%",
-    image: "https://placehold.co/600x400/2CA01C/ffffff?text=QuickBooks",
-    vendor: "Intuit",
-    rating: 4.3,
-    reviewCount: 1830,
-    color: "#2CA01C"
-  },
-  {
-    id: "tally",
-    name: "Tally",
-    description: "Business management software for accounting, inventory management, and taxation.",
-    category: "Finance",
-    price: "$18/mo",
-    discount: "4%",
-    image: "https://placehold.co/600x400/262F91/ffffff?text=Tally",
-    vendor: "Tally Solutions",
-    rating: 4.2,
-    reviewCount: 1240,
-    color: "#262F91"
-  },
-  {
-    id: "chatgpt",
-    name: "ChatGPT",
-    description: "AI-powered language model for generating human-like text and conversations.",
-    category: "AI & Automation",
-    price: "$20/mo",
-    discount: "10%",
-    image: "https://placehold.co/600x400/10A37F/ffffff?text=ChatGPT",
-    vendor: "OpenAI",
-    rating: 4.9,
-    reviewCount: 5230,
-    color: "#10A37F"
-  },
-  {
-    id: "perplexity",
-    name: "Perplexity AI",
-    description: "Answer engine that delivers comprehensive, accurate responses backed by sources.",
-    category: "AI & Automation",
-    price: "$20/mo",
-    discount: "5%",
-    image: "https://placehold.co/600x400/5436DA/ffffff?text=Perplexity",
-    vendor: "Perplexity Labs",
-    rating: 4.7,
-    reviewCount: 1840,
-    color: "#5436DA"
   },
   {
     id: "jira",
@@ -138,19 +75,6 @@ export const FEATURED_SOFTWARE = [
     color: "#0052CC"
   },
   {
-    id: "zapier",
-    name: "Zapier",
-    description: "Automation tool that connects your apps and automates workflows without coding.",
-    category: "Automation",
-    price: "$19.99/mo",
-    discount: "8%",
-    image: "https://placehold.co/600x400/FF4A00/ffffff?text=Zapier",
-    vendor: "Zapier, Inc.",
-    rating: 4.7,
-    reviewCount: 2540,
-    color: "#FF4A00"
-  },
-  {
     id: "o365",
     name: "Microsoft 365",
     description: "Productivity suite including Word, Excel, PowerPoint, and cloud services.",
@@ -163,7 +87,6 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 4350,
     color: "#D83B01"
   },
-  
   {
     id: "evernote",
     name: "Evernote",
@@ -281,7 +204,99 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 3240,
     color: "#0ACF83"
   },
+  {
+    id: "basecamp",
+    name: "Basecamp",
+    description: "Project management and team communication software for streamlined collaboration.",
+    category: "Productivity",
+    price: "$11/mo",
+    discount: "7%",
+    image: "https://placehold.co/600x400/1D2D35/ffffff?text=Basecamp",
+    vendor: "Basecamp LLC",
+    rating: 4.5,
+    reviewCount: 2150,
+    color: "#1D2D35"
+  },
+  {
+    id: "dropbox",
+    name: "Dropbox",
+    description: "Cloud storage service for file sharing and collaboration across devices.",
+    category: "Productivity",
+    price: "$9.99/mo",
+    discount: "6%",
+    image: "https://placehold.co/600x400/0061FF/ffffff?text=Dropbox",
+    vendor: "Dropbox, Inc.",
+    rating: 4.6,
+    reviewCount: 3180,
+    color: "#0061FF"
+  },
+  {
+    id: "box",
+    name: "Box",
+    description: "Cloud content management platform for secure file sharing and collaboration.",
+    category: "Productivity",
+    price: "$15/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/0061D5/ffffff?text=Box",
+    vendor: "Box, Inc.",
+    rating: 4.4,
+    reviewCount: 1920,
+    color: "#0061D5"
+  },
+  {
+    id: "onedrive",
+    name: "OneDrive",
+    description: "Microsoft's cloud storage service for file sharing and access across devices.",
+    category: "Productivity",
+    price: "$5/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/0078D4/ffffff?text=OneDrive",
+    vendor: "Microsoft",
+    rating: 4.5,
+    reviewCount: 2850,
+    color: "#0078D4"
+  },
+  {
+    id: "onenote",
+    name: "OneNote",
+    description: "Digital note-taking application that helps you organize ideas and information.",
+    category: "Productivity",
+    price: "$4/mo",
+    discount: "3%",
+    image: "https://placehold.co/600x400/7719AA/ffffff?text=OneNote",
+    vendor: "Microsoft",
+    rating: 4.5,
+    reviewCount: 2240,
+    color: "#7719AA"
+  },
+  {
+    id: "grammarly",
+    name: "Grammarly",
+    description: "AI-powered writing assistant that helps with grammar, spelling, and style.",
+    category: "Productivity",
+    price: "$12/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/15C39A/ffffff?text=Grammarly",
+    vendor: "Grammarly, Inc.",
+    rating: 4.7,
+    reviewCount: 3450,
+    color: "#15C39A"
+  },
+  {
+    id: "coda",
+    name: "Coda",
+    description: "Document platform combining the best of documents, spreadsheets, and applications.",
+    category: "Productivity",
+    price: "$10/mo",
+    discount: "7%",
+    image: "https://placehold.co/600x400/F46A54/ffffff?text=Coda",
+    vendor: "Coda Inc.",
+    rating: 4.5,
+    reviewCount: 1480,
+    color: "#F46A54"
+  },
   
+  // Marketing Category (19 apps)
   {
     id: "hubspot",
     name: "HubSpot",
@@ -412,7 +427,151 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 1950,
     color: "#75DD66"
   },
+  {
+    id: "klaviyo",
+    name: "Klaviyo",
+    description: "Email marketing platform focused on ecommerce with advanced segmentation.",
+    category: "Marketing",
+    price: "$45/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/0A1424/ffffff?text=Klaviyo",
+    vendor: "Klaviyo",
+    rating: 4.6,
+    reviewCount: 1870,
+    color: "#0A1424"
+  },
+  {
+    id: "convertkit",
+    name: "ConvertKit",
+    description: "Email marketing platform designed for creators and content publishers.",
+    category: "Marketing",
+    price: "$29/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/FB6970/ffffff?text=ConvertKit",
+    vendor: "ConvertKit",
+    rating: 4.5,
+    reviewCount: 1450,
+    color: "#FB6970"
+  },
+  {
+    id: "active-campaign",
+    name: "ActiveCampaign",
+    description: "Integrated email marketing, marketing automation, and CRM platform.",
+    category: "Marketing",
+    price: "$15/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/356AE6/ffffff?text=ActiveCampaign",
+    vendor: "ActiveCampaign",
+    rating: 4.6,
+    reviewCount: 2180,
+    color: "#356AE6"
+  },
+  {
+    id: "moz",
+    name: "Moz Pro",
+    description: "SEO software with keyword research, site audits, and link building tools.",
+    category: "Marketing",
+    price: "$99/mo",
+    discount: "15%",
+    image: "https://placehold.co/600x400/3EBBF9/ffffff?text=Moz+Pro",
+    vendor: "Moz",
+    rating: 4.4,
+    reviewCount: 1560,
+    color: "#3EBBF9"
+  },
+  {
+    id: "optimizely",
+    name: "Optimizely",
+    description: "A/B testing and experimentation platform for data-driven marketing.",
+    category: "Marketing",
+    price: "$50/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/0037FF/ffffff?text=Optimizely",
+    vendor: "Optimizely",
+    rating: 4.5,
+    reviewCount: 1340,
+    color: "#0037FF"
+  },
+  {
+    id: "unbounce",
+    name: "Unbounce",
+    description: "Landing page builder with A/B testing and conversion optimization tools.",
+    category: "Marketing",
+    price: "$90/mo",
+    discount: "12%",
+    image: "https://placehold.co/600x400/FF524A/ffffff?text=Unbounce",
+    vendor: "Unbounce",
+    rating: 4.4,
+    reviewCount: 1280,
+    color: "#FF524A"
+  },
+  {
+    id: "bitly",
+    name: "Bitly",
+    description: "Link management platform for branded links, QR Codes, and link analytics.",
+    category: "Marketing",
+    price: "$29/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/EE6123/ffffff?text=Bitly",
+    vendor: "Bitly",
+    rating: 4.5,
+    reviewCount: 1780,
+    color: "#EE6123"
+  },
+  {
+    id: "buzzsumo",
+    name: "BuzzSumo",
+    description: "Content marketing platform for content research, monitoring, and competitor analysis.",
+    category: "Marketing",
+    price: "$99/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/D43C1A/ffffff?text=BuzzSumo",
+    vendor: "BuzzSumo",
+    rating: 4.4,
+    reviewCount: 980,
+    color: "#D43C1A"
+  },
+  {
+    id: "surveymonkey",
+    name: "SurveyMonkey",
+    description: "Online survey and questionnaire tool for market research and feedback.",
+    category: "Marketing",
+    price: "$25/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/00BF6F/ffffff?text=SurveyMonkey",
+    vendor: "SurveyMonkey",
+    rating: 4.5,
+    reviewCount: 2240,
+    color: "#00BF6F"
+  },
   
+  // Finance Category (18 apps)
+  {
+    id: "quickbooks",
+    name: "QuickBooks",
+    description: "Accounting software for managing expenses, invoices, and financial reporting.",
+    category: "Finance",
+    price: "$25/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/2CA01C/ffffff?text=QuickBooks",
+    vendor: "Intuit",
+    rating: 4.3,
+    reviewCount: 1830,
+    color: "#2CA01C"
+  },
+  {
+    id: "tally",
+    name: "Tally",
+    description: "Business management software for accounting, inventory management, and taxation.",
+    category: "Finance",
+    price: "$18/mo",
+    discount: "4%",
+    image: "https://placehold.co/600x400/262F91/ffffff?text=Tally",
+    vendor: "Tally Solutions",
+    rating: 4.2,
+    reviewCount: 1240,
+    color: "#262F91"
+  },
   {
     id: "xero",
     name: "Xero",
@@ -543,7 +702,99 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 1340,
     color: "#135CAB"
   },
+  {
+    id: "razorpay",
+    name: "Razorpay",
+    description: "Payment gateway solution for businesses in India, with subscription management.",
+    category: "Finance",
+    price: "2.0% + ₹3",
+    discount: "10%",
+    image: "https://placehold.co/600x400/2D88FF/ffffff?text=Razorpay",
+    vendor: "Razorpay",
+    rating: 4.7,
+    reviewCount: 2160,
+    color: "#2D88FF"
+  },
+  {
+    id: "square",
+    name: "Square",
+    description: "Payment processing and point-of-sale solutions for businesses of all sizes.",
+    category: "Finance",
+    price: "2.6% + $0.10",
+    discount: "5%",
+    image: "https://placehold.co/600x400/000000/ffffff?text=Square",
+    vendor: "Block, Inc.",
+    rating: 4.6,
+    reviewCount: 2780,
+    color: "#000000"
+  },
+  {
+    id: "tipalti",
+    name: "Tipalti",
+    description: "Automated accounts payable and mass payment platform for global businesses.",
+    category: "Finance",
+    price: "$299/mo",
+    discount: "12%",
+    image: "https://placehold.co/600x400/0075C9/ffffff?text=Tipalti",
+    vendor: "Tipalti",
+    rating: 4.5,
+    reviewCount: 780,
+    color: "#0075C9"
+  },
+  {
+    id: "chargebee",
+    name: "Chargebee",
+    description: "Subscription billing and revenue management platform for growing businesses.",
+    category: "Finance",
+    price: "$249/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/5C3BFE/ffffff?text=Chargebee",
+    vendor: "Chargebee",
+    rating: 4.6,
+    reviewCount: 890,
+    color: "#5C3BFE"
+  },
+  {
+    id: "brex",
+    name: "Brex",
+    description: "Corporate credit cards and spend management platform for businesses.",
+    category: "Finance",
+    price: "$0/mo",
+    discount: "0%",
+    image: "https://placehold.co/600x400/002852/ffffff?text=Brex",
+    vendor: "Brex",
+    rating: 4.4,
+    reviewCount: 720,
+    color: "#002852"
+  },
+  {
+    id: "recurly",
+    name: "Recurly",
+    description: "Subscription management and billing platform for recurring revenue businesses.",
+    category: "Finance",
+    price: "$199/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/1EA6E4/ffffff?text=Recurly",
+    vendor: "Recurly",
+    rating: 4.5,
+    reviewCount: 650,
+    color: "#1EA6E4"
+  },
   
+  // Support Category (15 apps)
+  {
+    id: "zendesk",
+    name: "Zendesk",
+    description: "Customer service software and support ticket system for better customer relationships.",
+    category: "Support",
+    price: "$49/mo",
+    discount: "4%",
+    image: "https://placehold.co/600x400/03363D/ffffff?text=Zendesk",
+    vendor: "Zendesk Inc.",
+    rating: 4.5,
+    reviewCount: 1564,
+    color: "#03363D"
+  },
   {
     id: "intercom",
     name: "Intercom",
@@ -674,7 +925,73 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 650,
     color: "#3BC77B"
   },
+  {
+    id: "kustomer",
+    name: "Kustomer",
+    description: "CRM platform for customer service teams to deliver personalized experiences.",
+    category: "Support",
+    price: "$89/mo",
+    discount: "15%",
+    image: "https://placehold.co/600x400/3530D7/ffffff?text=Kustomer",
+    vendor: "Facebook",
+    rating: 4.4,
+    reviewCount: 780,
+    color: "#3530D7"
+  },
+  {
+    id: "front",
+    name: "Front",
+    description: "Customer communication platform that combines emails, apps, and teammates.",
+    category: "Support",
+    price: "$19/mo",
+    discount: "7%",
+    image: "https://placehold.co/600x400/4F384F/ffffff?text=Front",
+    vendor: "Front",
+    rating: 4.5,
+    reviewCount: 890,
+    color: "#4F384F"
+  },
+  {
+    id: "gladly",
+    name: "Gladly",
+    description: "Customer service platform that puts people at the center of every conversation.",
+    category: "Support",
+    price: "$75/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/FF5C35/ffffff?text=Gladly",
+    vendor: "Gladly",
+    rating: 4.3,
+    reviewCount: 540,
+    color: "#FF5C35"
+  },
+  {
+    id: "dixa",
+    name: "Dixa",
+    description: "Customer friendship platform unifying customer service across channels.",
+    category: "Support",
+    price: "$59/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/5468FF/ffffff?text=Dixa",
+    vendor: "Dixa",
+    rating: 4.4,
+    reviewCount: 420,
+    color: "#5468FF"
+  },
   
+  // Communication Category (16 apps)
+  {
+    id: "zoom",
+    name: "Zoom",
+    description: "Video conferencing, online meetings, and group messaging in one platform.",
+    category: "Communication",
+    price: "$14.99/mo",
+    discount: "7%",
+    image: "https://placehold.co/600x400/2D8CFF/ffffff?text=Zoom",
+    vendor: "Zoom Video Communications",
+    rating: 4.6,
+    reviewCount: 3560,
+    color: "#2D8CFF"
+  },
   {
     id: "microsoft-teams",
     name: "Microsoft Teams",
@@ -805,7 +1122,112 @@ export const FEATURED_SOFTWARE = [
     reviewCount: 950,
     color: "#95C11F"
   },
+  {
+    id: "telegram",
+    name: "Telegram Business",
+    description: "Cloud-based messaging app with enhanced security and business features.",
+    category: "Communication",
+    price: "$3.99/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/0088CC/ffffff?text=Telegram",
+    vendor: "Telegram FZ-LLC",
+    rating: 4.6,
+    reviewCount: 2850,
+    color: "#0088CC"
+  },
+  {
+    id: "signal",
+    name: "Signal for Business",
+    description: "Secure, end-to-end encrypted messaging platform for business communication.",
+    category: "Communication",
+    price: "$4.99/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/3A76F0/ffffff?text=Signal",
+    vendor: "Signal Foundation",
+    rating: 4.7,
+    reviewCount: 1750,
+    color: "#3A76F0"
+  },
+  {
+    id: "vonage",
+    name: "Vonage Business",
+    description: "Cloud communications platform for voice, messaging, and video communications.",
+    category: "Communication",
+    price: "$19.99/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/FF8F1C/ffffff?text=Vonage",
+    vendor: "Vonage",
+    rating: 4.3,
+    reviewCount: 1420,
+    color: "#FF8F1C"
+  },
+  {
+    id: "cloudtalk",
+    name: "CloudTalk",
+    description: "Cloud-based call center software for sales and support teams.",
+    category: "Communication",
+    price: "$25/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/00A5FF/ffffff?text=CloudTalk",
+    vendor: "CloudTalk",
+    rating: 4.4,
+    reviewCount: 670,
+    color: "#00A5FF"
+  },
+  {
+    id: "grasshopper",
+    name: "Grasshopper",
+    description: "Virtual phone system for entrepreneurs and small businesses.",
+    category: "Communication",
+    price: "$26/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/659F3D/ffffff?text=Grasshopper",
+    vendor: "LogMeIn",
+    rating: 4.2,
+    reviewCount: 890,
+    color: "#659F3D"
+  },
   
+  // AI & Automation Category (17 apps)
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    description: "AI-powered language model for generating human-like text and conversations.",
+    category: "AI & Automation",
+    price: "$20/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/10A37F/ffffff?text=ChatGPT",
+    vendor: "OpenAI",
+    rating: 4.9,
+    reviewCount: 5230,
+    color: "#10A37F"
+  },
+  {
+    id: "perplexity",
+    name: "Perplexity AI",
+    description: "Answer engine that delivers comprehensive, accurate responses backed by sources.",
+    category: "AI & Automation",
+    price: "$20/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/5436DA/ffffff?text=Perplexity",
+    vendor: "Perplexity Labs",
+    rating: 4.7,
+    reviewCount: 1840,
+    color: "#5436DA"
+  },
+  {
+    id: "zapier",
+    name: "Zapier",
+    description: "Automation tool that connects your apps and automates workflows without coding.",
+    category: "AI & Automation",
+    price: "$19.99/mo",
+    discount: "8%",
+    image: "https://placehold.co/600x400/FF4A00/ffffff?text=Zapier",
+    vendor: "Zapier, Inc.",
+    rating: 4.7,
+    reviewCount: 2540,
+    color: "#FF4A00"
+  },
   {
     id: "jasper",
     name: "Jasper",
@@ -935,19 +1357,71 @@ export const FEATURED_SOFTWARE = [
     rating: 4.6,
     reviewCount: 790,
     color: "#536DFE"
-  }
+  },
+  {
+    id: "levity",
+    name: "Levity",
+    description: "AI platform that automates document processing and image classification.",
+    category: "AI & Automation",
+    price: "$299/mo",
+    discount: "15%",
+    image: "https://placehold.co/600x400/4A23FF/ffffff?text=Levity",
+    vendor: "Levity AI",
+    rating: 4.3,
+    reviewCount: 480,
+    color: "#4A23FF"
+  },
+  {
+    id: "runway",
+    name: "Runway",
+    description: "Creative toolkit powered by AI for video editing and content creation.",
+    category: "AI & Automation",
+    price: "$15/mo",
+    discount: "5%",
+    image: "https://placehold.co/600x400/000000/ffffff?text=Runway",
+    vendor: "Runway AI",
+    rating: 4.7,
+    reviewCount: 560,
+    color: "#000000"
+  },
+  {
+    id: "databricks",
+    name: "Databricks",
+    description: "Unified analytics platform for big data processing and machine learning.",
+    category: "AI & Automation",
+    price: "$99/mo",
+    discount: "10%",
+    image: "https://placehold.co/600x400/FF3621/ffffff?text=Databricks",
+    vendor: "Databricks",
+    rating: 4.5,
+    reviewCount: 780,
+    color: "#FF3621"
+  },
+  {
+    id: "dataiku",
+    name: "Dataiku",
+    description: "Enterprise AI and machine learning platform for data science teams.",
+    category: "AI & Automation",
+    price: "$149/mo",
+    discount: "12%",
+    image: "https://placehold.co/600x400/2AB1AC/ffffff?text=Dataiku",
+    vendor: "Dataiku",
+    rating: 4.4,
+    reviewCount: 520,
+    color: "#2AB1AC"
+  },
 ];
 
 export const CATEGORIES = [
-  { name: "Productivity", count: 145 },
-  { name: "Marketing", count: 89 },
-  { name: "Finance", count: 67 },
-  { name: "Support", count: 45 },
-  { name: "Communication", count: 52 },
-  { name: "AI & Automation", count: 38 },
-  { name: "Automation", count: 29 },
-  { name: "HR", count: 34 },
-  { name: "Sales", count: 56 },
+  { name: "Productivity", count: CATEGORY_COUNTS.Productivity },
+  { name: "Marketing", count: CATEGORY_COUNTS.Marketing },
+  { name: "Finance", count: CATEGORY_COUNTS.Finance },
+  { name: "Support", count: CATEGORY_COUNTS.Support },
+  { name: "Communication", count: CATEGORY_COUNTS.Communication },
+  { name: "AI & Automation", count: CATEGORY_COUNTS["AI & Automation"] },
+  { name: "Automation", count: CATEGORY_COUNTS.Automation },
+  { name: "HR", count: CATEGORY_COUNTS.HR },
+  { name: "Sales", count: CATEGORY_COUNTS.Sales },
 ];
 
 const Index = () => {
@@ -957,22 +1431,57 @@ const Index = () => {
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="bg-white border-b">
+        <section className="bg-razorpay-blue border-b">
           <div className="container mx-auto px-4 py-16 md:py-24">
-            <div className="text-center max-w-3xl mx-auto animate-fade-up">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-razorpay-navy">
-                Essential Business Software at Exclusive Prices
-              </h1>
-              <p className="text-razorpay-gray text-lg mb-8">
-                Discover and manage all your business software in one place, with guaranteed savings.
-              </p>
-              <div className="relative max-w-xl mx-auto">
-                <Input 
-                  type="search" 
-                  placeholder="Search for software (e.g., 'CRM', 'Accounting', 'Email')" 
-                  className="pl-12 pr-4 h-12 text-lg rounded-md border-razorpay-blue border-2 focus-visible:ring-razorpay-blue"
+            <div className="flex flex-col md:flex-row items-center">
+              <div className="w-full md:w-1/2 text-left text-white animate-fade-up mb-8 md:mb-0">
+                <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                  Essential Business Software at Exclusive Prices
+                </h1>
+                <p className="text-white/90 text-lg mb-8">
+                  Find, manage, and optimize all your business software in one place.
+                </p>
+                <div className="relative max-w-xl">
+                  <Input 
+                    type="search" 
+                    placeholder="Search for software (e.g., 'CRM', 'Accounting', 'Email')" 
+                    className="pl-12 pr-4 h-12 text-lg rounded-md border-white border-2 bg-white/10 backdrop-blur-sm focus-visible:ring-white text-white placeholder:text-white/70"
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white" />
+                </div>
+              </div>
+              <div className="w-full md:w-1/2 flex justify-center">
+                <img 
+                  src="https://placehold.co/600x400/ffffff15/ffffff50?text=Connected+Ecosystem" 
+                  alt="Connected Business Ecosystem" 
+                  className="max-w-full rounded-lg shadow-xl"
                 />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-razorpay-gray" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Section */}
+        <section className="py-12 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-razorpay-lightblue p-6 rounded-lg">
+                <h3 className="text-xl font-semibold mb-3 text-razorpay-navy">Simplify your business toolkit</h3>
+                <p className="text-razorpay-gray">
+                  Discover, purchase, and manage essential business software at exclusive discounts—all in one place.
+                </p>
+              </div>
+              <div className="bg-razorpay-lightblue p-6 rounded-lg">
+                <h3 className="text-xl font-semibold mb-3 text-razorpay-navy">Save valuable time</h3>
+                <p className="text-razorpay-gray">
+                  Access all your business tools through a single dashboard—no more juggling multiple accounts and renewal dates.
+                </p>
+              </div>
+              <div className="bg-razorpay-lightblue p-6 rounded-lg">
+                <h3 className="text-xl font-semibold mb-3 text-razorpay-navy">Scale confidently</h3>
+                <p className="text-razorpay-gray">
+                  Leverage our collective purchasing power to access premium software that grows with your business needs.
+                </p>
               </div>
             </div>
           </div>
@@ -997,7 +1506,12 @@ const Index = () => {
 
         {/* Featured Software */}
         <section className="py-16 container mx-auto px-4">
-          <h2 className="text-2xl font-semibold mb-8 text-razorpay-navy">Featured Software</h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-semibold text-razorpay-navy">Featured Software</h2>
+            <Link to="/category/all" className="text-razorpay-blue hover:underline">
+              View all
+            </Link>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURED_SOFTWARE.slice(0, 6).map((software) => (
               <SoftwareCard key={software.id} {...software} />
@@ -1005,13 +1519,39 @@ const Index = () => {
           </div>
           
           {/* Recently Added Software */}
-          <h2 className="text-2xl font-semibold mb-8 mt-16 text-razorpay-navy">Recently Added</h2>
+          <div className="flex items-center justify-between mb-8 mt-16">
+            <h2 className="text-2xl font-semibold text-razorpay-navy">Recently Added</h2>
+            <Link to="/category/all" className="text-razorpay-blue hover:underline">
+              View all
+            </Link>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURED_SOFTWARE.slice(6, 12).map((software) => (
               <SoftwareCard key={software.id} {...software} />
             ))}
           </div>
         </section>
+
+        {/* Razorpay Branding Footer */}
+        <footer className="bg-razorpay-navy py-12 text-white">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="mb-6 md:mb-0">
+                <div className="flex items-center">
+                  <img src="https://placehold.co/40x40/2D88FF/ffffff?text=R" alt="Razorpay Logo" className="h-10 w-10 mr-3 rounded" />
+                  <h3 className="text-xl font-semibold">Razorpay BizTools Nexus</h3>
+                </div>
+                <p className="mt-2 text-white/70 max-w-md">
+                  Simplifying software discovery and management for businesses of all sizes.
+                </p>
+              </div>
+              <div className="text-white/70 text-sm">
+                <p>© 2023 Razorpay. All rights reserved.</p>
+                <p>A Razorpay initiative for businesses.</p>
+              </div>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );

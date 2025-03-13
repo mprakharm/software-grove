@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CATEGORY_COUNTS } from '@/pages/Index';
 
 const Navigation = () => {
   return (
@@ -16,27 +17,28 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-semibold text-primary">
-              SaaS Market
+            <Link to="/" className="text-xl font-semibold text-primary flex items-center">
+              <img src="https://placehold.co/30x30/2D88FF/ffffff?text=R" alt="Razorpay Logo" className="h-8 w-8 mr-2 rounded" />
+              <span>Razorpay BizTools Nexus</span>
             </Link>
             <div className="hidden md:flex items-center space-x-6">
               <Link to="/category/productivity" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Productivity
+                Productivity ({CATEGORY_COUNTS.Productivity})
               </Link>
               <Link to="/category/marketing" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Marketing
+                Marketing ({CATEGORY_COUNTS.Marketing})
               </Link>
               <Link to="/category/finance" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Finance
+                Finance ({CATEGORY_COUNTS.Finance})
               </Link>
               <Link to="/category/support" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Support
+                Support ({CATEGORY_COUNTS.Support})
               </Link>
               <Link to="/category/communication" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                Communication
+                Communication ({CATEGORY_COUNTS["Communication"]})
               </Link>
               <Link to="/category/ai & automation" className="text-razorpay-gray hover:text-razorpay-blue transition-colors">
-                AI & Automation
+                AI & Automation ({CATEGORY_COUNTS["AI & Automation"]})
               </Link>
             </div>
           </div>
