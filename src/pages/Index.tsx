@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -780,3 +781,190 @@ export const FEATURED_SOFTWARE = [
     color: "#4F46E5"
   },
 ];
+
+// Home page component
+const Index = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      {/* Hero Section with Circuit Board Pattern */}
+      <div className="relative bg-blue-600 py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Circuit Board Pattern Background */}
+        <div className="absolute inset-0 opacity-15">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <pattern id="circuit-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <path d="M20,0 L20,100 M40,0 L40,100 M60,0 L60,100 M80,0 L80,100 M0,20 L100,20 M0,40 L100,40 M0,60 L100,60 M0,80 L100,80" 
+                    stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="20" cy="20" r="3" fill="white" />
+              <circle cx="60" cy="20" r="3" fill="white" />
+              <circle cx="20" cy="60" r="3" fill="white" />
+              <circle cx="60" cy="60" r="3" fill="white" />
+              <circle cx="40" cy="40" r="3" fill="white" />
+              <circle cx="80" cy="40" r="3" fill="white" />
+              <circle cx="40" cy="80" r="3" fill="white" />
+              <circle cx="80" cy="80" r="3" fill="white" />
+            </pattern>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#circuit-pattern)" />
+          </svg>
+        </div>
+        
+        <div className="container mx-auto text-center relative z-10">
+          <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">
+            Find the Perfect Software <br className="hidden sm:block" />
+            for Your Business
+          </h1>
+          <p className="mt-6 text-xl text-white max-w-3xl mx-auto">
+            Browse thousands of business applications across all categories.
+            Save time and money with our exclusive subscription deals.
+          </p>
+          <div className="mt-10 max-w-xl mx-auto">
+            <div className="relative rounded-full shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <Input
+                type="text"
+                className="form-input block w-full pl-10 py-6 text-lg rounded-full"
+                placeholder="Search for software, tools, and applications..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Category Buttons */}
+      <div className="container mx-auto mt-10 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Browse Categories
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {Object.entries(CATEGORY_COUNTS).map(([category, count]) => (
+            <Link key={category} to={`/category/${category.toLowerCase()}`} className="group">
+              <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center text-center">
+                <span className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {category}
+                </span>
+                <span className="text-sm text-gray-500 mt-1">
+                  {count} apps
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+      
+      {/* Featured Software */}
+      <div className="container mx-auto mt-16 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Featured Software
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {FEATURED_SOFTWARE.slice(0, 8).map((software) => (
+            <SoftwareCard key={software.id} software={software} />
+          ))}
+        </div>
+        <div className="text-center mt-10">
+          <Link 
+            to="/category/all" 
+            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Browse All Software
+          </Link>
+        </div>
+      </div>
+      
+      {/* Subscription Benefits */}
+      <div className="bg-gray-50 py-16 mt-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+              Save with Software Subscriptions
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+              Get exclusive deals when subscribing through our platform. 
+              Manage all your software subscriptions in one place.
+            </p>
+          </div>
+          
+          <div className="mt-12 grid gap-8 grid-cols-1 md:grid-cols-3">
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                {/* Icon here */}
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Save up to 20%</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Get exclusive discounts on software subscriptions not available elsewhere.
+              </p>
+            </div>
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                {/* Icon here */}
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Centralized Management</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Manage all your software subscriptions from a single dashboard.
+              </p>
+            </div>
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                {/* Icon here */}
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Hassle-free Cancellation</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Cancel any subscription with one click, no questions asked.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <footer className="bg-white mt-16 pt-12 pb-8 border-t border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">Product</h3>
+              <ul className="mt-4 space-y-2">
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Pricing</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Features</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Marketplace</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">Support</h3>
+              <ul className="mt-4 space-y-2">
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Help Center</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Contact Us</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">Company</h3>
+              <ul className="mt-4 space-y-2">
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">About</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Careers</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Blog</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">Legal</h3>
+              <ul className="mt-4 space-y-2">
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Privacy</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Terms</a></li>
+                <li><a href="#" className="text-base text-gray-600 hover:text-gray-900">Cookie Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-12 border-t border-gray-200 pt-8">
+            <p className="text-base text-gray-500 text-center">
+              &copy; 2023 Software Marketplace. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;
