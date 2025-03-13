@@ -1,7 +1,8 @@
+
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
-import { Search } from 'lucide-react';
+import { Percent, ListChecks, XCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 
@@ -787,8 +788,8 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      {/* Hero Section with Circuit Board Pattern */}
-      <div className="relative bg-blue-600 py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Imageon Banner Section with Circuit Board Pattern */}
+      <div className="relative bg-blue-600 py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Circuit Board Pattern Background */}
         <div className="absolute inset-0 opacity-15">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -832,7 +833,52 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Category Buttons */}
+      {/* Subscription Benefits - Moved to above Categories */}
+      <div className="bg-gray-50 py-16 mt-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+              Save with Software Subscriptions
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+              Get exclusive deals when subscribing through our platform. 
+              Manage all your software subscriptions in one place.
+            </p>
+          </div>
+          
+          <div className="mt-12 grid gap-8 grid-cols-1 md:grid-cols-3">
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                <Percent className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Save up to 20%</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Get exclusive discounts on software subscriptions not available elsewhere.
+              </p>
+            </div>
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                <ListChecks className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Centralized Management</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Manage all your software subscriptions from a single dashboard.
+              </p>
+            </div>
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
+                <XCircle className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Hassle-free Cancellation</h3>
+              <p className="mt-2 text-base text-gray-600">
+                Cancel any subscription with one click, no questions asked.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Category Buttons - Moved after Subscription Benefits */}
       <div className="container mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Browse Categories
@@ -883,51 +929,6 @@ const Index = () => {
           >
             Browse All Software
           </Link>
-        </div>
-      </div>
-      
-      {/* Subscription Benefits */}
-      <div className="bg-gray-50 py-16 mt-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Save with Software Subscriptions
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-              Get exclusive deals when subscribing through our platform. 
-              Manage all your software subscriptions in one place.
-            </p>
-          </div>
-          
-          <div className="mt-12 grid gap-8 grid-cols-1 md:grid-cols-3">
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
-                {/* Icon here */}
-              </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Save up to 20%</h3>
-              <p className="mt-2 text-base text-gray-600">
-                Get exclusive discounts on software subscriptions not available elsewhere.
-              </p>
-            </div>
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
-                {/* Icon here */}
-              </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Centralized Management</h3>
-              <p className="mt-2 text-base text-gray-600">
-                Manage all your software subscriptions from a single dashboard.
-              </p>
-            </div>
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white">
-                {/* Icon here */}
-              </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Hassle-free Cancellation</h3>
-              <p className="mt-2 text-base text-gray-600">
-                Cancel any subscription with one click, no questions asked.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
       
