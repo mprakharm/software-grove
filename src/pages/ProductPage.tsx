@@ -1,20 +1,56 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Breadcrumb from '@/components/Breadcrumb';
-import { FEATURED_SOFTWARE } from './Index';
 import { PRODUCT_CONTENT } from '@/data/productContent';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { StarIcon } from 'lucide-react';
+import { ProductAPI } from '@/utils/api';
+import { Product } from '@/utils/db';
+import { toast } from '@/components/ui/use-toast';
 
 const ProductPage = () => {
   const { productId } = useParams<{ productId: string }>();
-  const product = FEATURED_SOFTWARE.find(item => item.id === productId);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const productContent = productId ? PRODUCT_CONTENT[productId] : undefined;
+  
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!productId) return;
+      
+      setLoading(true);
+      try {
+        const data = await ProductAPI.getProductById(productId);
+        setProduct(data);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load product details",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [productId]);
+  
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   if (!product) {
     return (
@@ -41,9 +77,9 @@ const ProductPage = () => {
     },
   ];
 
-  // Calculate original price before discount
-  const discountPercentage = parseInt(product.discount);
-  const currentPrice = parseInt(product.price.replace('$', ''));
+  // Calculate original price before discount (using 10% as default discount)
+  const discountPercentage = 10;
+  const currentPrice = product.price;
   const originalPrice = Math.round(currentPrice / (1 - discountPercentage / 100));
   
   return (
@@ -58,15 +94,15 @@ const ProductPage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg overflow-hidden shadow-sm border">
               <img 
-                src={product.image} 
+                src={product.logo} 
                 alt={product.name} 
                 className="w-full h-auto object-cover"
               />
               <div className="grid grid-cols-4 gap-2 p-2">
-                <img src={product.image} alt="Screenshot 1" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.image} alt="Screenshot 2" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.image} alt="Screenshot 3" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.image} alt="Screenshot 4" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.logo} alt="Screenshot 1" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.logo} alt="Screenshot 2" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.logo} alt="Screenshot 3" className="rounded border cursor-pointer hover:border-primary" />
+                <img src={product.logo} alt="Screenshot 4" className="rounded border cursor-pointer hover:border-primary" />
               </div>
             </div>
           </div>
@@ -77,25 +113,25 @@ const ProductPage = () => {
               <div className="mb-4">
                 <Badge className="mb-2">{product.category}</Badge>
                 <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
-                <p className="text-sm text-gray-500 mb-2">by {product.vendor}</p>
+                <p className="text-sm text-gray-500 mb-2">by {product.name} Inc.</p>
                 <div className="flex items-center mb-4">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
                       <StarIcon 
                         key={i} 
-                        className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                        className={`w-4 h-4 ${i < Math.floor(product.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
                       />
                     ))}
                   </div>
-                  <span className="ml-2 text-sm text-gray-600">{product.rating} ({product.reviewCount} reviews)</span>
+                  <span className="ml-2 text-sm text-gray-600">{product.rating || 0} ({product.reviews || 0} reviews)</span>
                 </div>
               </div>
               
               <div className="mb-6">
                 <div className="flex items-center mb-1">
-                  <span className="text-3xl font-bold text-primary">{product.price}</span>
+                  <span className="text-3xl font-bold text-primary">${product.price}</span>
                   <span className="ml-2 text-sm line-through text-gray-500">${originalPrice}/mo</span>
-                  <Badge className="ml-2 bg-green-500">{product.discount} OFF</Badge>
+                  <Badge className="ml-2 bg-green-500">10% OFF</Badge>
                 </div>
                 <p className="text-sm text-gray-600">per user/month, billed annually</p>
               </div>
@@ -128,7 +164,7 @@ const ProductPage = () => {
                   <>
                     <p className="text-gray-700 mb-4">{product.description}</p>
                     <p className="text-gray-700 mb-4">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
+                      {product.featuredBenefit || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.'}
                     </p>
                     <p className="text-gray-700">
                       Suspendisse in orci enim. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
@@ -149,6 +185,18 @@ const ProductPage = () => {
                         <div>
                           <h3 className="font-medium">{feature.name}</h3>
                           <p className="text-gray-600 text-sm">{feature.description}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : product.benefits && product.benefits.length > 0 ? (
+                  <ul className="space-y-4">
+                    {product.benefits.map((benefit, index) => (
+                      <li key={index} className="flex">
+                        <span className="mr-2 text-primary">✓</span>
+                        <div>
+                          <h3 className="font-medium">{benefit}</h3>
+                          <p className="text-gray-600 text-sm">This premium feature helps improve your productivity.</p>
                         </div>
                       </li>
                     ))}
@@ -197,11 +245,11 @@ const ProductPage = () => {
                       {[...Array(5)].map((_, i) => (
                         <StarIcon 
                           key={i} 
-                          className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                          className={`w-4 h-4 ${i < Math.floor(product.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
                         />
                       ))}
                     </div>
-                    <span className="ml-2 text-sm text-gray-600">{product.rating} out of 5</span>
+                    <span className="ml-2 text-sm text-gray-600">{product.rating || 0} out of 5</span>
                   </div>
                 </div>
                 

@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SoftwareCard from '@/components/SoftwareCard';
 import Breadcrumb from '@/components/Breadcrumb';
-import { FEATURED_SOFTWARE } from './Index';
 import { 
   Select,
   SelectContent,
@@ -14,11 +13,15 @@ import {
 } from '@/components/ui/select';
 import { initializeDatabase } from '@/utils/initializeDb';
 import { toast } from '@/components/ui/use-toast';
+import { ProductAPI } from '@/utils/api';
+import { Product } from '@/utils/db';
 
 const CategoryPage = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const [sortBy, setSortBy] = useState('popularity');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const init = async () => {
@@ -52,10 +55,28 @@ const CategoryPage = () => {
     init();
   }, []);
   
-  // Filter software by category
-  const filteredSoftware = FEATURED_SOFTWARE.filter(
-    software => software.category.toLowerCase() === categoryName?.toLowerCase()
-  );
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        // Fetch products filtered by category if categoryName is provided
+        const filters = categoryName ? { category: formatCategoryName(categoryName) } : undefined;
+        const data = await ProductAPI.getProducts(filters);
+        setProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load products",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, [categoryName]);
 
   // Function to format the category name for display
   const formatCategoryName = (name: string | undefined) => {
@@ -69,6 +90,20 @@ const CategoryPage = () => {
       href: `/category/${categoryName}`,
     },
   ];
+  
+  // Transform Product objects to SoftwareCard props
+  const softwareCardItems = products.map(product => ({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    category: product.category,
+    price: `$${product.price}`,
+    discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
+    image: product.logo,
+    vendor: "Vendor", // Default vendor if not available
+    rating: product.rating,
+    reviewCount: product.reviews,
+  }));
 
   return (
     <Layout>
@@ -105,9 +140,13 @@ const CategoryPage = () => {
           </div>
         </div>
         
-        {filteredSoftware.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <p className="text-secondary">Loading products...</p>
+          </div>
+        ) : softwareCardItems.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSoftware.map((software) => (
+            {softwareCardItems.map((software) => (
               <SoftwareCard key={software.id} {...software} />
             ))}
           </div>
