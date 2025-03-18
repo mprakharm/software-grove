@@ -1,5 +1,6 @@
 
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
+import { ProductAPI } from './api';
 
 export async function initializeDatabase() {
   try {
@@ -16,6 +17,9 @@ export async function initializeDatabase() {
       } else {
         console.log("Some products may need to be added manually");
       }
+
+      // Force refresh of products in memory
+      await ProductAPI.getProducts();
       
       return true;
     } else {

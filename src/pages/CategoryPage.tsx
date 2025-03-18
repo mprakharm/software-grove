@@ -60,7 +60,7 @@ const CategoryPage = () => {
       setLoading(true);
       try {
         // Fetch products filtered by category if categoryName is provided
-        const filters = categoryName ? { category: formatCategoryName(categoryName) } : undefined;
+        const filters = categoryName && categoryName !== 'all' ? { category: formatCategoryName(categoryName) } : undefined;
         const data = await ProductAPI.getProducts(filters);
         setProducts(data);
       } catch (error) {
@@ -86,21 +86,43 @@ const CategoryPage = () => {
 
   const breadcrumbItems = [
     {
-      label: formatCategoryName(categoryName),
+      label: categoryName === 'all' ? 'All Software' : formatCategoryName(categoryName),
       href: `/category/${categoryName}`,
     },
   ];
   
+  // Sort products based on the selected sorting option
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low-high':
+        // Parse the price strings and compare numerically
+        return parseFloat(String(a.price)) - parseFloat(String(b.price));
+      case 'price-high-low':
+        // Parse the price strings and compare numerically (reversed)
+        return parseFloat(String(b.price)) - parseFloat(String(a.price));
+      case 'alphabetical':
+        // Sort alphabetically by name
+        return a.name.localeCompare(b.name);
+      case 'rating':
+        // Sort by rating (highest first)
+        return (b.rating || 0) - (a.rating || 0);
+      case 'popularity':
+      default:
+        // Sort by review count (highest first) for popularity
+        return (b.reviews || 0) - (a.reviews || 0);
+    }
+  });
+
   // Transform Product objects to SoftwareCard props
-  const softwareCardItems = products.map(product => ({
+  const softwareCardItems = sortedProducts.map(product => ({
     id: product.id,
     name: product.name,
     description: product.description,
     category: product.category,
-    price: `$${product.price}`,
+    price: typeof product.price === 'number' ? `$${product.price}` : product.price,
     discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
     image: product.logo,
-    vendor: "Vendor", // Default vendor if not available
+    vendor: product.vendor || "Vendor", // Use vendor from product or default
     rating: product.rating,
     reviewCount: product.reviews,
   }));
@@ -120,7 +142,7 @@ const CategoryPage = () => {
         
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <h1 className="text-3xl font-bold mb-4 md:mb-0">
-            {formatCategoryName(categoryName)} Software
+            {categoryName === 'all' ? 'All Software' : `${formatCategoryName(categoryName)} Software`}
           </h1>
           
           <div className="flex items-center">
