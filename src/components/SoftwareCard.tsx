@@ -32,6 +32,11 @@ const SoftwareCard = ({
   reviewCount,
   color = "#2D88FF" 
 }: SoftwareCardProps) => {
+  // Ensure price is a string
+  const formattedPrice = typeof price === 'number' 
+    ? `$${price.toFixed(2)}` 
+    : (price || 'Free');
+    
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
       <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm hover:border-razorpay-blue">
@@ -41,7 +46,7 @@ const SoftwareCard = ({
             alt={name}
             className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
           />
-          {discount !== "0%" && (
+          {discount && discount !== "0%" && (
             <Badge className="absolute top-2 right-2" style={{ backgroundColor: color }}>{discount} OFF</Badge>
           )}
         </div>
@@ -71,8 +76,8 @@ const SoftwareCard = ({
               )}
             </div>
             <div className="flex flex-col items-end">
-              <span className="font-semibold text-razorpay-blue">{price}</span>
-              {price && typeof price === 'string' && !price.includes('%') && (
+              <span className="font-semibold text-razorpay-blue">{formattedPrice}</span>
+              {formattedPrice && formattedPrice.includes('$') && !formattedPrice.includes('%') && (
                 <span className="text-xs text-razorpay-gray">per user/month</span>
               )}
             </div>
