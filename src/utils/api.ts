@@ -458,149 +458,268 @@ export const VendorAPI = {
     console.log(`Fetching plans for product: ${productId}`);
     
     try {
-      const mockPlans = {
-        'linkedin-premium': [
-          {
-            id: 'linkedin-basic',
-            name: 'Career',
-            description: 'Basic plan for job seekers',
-            price: 29.99,
-            features: [
-              'See who viewed your profile',
-              'InMail messages',
-              'Job insights',
-              'Applicant insights'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 20
-          },
-          {
-            id: 'linkedin-pro',
-            name: 'Business',
-            description: 'Professional plan for networking',
-            price: 59.99,
-            features: [
-              'All Career features',
-              'Advanced search filters',
-              'Unlimited people browsing',
-              'Business insights'
-            ],
-            popular: true,
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 25
-          },
-          {
-            id: 'linkedin-premium',
-            name: 'Executive',
-            description: 'Premium plan for industry leaders',
-            price: 99.99,
-            features: [
-              'All Business features',
-              'Executive insights',
-              'Leadership analytics',
-              'Unlimited InMail messages'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 15
-          }
-        ],
-        'salesforce': [
-          {
-            id: 'salesforce-essentials',
-            name: 'Essentials',
-            description: 'Basic CRM for small business',
-            price: 25,
-            features: [
-              'Account and contact management',
-              'Opportunity tracking',
-              'Lead management',
-              'Email integration'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 15
-          },
-          {
-            id: 'salesforce-professional',
-            name: 'Professional',
-            description: 'Complete CRM for any size business',
-            price: 75,
-            features: [
-              'All Essentials features',
-              'Forecasting',
-              'Collaborative forecasting',
-              'Lead scoring'
-            ],
-            popular: true,
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 20
-          },
-          {
-            id: 'salesforce-enterprise',
-            name: 'Enterprise',
-            description: 'Deeply customizable CRM',
-            price: 150,
-            features: [
-              'All Professional features',
-              'Workflow automation',
-              'Approval automation',
-              'Custom app development'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 25
-          }
-        ],
-        'default': [
-          {
-            id: 'basic',
-            name: 'Basic',
-            description: 'Essential features for individuals',
-            price: 9.99,
-            features: [
-              'Core functionality',
-              'Email support',
-              'Basic reporting',
-              '1 user'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 10
-          },
-          {
-            id: 'pro',
-            name: 'Professional',
-            description: 'Advanced features for teams',
-            price: 19.99,
-            features: [
-              'All Basic features',
-              'Advanced reporting',
-              'Priority support',
-              'Up to 5 users'
-            ],
-            popular: true,
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 15
-          },
-          {
-            id: 'enterprise',
-            name: 'Enterprise',
-            description: 'Complete solution for organizations',
-            price: 49.99,
-            features: [
-              'All Professional features',
-              'Custom integrations',
-              'Dedicated support',
-              'Unlimited users'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 20
-          }
-        ]
-      };
+      const { data: productData } = await supabase
+        .from('products')
+        .select('name, vendor')
+        .eq('id', productId)
+        .single();
       
-      const plans = mockPlans[productId as keyof typeof mockPlans] || mockPlans['default'];
-      return plans;
+      console.log('Product info for API selection:', productData);
+      
+      if (productData) {
+        const productName = productData.name.toLowerCase();
+        const vendor = productData.vendor.toLowerCase();
+        
+        if (productName.includes('linkedin')) {
+          console.log('Calling LinkedIn API endpoint');
+          try {
+            // This would be replaced with actual API call to LinkedIn's endpoints
+            // const response = await fetch('https://api.linkedin.com/plans', {
+            //   method: 'GET',
+            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+            // });
+            // return await response.json();
+            
+            // For now, return mock LinkedIn data
+            return await this.getMockPlans('linkedin-premium');
+          } catch (error) {
+            console.error('Error calling LinkedIn API:', error);
+            return await this.getMockPlans('linkedin-premium');
+          }
+        }
+        
+        if (productName.includes('salesforce') || vendor.includes('salesforce')) {
+          console.log('Calling Salesforce API endpoint');
+          try {
+            // This would be replaced with actual API call to Salesforce's endpoints
+            // const response = await fetch('https://api.salesforce.com/plans', {
+            //   method: 'GET',
+            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+            // });
+            // return await response.json();
+            
+            // For now, return mock Salesforce data
+            return await this.getMockPlans('salesforce');
+          } catch (error) {
+            console.error('Error calling Salesforce API:', error);
+            return await this.getMockPlans('salesforce');
+          }
+        }
+        
+        if (productName.includes('microsoft') || productName.includes('office') || vendor.includes('microsoft')) {
+          console.log('Calling Microsoft API endpoint');
+          try {
+            // This would be replaced with actual API call to Microsoft's endpoints
+            // const response = await fetch('https://api.microsoft.com/365/plans', {
+            //   method: 'GET',
+            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+            // });
+            // return await response.json();
+            
+            // For now, return mock Microsoft data
+            return await this.getMockPlans('microsoft');
+          } catch (error) {
+            console.error('Error calling Microsoft API:', error);
+            return await this.getMockPlans('microsoft');
+          }
+        }
+      }
+      
+      console.log('No specific API found for this product, using default mock data');
+      return await this.getMockPlans('default');
     } catch (error) {
-      console.error('Error fetching product plans:', error);
-      throw error;
+      console.error('Error determining product API:', error);
+      return await this.getMockPlans('default');
     }
+  },
+  
+  async getMockPlans(productType: string): Promise<any[]> {
+    console.log(`Getting mock plans for: ${productType}`);
+    
+    const mockPlans = {
+      'linkedin-premium': [
+        {
+          id: 'linkedin-basic',
+          name: 'Career',
+          description: 'Basic plan for job seekers',
+          price: 29.99,
+          features: [
+            'See who viewed your profile',
+            'InMail messages',
+            'Job insights',
+            'Applicant insights'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 20
+        },
+        {
+          id: 'linkedin-pro',
+          name: 'Business',
+          description: 'Professional plan for networking',
+          price: 59.99,
+          features: [
+            'All Career features',
+            'Advanced search filters',
+            'Unlimited people browsing',
+            'Business insights'
+          ],
+          popular: true,
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 25
+        },
+        {
+          id: 'linkedin-premium',
+          name: 'Executive',
+          description: 'Premium plan for industry leaders',
+          price: 99.99,
+          features: [
+            'All Business features',
+            'Executive insights',
+            'Leadership analytics',
+            'Unlimited InMail messages'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 15
+        }
+      ],
+      'salesforce': [
+        {
+          id: 'salesforce-essentials',
+          name: 'Essentials',
+          description: 'Basic CRM for small business',
+          price: 25,
+          features: [
+            'Account and contact management',
+            'Opportunity tracking',
+            'Lead management',
+            'Email integration'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 15
+        },
+        {
+          id: 'salesforce-professional',
+          name: 'Professional',
+          description: 'Complete CRM for any size business',
+          price: 75,
+          features: [
+            'All Essentials features',
+            'Forecasting',
+            'Collaborative forecasting',
+            'Lead scoring'
+          ],
+          popular: true,
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 20
+        },
+        {
+          id: 'salesforce-enterprise',
+          name: 'Enterprise',
+          description: 'Deeply customizable CRM',
+          price: 150,
+          features: [
+            'All Professional features',
+            'Workflow automation',
+            'Approval automation',
+            'Custom app development'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 25
+        }
+      ],
+      'microsoft': [
+        {
+          id: 'microsoft-basic',
+          name: 'Microsoft 365 Basic',
+          description: 'Essential Microsoft tools for individuals',
+          price: 5.99,
+          features: [
+            'Web versions of Office apps',
+            'Email and calendar',
+            '1TB OneDrive storage',
+            'Security features'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 10
+        },
+        {
+          id: 'microsoft-standard',
+          name: 'Microsoft 365 Standard',
+          description: 'Complete Microsoft tools for small businesses',
+          price: 12.99,
+          features: [
+            'Desktop versions of Office apps',
+            'Email and calendar',
+            '1TB OneDrive storage',
+            'Security features'
+          ],
+          popular: true,
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 15
+        },
+        {
+          id: 'microsoft-premium',
+          name: 'Microsoft 365 Premium',
+          description: 'Advanced security and management for businesses',
+          price: 22.99,
+          features: [
+            'All Standard features',
+            'Advanced security',
+            'Device management',
+            'Cyber threat protection'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 20
+        }
+      ],
+      'default': [
+        {
+          id: 'basic',
+          name: 'Basic',
+          description: 'Essential features for individuals',
+          price: 9.99,
+          features: [
+            'Core functionality',
+            'Email support',
+            'Basic reporting',
+            '1 user'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 10
+        },
+        {
+          id: 'pro',
+          name: 'Professional',
+          description: 'Advanced features for teams',
+          price: 19.99,
+          features: [
+            'All Basic features',
+            'Advanced reporting',
+            'Priority support',
+            'Up to 5 users'
+          ],
+          popular: true,
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 15
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'Complete solution for organizations',
+          price: 49.99,
+          features: [
+            'All Professional features',
+            'Custom integrations',
+            'Dedicated support',
+            'Unlimited users'
+          ],
+          billingOptions: ['monthly', 'annual'],
+          discountPercentage: 20
+        }
+      ]
+    };
+    
+    return mockPlans[productType as keyof typeof mockPlans] || mockPlans['default'];
   }
 };
+

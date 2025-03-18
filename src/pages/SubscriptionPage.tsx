@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Breadcrumb from '@/components/Breadcrumb';
-import { FEATURED_SOFTWARE } from './Index';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +90,7 @@ const SubscriptionPage = () => {
       setIsLoadingPlans(false);
     }
   };
-  
+
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
     let price = basePrice * userCount;
     
@@ -101,7 +100,7 @@ const SubscriptionPage = () => {
     
     return price;
   };
-  
+
   if (isLoadingProduct) {
     return (
       <Layout>
