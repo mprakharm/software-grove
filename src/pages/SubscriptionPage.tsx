@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -105,10 +104,8 @@ const SubscriptionPage = () => {
     },
   ];
 
-  // Calculate the number of months for the saving calculation
   const monthCount = billingCycle === 'yearly' ? 12 : 1;
   
-  // Calculate the total cost
   const selectedPlanData = subscriptionPlans.find(plan => plan.id === selectedPlan);
   const pricePerUser = billingCycle === 'yearly' 
     ? selectedPlanData?.yearlyPrice 
@@ -133,7 +130,6 @@ const SubscriptionPage = () => {
 
     setIsSubmitting(true);
     try {
-      // Calculate renewal date (1 month or 1 year from now)
       const startDate = new Date();
       const endDate = new Date();
       if (billingCycle === 'yearly') {
@@ -142,16 +138,17 @@ const SubscriptionPage = () => {
         endDate.setMonth(endDate.getMonth() + 1);
       }
 
-      // Create subscription - fixing the property names to match what's expected
       const newSubscription = {
         userId: user.id,
         productId: productId,
         planId: selectedPlan,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: startDate,
+        endDate: endDate,
         autoRenew: true,
         price: totalPrice,
-        // Additional fields not required by the Subscription type but useful for display
+      };
+
+      const subscriptionMetadata = {
         name: product.name,
         plan: selectedPlanData?.name || 'Unknown',
         users: userCount,
@@ -165,7 +162,6 @@ const SubscriptionPage = () => {
 
       await SubscriptionAPI.createSubscription(newSubscription);
       
-      // Create a purchase record
       await supabase.from('purchases').insert({
         user_id: user.id,
         product_id: productId,
@@ -176,7 +172,6 @@ const SubscriptionPage = () => {
         description: `${product.name} - ${selectedPlanData?.name} (${userCount} users)`
       });
 
-      // Refresh subscriptions in context
       await refreshSubscriptions();
 
       toast({
@@ -184,7 +179,6 @@ const SubscriptionPage = () => {
         description: `You've successfully subscribed to ${product.name}!`,
       });
 
-      // Navigate to subscriptions page
       navigate('/subscriptions');
     } catch (error) {
       console.error('Error creating subscription:', error);
