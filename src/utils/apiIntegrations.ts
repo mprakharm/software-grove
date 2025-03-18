@@ -39,7 +39,7 @@ export function initializeApiIntegrations() {
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: { 
-          'Authorization': 'devrzpay:H2fjwc5Q9yHZLv56',
+          'Authorization': 'ZGV2cnpwYXk6SDJmandjNVE5eUhaTHY1Ng==',
           'Content-Type': 'application/json'
         },
         // Add mode: 'cors' to explicitly request CORS
