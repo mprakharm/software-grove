@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
 import { Percent, ListChecks, XCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Link, useSearchParams } from 'react-router-dom';
+import { ProductAPI } from '@/utils/api';
+import { Product } from '@/utils/db';
 
 // Software data with balanced categories (5-10 per category)
 export const FEATURED_SOFTWARE = [
@@ -632,7 +635,26 @@ export const CATEGORY_COUNTS = {
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [filteredSoftware, setFilteredSoftware] = useState(FEATURED_SOFTWARE);
+  const [filteredSoftware, setFilteredSoftware] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+
+  // Load initial featured products
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      setIsLoading(true);
+      try {
+        const products = await ProductAPI.getProducts();
+        setFeaturedProducts(products.slice(0, 8)); // Show 8 featured products
+      } catch (error) {
+        console.error('Error loading featured products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeaturedProducts();
+  }, []);
 
   useEffect(() => {
     // Update URL when search changes
@@ -644,19 +666,26 @@ const Index = () => {
       setSearchParams(searchParams);
     }
 
-    // Filter software based on search query
-    if (searchQuery.trim() === '') {
-      setFilteredSoftware(FEATURED_SOFTWARE);
-    } else {
-      const query = searchQuery.toLowerCase().trim();
-      const filtered = FEATURED_SOFTWARE.filter(software => 
-        software.name.toLowerCase().includes(query) || 
-        software.description.toLowerCase().includes(query) || 
-        software.category.toLowerCase().includes(query) ||
-        software.vendor.toLowerCase().includes(query)
-      );
-      setFilteredSoftware(filtered);
-    }
+    // Search products from API
+    const searchProducts = async () => {
+      if (searchQuery.trim() === '') {
+        setFilteredSoftware([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const products = await ProductAPI.getProducts({ searchQuery });
+        setFilteredSoftware(products);
+      } catch (error) {
+        console.error('Error searching products:', error);
+        setFilteredSoftware([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    searchProducts();
   }, [searchQuery, searchParams, setSearchParams]);
 
   const handleSearchChange = (query: string) => {
@@ -791,7 +820,13 @@ const Index = () => {
           {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Software"}
         </h2>
         
-        {filteredSoftware.length === 0 && searchQuery && (
+        {isLoading && (
+          <div className="text-center py-12">
+            <p className="text-lg text-gray-600">Loading...</p>
+          </div>
+        )}
+        
+        {!isLoading && filteredSoftware.length === 0 && searchQuery && (
           <div className="text-center py-12">
             <p className="text-lg text-gray-600">No software found matching your search criteria.</p>
             <button 
@@ -804,20 +839,20 @@ const Index = () => {
         )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {(searchQuery ? filteredSoftware : FEATURED_SOFTWARE.slice(0, 8)).map((software) => (
+          {(searchQuery ? filteredSoftware : featuredProducts).map((product) => (
             <SoftwareCard 
-              key={software.id}
-              id={software.id}
-              name={software.name}
-              description={software.description}
-              category={software.category}
-              price={software.price}
-              discount={software.discount}
-              image={software.image}
-              vendor={software.vendor}
-              rating={software.rating}
-              reviewCount={software.reviewCount}
-              color={software.color}
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              description={product.description}
+              category={product.category}
+              price={product.price || '$0'}
+              discount={product.discount || '0%'}
+              image={product.image || 'https://placehold.co/600x400/aaaaaa/ffffff?text=' + encodeURIComponent(product.name)}
+              vendor={product.vendor || 'Vendor'}
+              rating={product.rating || 4.5}
+              reviewCount={product.reviewCount || 100}
+              color={product.color || '#aaaaaa'}
             />
           ))}
         </div>

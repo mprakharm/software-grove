@@ -1,3 +1,4 @@
+
 import { Product, Bundle, Subscription, Purchase } from './db';
 import { supabase } from './supabase';
 import {
@@ -31,7 +32,8 @@ export const ProductAPI = {
       
       if (filters.searchQuery) {
         const searchTerm = `%${filters.searchQuery.toLowerCase()}%`;
-        query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm}`);
+        // Use or to search across multiple fields with ilike for case-insensitive search
+        query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm},vendor.ilike.${searchTerm}`);
       }
     }
     
@@ -119,6 +121,31 @@ export const ProductAPI = {
       console.error('Error in getProductByNameOrId:', error);
       return null;
     }
+  },
+  
+  // Search for products with a more comprehensive approach - used for the global search
+  async searchProducts(searchQuery: string): Promise<Product[]> {
+    if (process.env.NODE_ENV === 'development') {
+      await delay(300);
+    }
+    
+    if (!searchQuery || searchQuery.trim() === '') {
+      return [];
+    }
+    
+    const searchTerm = `%${searchQuery.toLowerCase()}%`;
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select()
+      .or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm},vendor.ilike.${searchTerm}`);
+    
+    if (error) {
+      console.error('Error searching products:', error);
+      throw error;
+    }
+    
+    return (data || []).map(transformProductFromSupabase);
   },
   
   // Add a new product

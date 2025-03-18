@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, X, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { CATEGORY_COUNTS, FEATURED_SOFTWARE } from '@/pages/Index';
+import { CATEGORY_COUNTS } from '@/pages/Index';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { ProductAPI } from '@/utils/api';
+import { Product } from '@/utils/db';
 
 interface NavigationProps {
   searchQuery?: string;
@@ -21,28 +23,48 @@ interface NavigationProps {
 
 const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showResults, setShowResults] = useState(false);
-  const [searchResults, setSearchResults] = useState<typeof FEATURED_SOFTWARE>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const searchRef = useRef<HTMLDivElement>(null);
   const { user, signOut, subscriptions } = useAuth();
   
+  // Update local search query when prop changes
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setSearchResults([]);
-      setShowResults(false);
-    } else {
-      const query = searchQuery.toLowerCase().trim();
-      const filtered = FEATURED_SOFTWARE.filter(software => 
-        software.name.toLowerCase().includes(query) || 
-        software.description.toLowerCase().includes(query) || 
-        software.category.toLowerCase().includes(query) ||
-        software.vendor.toLowerCase().includes(query)
-      ).slice(0, 6);
-      
-      setSearchResults(filtered);
-      setShowResults(filtered.length > 0);
-    }
+    setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
+
+  // Handle search query changes
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (localSearchQuery.trim() === '') {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const products = await ProductAPI.getProducts({ 
+          searchQuery: localSearchQuery 
+        });
+        setSearchResults(products.slice(0, 6)); // Limit to 6 results
+        setShowResults(products.length > 0);
+      } catch (error) {
+        console.error('Error searching products:', error);
+        setSearchResults([]);
+        setShowResults(false);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    // Debounce search to avoid too many requests
+    const debounceTimeout = setTimeout(fetchSearchResults, 300);
+    return () => clearTimeout(debounceTimeout);
+  }, [localSearchQuery]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,17 +81,26 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    if (localSearchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(localSearchQuery.trim())}`);
       setShowResults(false);
     }
   };
 
   const handleClearSearch = () => {
+    setLocalSearchQuery('');
     if (onSearchChange) {
       onSearchChange('');
     }
     setShowResults(false);
+  };
+
+  const handleLocalSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalSearchQuery(value);
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
   };
 
   const handleResultClick = (id: string) => {
@@ -84,6 +115,9 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
 
   // Get the number of active subscriptions
   const subscriptionCount = subscriptions?.length || 0;
+
+  // Check if current page is a product page
+  const isProductPage = location.pathname.includes('/product/');
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b z-50">
@@ -125,14 +159,14 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
                   type="search" 
                   placeholder="Search software..." 
                   className="pl-10 pr-8 bg-white/50"
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+                  value={localSearchQuery}
+                  onChange={handleLocalSearchChange}
                   onFocus={() => searchResults.length > 0 && setShowResults(true)}
                 />
                 <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
                   <Search className="h-4 w-4 text-razorpay-gray" />
                 </button>
-                {searchQuery && (
+                {localSearchQuery && (
                   <button 
                     type="button"
                     onClick={handleClearSearch}
@@ -145,32 +179,47 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
               
               {showResults && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                  {searchResults.map((software) => (
-                    <div 
-                      key={software.id}
-                      className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handleResultClick(software.id)}
-                    >
-                      <div className="flex items-center">
-                        <div 
-                          className="w-8 h-8 rounded flex-shrink-0 mr-3" 
-                          style={{ backgroundColor: software.color }}
-                        />
-                        <div>
-                          <h4 className="font-medium text-sm">{software.name}</h4>
-                          <p className="text-xs text-gray-500 truncate">{software.category}</p>
-                        </div>
-                      </div>
+                  {isSearching ? (
+                    <div className="p-4 text-center text-gray-500">
+                      Searching...
                     </div>
-                  ))}
-                  <div className="p-2 text-center">
-                    <button 
-                      onClick={handleSearchSubmit}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      See all results
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      {searchResults.map((product) => (
+                        <div 
+                          key={product.id}
+                          className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleResultClick(product.id)}
+                        >
+                          <div className="flex items-center">
+                            <div 
+                              className="w-8 h-8 rounded flex-shrink-0 mr-3" 
+                              style={{ backgroundColor: product.color || '#aaaaaa' }}
+                            />
+                            <div>
+                              <h4 className="font-medium text-sm">{product.name}</h4>
+                              <p className="text-xs text-gray-500 truncate">{product.category}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {searchResults.length > 0 && (
+                        <div className="p-2 text-center">
+                          <button 
+                            onClick={handleSearchSubmit}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            See all results
+                          </button>
+                        </div>
+                      )}
+                      {searchResults.length === 0 && (
+                        <div className="p-4 text-center text-gray-500">
+                          No results found
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>
