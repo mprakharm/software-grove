@@ -33,7 +33,7 @@ export function initializeApiIntegrations() {
     console.log('Calling LinkedIn Premium API for product:', product.name);
     try {
       // Using a CORS proxy to handle potential CORS issues
-      const apiUrl = 'https://api-dev.getfleek.app/partner';
+      const apiUrl = 'https://api-dev.getfleek.app/partner/get_available_plans';
       console.log('Attempting to fetch from:', apiUrl);
       
       const response = await fetch(apiUrl, {
