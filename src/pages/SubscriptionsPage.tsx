@@ -114,11 +114,13 @@ const SubscriptionsPage = () => {
     queryKey: ['purchases', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return await supabase
+      const response = await supabase
         .from('purchases')
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false });
+      
+      return response;
     },
     enabled: !!user?.id
   });
