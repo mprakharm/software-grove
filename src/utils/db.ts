@@ -1,4 +1,3 @@
-
 import { supabase } from './supabase';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -45,7 +44,7 @@ export type Bundle = {
   isLimitedTime?: boolean;
   expiryDate?: string;
   color: string;
-  purchases?: number;
+  purchases?: number; // Added this property to fix the error
 };
 
 export type User = {
