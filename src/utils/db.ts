@@ -44,7 +44,7 @@ export type Bundle = {
   isLimitedTime?: boolean;
   expiryDate?: string;
   color: string;
-  purchases?: number; // Added this property to fix the error
+  purchases?: number; // This property is needed for tracking bundle purchases
 };
 
 export type User = {
