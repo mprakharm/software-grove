@@ -9,7 +9,8 @@ import { Check, Loader2, ArrowRight, Star } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SubscriptionAPI, VendorAPI, ProductAPI } from '@/utils/api';
+import { SubscriptionAPI, ProductAPI } from '@/utils/api';
+import { ApiService } from '@/utils/apiService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
@@ -71,8 +72,10 @@ const SubscriptionPage = () => {
     setIsLoadingPlans(true);
     try {
       console.log('Fetching plans for product ID:', productId);
-      const plans = await VendorAPI.getProductPlans(productId);
-      console.log('Plans fetched:', plans);
+      
+      const plans = await ApiService.getVendorPlans(productId);
+      
+      console.log('Plans fetched from API service:', plans);
       setVendorPlans(plans);
       
       const popularPlan = plans.find(plan => plan.popular);
