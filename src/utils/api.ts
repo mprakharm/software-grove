@@ -450,6 +450,103 @@ export const PurchaseAPI = {
 };
 
 export const VendorAPI = {
+  // Registry of API handlers for different products or vendors
+  apiRegistry: {
+    // Key can be product name, vendor name, or a regex pattern
+    'linkedin': {
+      handler: async (product: any) => {
+        console.log('Calling LinkedIn API endpoint');
+        try {
+          // Test API endpoint for LinkedIn Premium
+          const response = await fetch('https://api.example.com/linkedin/plans', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+          });
+          
+          if (response.ok) {
+            return await response.json();
+          }
+          throw new Error('Failed to fetch LinkedIn plans');
+        } catch (error) {
+          console.error('Error calling LinkedIn API:', error);
+          return null; // Will fall back to mock data
+        }
+      }
+    },
+    'salesforce': {
+      handler: async (product: any) => {
+        console.log('Calling Salesforce API endpoint');
+        try {
+          const response = await fetch('https://api.example.com/salesforce/plans', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+          });
+          
+          if (response.ok) {
+            return await response.json();
+          }
+          throw new Error('Failed to fetch Salesforce plans');
+        } catch (error) {
+          console.error('Error calling Salesforce API:', error);
+          return null;
+        }
+      }
+    },
+    'microsoft': {
+      handler: async (product: any) => {
+        console.log('Calling Microsoft API endpoint');
+        try {
+          const response = await fetch('https://api.example.com/microsoft/plans', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+          });
+          
+          if (response.ok) {
+            return await response.json();
+          }
+          throw new Error('Failed to fetch Microsoft plans');
+        } catch (error) {
+          console.error('Error calling Microsoft API:', error);
+          return null;
+        }
+      }
+    }
+  },
+  
+  // Method to find the appropriate API handler based on product information
+  findApiHandler: function(product: any): any {
+    if (!product) return null;
+    
+    const productName = product.name?.toLowerCase() || '';
+    const vendorName = product.vendor?.toLowerCase() || '';
+    
+    // Check for direct matches in registry
+    for (const key of Object.keys(this.apiRegistry)) {
+      if (productName.includes(key) || vendorName.includes(key)) {
+        console.log(`Found API handler for key: ${key}`);
+        return this.apiRegistry[key];
+      }
+    }
+    
+    // Try to match based on metadata if available
+    if (product.metadata && typeof product.metadata === 'object') {
+      const apiProvider = product.metadata.apiProvider;
+      if (apiProvider && this.apiRegistry[apiProvider]) {
+        console.log(`Found API handler from metadata: ${apiProvider}`);
+        return this.apiRegistry[apiProvider];
+      }
+    }
+    
+    console.log('No specific API handler found for this product');
+    return null;
+  },
+  
+  // Register a new API handler dynamically
+  registerApiHandler: function(key: string, handler: Function): void {
+    this.apiRegistry[key.toLowerCase()] = { handler };
+    console.log(`Registered new API handler for: ${key}`);
+  },
+  
   async getProductPlans(productId: string): Promise<any[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
@@ -460,68 +557,35 @@ export const VendorAPI = {
     try {
       const { data: productData } = await supabase
         .from('products')
-        .select('name, vendor')
+        .select('*')
         .eq('id', productId)
         .single();
       
       console.log('Product info for API selection:', productData);
       
       if (productData) {
+        // Try to get the appropriate API handler
+        const apiHandler = this.findApiHandler(productData);
+        
+        if (apiHandler) {
+          const apiResult = await apiHandler.handler(productData);
+          if (apiResult) {
+            console.log('API call successful, using returned plans');
+            return apiResult;
+          }
+        }
+        
+        // Fall back to mock data based on the product type
+        console.log('Falling back to mock data');
         const productName = productData.name.toLowerCase();
         const vendor = productData.vendor.toLowerCase();
         
         if (productName.includes('linkedin')) {
-          console.log('Calling LinkedIn API endpoint');
-          try {
-            // This would be replaced with actual API call to LinkedIn's endpoints
-            // const response = await fetch('https://api.linkedin.com/plans', {
-            //   method: 'GET',
-            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-            // });
-            // return await response.json();
-            
-            // For now, return mock LinkedIn data
-            return await this.getMockPlans('linkedin-premium');
-          } catch (error) {
-            console.error('Error calling LinkedIn API:', error);
-            return await this.getMockPlans('linkedin-premium');
-          }
-        }
-        
-        if (productName.includes('salesforce') || vendor.includes('salesforce')) {
-          console.log('Calling Salesforce API endpoint');
-          try {
-            // This would be replaced with actual API call to Salesforce's endpoints
-            // const response = await fetch('https://api.salesforce.com/plans', {
-            //   method: 'GET',
-            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-            // });
-            // return await response.json();
-            
-            // For now, return mock Salesforce data
-            return await this.getMockPlans('salesforce');
-          } catch (error) {
-            console.error('Error calling Salesforce API:', error);
-            return await this.getMockPlans('salesforce');
-          }
-        }
-        
-        if (productName.includes('microsoft') || productName.includes('office') || vendor.includes('microsoft')) {
-          console.log('Calling Microsoft API endpoint');
-          try {
-            // This would be replaced with actual API call to Microsoft's endpoints
-            // const response = await fetch('https://api.microsoft.com/365/plans', {
-            //   method: 'GET',
-            //   headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-            // });
-            // return await response.json();
-            
-            // For now, return mock Microsoft data
-            return await this.getMockPlans('microsoft');
-          } catch (error) {
-            console.error('Error calling Microsoft API:', error);
-            return await this.getMockPlans('microsoft');
-          }
+          return await this.getMockPlans('linkedin-premium');
+        } else if (productName.includes('salesforce') || vendor.includes('salesforce')) {
+          return await this.getMockPlans('salesforce');
+        } else if (productName.includes('microsoft') || productName.includes('office') || vendor.includes('microsoft')) {
+          return await this.getMockPlans('microsoft');
         }
       }
       
@@ -723,3 +787,9 @@ export const VendorAPI = {
   }
 };
 
+// Example of how to register a new API handler dynamically
+// VendorAPI.registerApiHandler('zoom', async (product) => {
+//   // Custom API integration for Zoom
+//   const response = await fetch('https://api.zoom.us/v2/plans');
+//   return await response.json();
+// });
