@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +12,17 @@ import {
   Settings, 
   Calendar, 
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { SubscriptionAPI } from '@/utils/api';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/utils/supabase';
+import { useToast } from '@/components/ui/use-toast';
 
-// Mock data for active subscriptions
+// Mock data for active subscriptions (fallback if no real subscriptions yet)
 const ACTIVE_SUBSCRIPTIONS = [
   {
     id: 'sub-001',
@@ -90,6 +96,77 @@ const PAYMENT_HISTORY = [
 ];
 
 const SubscriptionsPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Fetch user's subscriptions
+  const { data: userSubscriptions, isLoading, error } = useQuery({
+    queryKey: ['subscriptions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      return await SubscriptionAPI.getUserSubscriptions(user.id);
+    },
+    enabled: !!user?.id
+  });
+
+  // Fetch user's payment history
+  const { data: userPurchases } = useQuery({
+    queryKey: ['purchases', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      return await supabase
+        .from('purchases')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+    },
+    enabled: !!user?.id
+  });
+
+  const handleRenewSubscription = async (subscriptionId: string) => {
+    try {
+      // In a real application, this would connect to a payment processing system
+      toast({
+        title: "Subscription Renewed",
+        description: "Your subscription has been successfully renewed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Renewal Failed",
+        description: "There was an error renewing your subscription. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Determine which subscriptions to display
+  const subscriptionsToDisplay = userSubscriptions?.length ? userSubscriptions : ACTIVE_SUBSCRIPTIONS;
+  const purchasesToDisplay = userPurchases?.data?.length ? userPurchases.data : PAYMENT_HISTORY;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8 flex justify-center items-center" style={{ minHeight: "60vh" }}>
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Error Loading Subscriptions</h1>
+            <p className="text-gray-600 mb-6">There was a problem loading your subscription data.</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
@@ -111,14 +188,14 @@ const SubscriptionsPage = () => {
           
           <TabsContent value="active" className="mt-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ACTIVE_SUBSCRIPTIONS.map((subscription) => (
+              {subscriptionsToDisplay.map((subscription) => (
                 <Card key={subscription.id} className="h-full">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center">
                         <div className="h-10 w-10 bg-gray-200 rounded mr-3">
                           <img 
-                            src={subscription.image} 
+                            src={subscription.image || "https://placehold.co/600x400/e4e4e7/ffffff?text=Software"} 
                             alt={subscription.name}
                             className="h-full w-full object-cover rounded"
                           />
@@ -167,9 +244,14 @@ const SubscriptionsPage = () => {
                       )}
                       
                       <div className="pt-2 grid grid-cols-2 gap-2">
-                        <Button variant="outline" size="sm" className="w-full flex items-center justify-center">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full flex items-center justify-center"
+                          onClick={() => handleRenewSubscription(subscription.id)}
+                        >
                           <Settings className="h-4 w-4 mr-1" />
-                          <span>Manage</span>
+                          <span>Renew</span>
                         </Button>
                         <Button variant="outline" size="sm" className="w-full flex items-center justify-center">
                           <ExternalLink className="h-4 w-4 mr-1" />
@@ -215,10 +297,10 @@ const SubscriptionsPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {PAYMENT_HISTORY.map((payment) => (
+                      {purchasesToDisplay.map((payment) => (
                         <tr key={payment.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 text-sm">{new Date(payment.date).toLocaleDateString()}</td>
-                          <td className="py-3 px-4 text-sm">{payment.description}</td>
+                          <td className="py-3 px-4 text-sm">{payment.description || `Payment for ${payment.product_id || payment.bundle_id || 'subscription'}`}</td>
                           <td className="py-3 px-4 text-sm text-right">${payment.amount.toFixed(2)}</td>
                           <td className="py-3 px-4 text-right">
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-normal">

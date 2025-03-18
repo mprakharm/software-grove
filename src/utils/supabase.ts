@@ -123,10 +123,10 @@ export async function seedDatabaseWithFrontendData() {
         category: item.category || 'Other',
         logo: item.image || 'https://placehold.co/100x100',
         price: price || 0,
-        featuredBenefit: item.featuredBenefit,
+        featuredBenefit: item.featuredBenefit || null,
         benefits: item.benefits || [],
-        rating: item.rating,
-        reviews: item.reviewCount,
+        rating: item.rating || 0,
+        reviews: item.reviewCount || 0,
         popularity: item.popularity || 50,
         inStock: true,
         isHot: item.isHot || false
@@ -144,7 +144,7 @@ export async function seedDatabaseWithFrontendData() {
       return false;
     }
     
-    console.log(`Successfully seeded database with ${insertedProducts.length} products.`);
+    console.log(`Successfully seeded database with ${insertedProducts?.length} products.`);
     return true;
   } catch (error) {
     console.error("Error seeding database:", error);

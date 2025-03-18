@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, User, X } from 'lucide-react';
+import { Search, ShoppingCart, User, X, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -8,8 +7,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { CATEGORY_COUNTS, FEATURED_SOFTWARE } from '@/pages/Index';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 interface NavigationProps {
   searchQuery?: string;
@@ -21,9 +23,9 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<typeof FEATURED_SOFTWARE>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+  const { user, signOut } = useAuth();
   
   useEffect(() => {
-    // Filter software based on search query for dropdown results
     if (searchQuery.trim() === '') {
       setSearchResults([]);
       setShowResults(false);
@@ -34,7 +36,7 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
         software.description.toLowerCase().includes(query) || 
         software.category.toLowerCase().includes(query) ||
         software.vendor.toLowerCase().includes(query)
-      ).slice(0, 6); // Limit to 6 results for dropdown
+      ).slice(0, 6);
       
       setSearchResults(filtered);
       setShowResults(filtered.length > 0);
@@ -42,7 +44,6 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   }, [searchQuery]);
 
   useEffect(() => {
-    // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
@@ -73,6 +74,11 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const handleResultClick = (id: string) => {
     navigate(`/product/${id}`);
     setShowResults(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -133,7 +139,6 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
                 )}
               </form>
               
-              {/* Search Results Dropdown */}
               {showResults && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
                   {searchResults.map((software) => (
@@ -166,25 +171,43 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
               )}
             </div>
             
-            <Link to="/subscriptions" className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-              <ShoppingCart className="h-5 w-5 text-razorpay-gray" />
-              <span className="absolute -top-1 -right-1 bg-razorpay-blue text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                2
-              </span>
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <User className="h-5 w-5 text-razorpay-gray" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link to="/subscriptions">My Subscriptions</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/account">Account Settings</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user ? (
+              <>
+                <Link to="/subscriptions" className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+                  <ShoppingCart className="h-5 w-5 text-razorpay-gray" />
+                  <span className="absolute -top-1 -right-1 bg-razorpay-blue text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                    2
+                  </span>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <User className="h-5 w-5 text-razorpay-gray" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/subscriptions">My Subscriptions</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/account">Account Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/sign-in">Sign In</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/sign-up">Sign Up</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
