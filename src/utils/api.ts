@@ -1,4 +1,3 @@
-
 import { Product, Bundle, Subscription, Purchase } from './db';
 import { supabase } from './supabase';
 import {
@@ -68,6 +67,58 @@ export const ProductAPI = {
     }
     
     return data ? transformProductFromSupabase(data) : null;
+  },
+  
+  // Get a product by name or ID - handles both UUID and string IDs
+  async getProductByNameOrId(nameOrId: string): Promise<Product | null> {
+    if (process.env.NODE_ENV === 'development') {
+      await delay(200);
+    }
+    
+    try {
+      // First try to get by ID (UUID)
+      const { data, error } = await supabase
+        .from('products')
+        .select()
+        .eq('id', nameOrId)
+        .single();
+      
+      if (data) {
+        return transformProductFromSupabase(data);
+      }
+      
+      // If not found or error, try to find by slug (convert hyphen to spaces and capitalize)
+      const formattedName = nameOrId
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      
+      const { data: nameData, error: nameError } = await supabase
+        .from('products')
+        .select()
+        .ilike('name', formattedName)
+        .single();
+      
+      if (nameData) {
+        return transformProductFromSupabase(nameData);
+      }
+      
+      // If still not found, try a more flexible search
+      const { data: flexData, error: flexError } = await supabase
+        .from('products')
+        .select()
+        .ilike('name', `%${nameOrId.replace(/-/g, '%')}%`)
+        .single();
+      
+      if (flexData) {
+        return transformProductFromSupabase(flexData);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error in getProductByNameOrId:', error);
+      return null;
+    }
   },
   
   // Add a new product

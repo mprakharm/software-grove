@@ -25,7 +25,8 @@ const ProductPage = () => {
       
       setLoading(true);
       try {
-        const data = await ProductAPI.getProductById(productId);
+        // Modified to handle both UUID and string IDs
+        const data = await ProductAPI.getProductByNameOrId(productId);
         setProduct(data);
       } catch (error) {
         console.error("Error fetching product:", error);
