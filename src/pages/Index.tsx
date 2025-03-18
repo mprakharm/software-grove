@@ -7,7 +7,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ProductAPI } from '@/utils/api';
 import { Product } from '@/utils/db';
 
-// Software data with balanced categories (5-10 per category)
 export const FEATURED_SOFTWARE = [
   // Productivity Category (8 apps)
   {
@@ -620,7 +619,6 @@ export const FEATURED_SOFTWARE = [
   }
 ];
 
-// Calculate actual category counts based on the software list
 export const CATEGORY_COUNTS = {
   "Productivity": FEATURED_SOFTWARE.filter(s => s.category === "Productivity").length,
   "Marketing": FEATURED_SOFTWARE.filter(s => s.category === "Marketing").length,
@@ -630,7 +628,6 @@ export const CATEGORY_COUNTS = {
   "AI & Automation": FEATURED_SOFTWARE.filter(s => s.category === "AI & Automation").length,
 };
 
-// Home page component
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -638,13 +635,12 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
-  // Load initial featured products
   useEffect(() => {
     const loadFeaturedProducts = async () => {
       setIsLoading(true);
       try {
         const products = await ProductAPI.getProducts();
-        setFeaturedProducts(products.slice(0, 8)); // Show 8 featured products
+        setFeaturedProducts(products.slice(0, 8));
       } catch (error) {
         console.error('Error loading featured products:', error);
       } finally {
@@ -656,7 +652,6 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    // Update URL when search changes
     if (searchQuery) {
       searchParams.set('search', searchQuery);
       setSearchParams(searchParams);
@@ -665,7 +660,6 @@ const Index = () => {
       setSearchParams(searchParams);
     }
 
-    // Search products from API
     const searchProducts = async () => {
       if (searchQuery.trim() === '') {
         setFilteredSoftware([]);
@@ -693,16 +687,13 @@ const Index = () => {
 
   const handleBannerSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Already handled in useEffect
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation searchQuery={searchQuery} onSearchChange={handleSearchChange} />
       
-      {/* Imageon Banner Section with Circuit Board Pattern */}
       <div className="relative bg-blue-600 py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Circuit Board Pattern Background */}
         <div className="absolute inset-0 opacity-15">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <pattern id="circuit-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
@@ -747,7 +738,6 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Subscription Benefits - Moved to above Categories */}
       <div className="bg-gray-50 py-16 mt-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -792,7 +782,6 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Category Buttons - Moved after Subscription Benefits */}
       <div className="container mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Browse Categories
@@ -813,7 +802,6 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Search Results or Featured Software */}
       <div className="container mx-auto mt-16 px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Software"}
@@ -838,22 +826,28 @@ const Index = () => {
         )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {(searchQuery ? filteredSoftware : featuredProducts).map((product) => (
-            <SoftwareCard 
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              description={product.description}
-              category={product.category}
-              price={typeof product.price === 'number' ? `$${product.price}` : (product.price?.toString() || '$0')}
-              discount={product.discount || '0%'}
-              image={product.image || product.logo || `https://placehold.co/600x400/aaaaaa/ffffff?text=${encodeURIComponent(product.name)}`}
-              vendor={product.vendor || 'Vendor'}
-              rating={product.rating || 4.5}
-              reviewCount={product.reviewCount || product.reviews || 100}
-              color={product.color || '#aaaaaa'}
-            />
-          ))}
+          {(searchQuery ? filteredSoftware : featuredProducts).map((product) => {
+            const priceStr = typeof product.price === 'number' 
+              ? `$${product.price}` 
+              : (product.price ? String(product.price) : '$0');
+              
+            return (
+              <SoftwareCard 
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                description={product.description}
+                category={product.category}
+                price={priceStr}
+                discount={product.discount || '0%'}
+                image={product.image || product.logo || `https://placehold.co/600x400/aaaaaa/ffffff?text=${encodeURIComponent(product.name)}`}
+                vendor={product.vendor || 'Vendor'}
+                rating={product.rating || 4.5}
+                reviewCount={product.reviewCount || product.reviews || 100}
+                color={product.color || '#aaaaaa'}
+              />
+            );
+          })}
         </div>
         
         {!searchQuery && (
@@ -868,7 +862,6 @@ const Index = () => {
         )}
       </div>
       
-      {/* Footer */}
       <footer className="bg-white mt-16 pt-12 pb-8 border-t border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
