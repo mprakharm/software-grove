@@ -72,6 +72,31 @@ export function initializeApiIntegrations() {
       return null;
     }
   });
+
+  // Add a direct handler for "LinkedIn Premium" product by name
+  VendorAPI.registerApiHandler('linkedin', async (product) => {
+    console.log('Using specific LinkedIn Premium API handler by product name');
+    try {
+      const response = await fetch('https://api-dev.getfleek.app/partner', {
+        method: 'GET',
+        headers: { 
+          'Authorization': 'devrzpay:H2fjwc5Q9yHZLv56',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('LinkedIn specific API response:', data);
+        return data;
+      }
+      console.error('LinkedIn specific API returned an error status:', response.status);
+      return null;
+    } catch (error) {
+      console.error('Error calling LinkedIn specific API:', error);
+      return null;
+    }
+  });
   
   console.log('API integrations initialized');
 }

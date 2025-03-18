@@ -450,14 +450,11 @@ export const PurchaseAPI = {
 };
 
 export const VendorAPI = {
-  // Registry of API handlers for different products or vendors
   apiRegistry: {
-    // Key can be product name, vendor name, or a regex pattern
     'linkedin': {
       handler: async (product: any) => {
         console.log('Calling LinkedIn API endpoint');
         try {
-          // Test API endpoint for LinkedIn Premium
           const response = await fetch('https://api.example.com/linkedin/plans', {
             method: 'GET',
             headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
@@ -469,7 +466,7 @@ export const VendorAPI = {
           throw new Error('Failed to fetch LinkedIn plans');
         } catch (error) {
           console.error('Error calling LinkedIn API:', error);
-          return null; // Will fall back to mock data
+          return null;
         }
       }
     },
@@ -513,14 +510,12 @@ export const VendorAPI = {
     }
   },
   
-  // Method to find the appropriate API handler based on product information
   findApiHandler: function(product: any): any {
     if (!product) return null;
     
     const productName = product.name?.toLowerCase() || '';
     const vendorName = product.vendor?.toLowerCase() || '';
     
-    // Check for direct matches in registry
     for (const key of Object.keys(this.apiRegistry)) {
       if (productName.includes(key) || vendorName.includes(key)) {
         console.log(`Found API handler for key: ${key}`);
@@ -528,7 +523,6 @@ export const VendorAPI = {
       }
     }
     
-    // Try to match based on metadata if available
     if (product.metadata && typeof product.metadata === 'object') {
       const apiProvider = product.metadata.apiProvider;
       if (apiProvider && this.apiRegistry[apiProvider]) {
@@ -541,7 +535,6 @@ export const VendorAPI = {
     return null;
   },
   
-  // Register a new API handler dynamically
   registerApiHandler: function(key: string, handler: Function): void {
     this.apiRegistry[key.toLowerCase()] = { handler };
     console.log(`Registered new API handler for: ${key}`);
@@ -564,7 +557,6 @@ export const VendorAPI = {
       console.log('Product info for API selection:', productData);
       
       if (productData) {
-        // Try to get the appropriate API handler
         const apiHandler = this.findApiHandler(productData);
         
         if (apiHandler) {
@@ -575,12 +567,11 @@ export const VendorAPI = {
           }
         }
         
-        // Fall back to mock data based on the product type
-        console.log('Falling back to mock data');
-        const productName = productData.name.toLowerCase();
-        const vendor = productData.vendor.toLowerCase();
+        const productName = productData.name ? productData.name.toLowerCase() : '';
+        const vendor = productData.vendor ? productData.vendor.toLowerCase() : '';
         
         if (productName.includes('linkedin')) {
+          console.log('Falling back to LinkedIn Premium mock plans');
           return await this.getMockPlans('linkedin-premium');
         } else if (productName.includes('salesforce') || vendor.includes('salesforce')) {
           return await this.getMockPlans('salesforce');
