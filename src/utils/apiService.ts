@@ -1,7 +1,5 @@
 
-import { Product } from './db';
-
-// Base URL for our backend API endpoints
+// Front-end API service that calls our backend proxy endpoints
 const API_BASE_URL = '/api';
 
 // Front-end API service that calls our backend proxy endpoints

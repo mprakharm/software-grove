@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -43,7 +42,7 @@ export function initializeApiIntegrations() {
           'Authorization': 'ZGV2cnpwYXk6SDJmandjNVE5eUhaTHY1Ng==',
           'Content-Type': 'application/json'
         },
-        // Add mode: 'cors' to explicitly request CORS
+        // Use appropriate fetch options without modifying TypeScript config
         mode: 'cors'
       });
       
@@ -66,10 +65,9 @@ export function initializeApiIntegrations() {
         console.warn('Server-side: LinkedIn API returned unexpected data format:', data);
         throw new Error('Unexpected data format from API');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Server-side: Error calling LinkedIn Premium API:', error);
-      // Return an error object instead of null so we can distinguish between
-      // a successful empty response and an error
+      // Return an error object instead of null
       return { error: true, message: error.message };
     }
   });
