@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ProductAPI, BundleAPI } from '@/utils/api';
 import { Product, Bundle, BundleProduct } from '@/utils/db';
+import { initializeDatabase } from '@/utils/initializeDb';
 import { 
   Form,
   FormControl,
@@ -17,7 +17,7 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { Plus, Trash, Edit, Save, Upload } from 'lucide-react';
+import { Plus, Trash, Edit, Save, Upload, RefreshCw } from 'lucide-react';
 import BulkUploadDialog from '@/components/admin/BulkUploadDialog';
 
 const AdminPage = () => {
@@ -31,6 +31,7 @@ const AdminPage = () => {
   const [isAddingBundle, setIsAddingBundle] = useState(false);
   const [isBulkUploadingProducts, setIsBulkUploadingProducts] = useState(false);
   const [isBulkUploadingBundles, setIsBulkUploadingBundles] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const newProductForm = useForm({
     defaultValues: {
@@ -43,32 +44,60 @@ const AdminPage = () => {
     }
   });
 
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [productsData, bundlesData] = await Promise.all([
-          ProductAPI.getProducts(),
-          BundleAPI.getBundles()
-        ]);
-        setProducts(productsData);
-        setBundles(bundlesData);
-      } catch (error) {
-        console.error('Error loading data:', error);
+  const initDb = async () => {
+    setIsInitializing(true);
+    try {
+      const result = await initializeDatabase();
+      if (result) {
         toast({
-          title: 'Error',
-          description: 'Failed to load data. Please try again.',
+          title: 'Database Ready',
+          description: 'Connected to database and imported products successfully',
+        });
+        loadData();
+      } else {
+        toast({
+          title: 'Database Setup Required',
+          description: 'Please check console for more information',
           variant: 'destructive'
         });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error initializing database:", error);
+      toast({
+        title: 'Error',
+        description: 'Failed to initialize database. See console for details.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsInitializing(false);
+    }
+  };
 
-    loadData();
-  }, [toast]);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [productsData, bundlesData] = await Promise.all([
+        ProductAPI.getProducts(),
+        BundleAPI.getBundles()
+      ]);
+      setProducts(productsData);
+      setBundles(bundlesData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load data. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Handle adding a new product
+  useEffect(() => {
+    initDb();
+  }, []);
+
   const handleAddProduct = async (data: Omit<Product, 'id'>) => {
     try {
       const newProduct = await ProductAPI.addProduct(data);
@@ -89,7 +118,6 @@ const AdminPage = () => {
     }
   };
 
-  // Delete a product
   const handleDeleteProduct = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
@@ -110,7 +138,6 @@ const AdminPage = () => {
     }
   };
 
-  // Update a product
   const handleUpdateProduct = async (product: Product) => {
     try {
       const updatedProduct = await ProductAPI.updateProduct(product.id, product);
@@ -132,7 +159,6 @@ const AdminPage = () => {
     }
   };
 
-  // Handle bulk upload for products
   const handleBulkUploadProducts = async (productsData: Omit<Product, 'id'>[]) => {
     try {
       const addedProducts = await ProductAPI.bulkUploadProducts(productsData);
@@ -152,7 +178,6 @@ const AdminPage = () => {
     }
   };
 
-  // Handle bulk upload for bundles
   const handleBulkUploadBundles = async (bundlesData: Omit<Bundle, 'id'>[]) => {
     try {
       const addedBundles = await BundleAPI.bulkUploadBundles(bundlesData);
@@ -172,7 +197,6 @@ const AdminPage = () => {
     }
   };
 
-  // Sample data for CSV templates
   const productSampleData = [
     {
       name: 'Sample Product 1',
@@ -232,13 +256,30 @@ const AdminPage = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
         
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={initDb} 
+            disabled={isInitializing}
+            className="mb-4"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isInitializing ? 'animate-spin' : ''}`} />
+            {isInitializing ? 'Initializing Database...' : 'Refresh Database'}
+          </Button>
+          
+          {!loading && products.length === 0 && (
+            <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800">
+              <p>No products found in database. Click the button above to import products from the website.</p>
+            </div>
+          )}
+        </div>
+        
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="bundles">Bundles</TabsTrigger>
           </TabsList>
           
-          {/* Products Tab */}
           <TabsContent value="products">
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold">Products</h2>
@@ -257,108 +298,104 @@ const AdminPage = () => {
               </div>
             </div>
             
-            {/* Add New Product Form */}
-            {isAddingProduct && (
-              <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-                <h3 className="text-xl font-bold mb-4">Add New Product</h3>
-                <Form {...newProductForm}>
-                  <form onSubmit={newProductForm.handleSubmit(handleAddProduct)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={newProductForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Product name" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={newProductForm.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Category" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={newProductForm.control}
-                        name="price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                {...field} 
-                                onChange={e => field.onChange(parseFloat(e.target.value))}
-                                placeholder="Price" 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={newProductForm.control}
-                        name="logo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Logo URL</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Logo URL" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
+            <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+              <h3 className="text-xl font-bold mb-4">Add New Product</h3>
+              <Form {...newProductForm}>
+                <form onSubmit={newProductForm.handleSubmit(handleAddProduct)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={newProductForm.control}
-                      name="description"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Product description" />
+                            <Input {...field} placeholder="Product name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setIsAddingProduct(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit">
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Product
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
-            )}
+                    <FormField
+                      control={newProductForm.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Category" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={newProductForm.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              {...field} 
+                              onChange={e => field.onChange(parseFloat(e.target.value))}
+                              placeholder="Price" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={newProductForm.control}
+                      name="logo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Logo URL</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Logo URL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={newProductForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Product description" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsAddingProduct(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Product
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
             
-            {/* Bulk Upload Product Dialog */}
             <BulkUploadDialog
               isOpen={isBulkUploadingProducts}
               onClose={() => setIsBulkUploadingProducts(false)}
@@ -367,7 +404,6 @@ const AdminPage = () => {
               sampleData={productSampleData}
             />
             
-            {/* Products Table */}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -413,7 +449,6 @@ const AdminPage = () => {
             </div>
           </TabsContent>
           
-          {/* Bundles Tab */}
           <TabsContent value="bundles">
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold">Bundles</h2>
@@ -432,7 +467,6 @@ const AdminPage = () => {
               </div>
             </div>
             
-            {/* Bulk Upload Bundle Dialog */}
             <BulkUploadDialog
               isOpen={isBulkUploadingBundles}
               onClose={() => setIsBulkUploadingBundles(false)}
@@ -441,7 +475,6 @@ const AdminPage = () => {
               sampleData={bundleSampleData}
             />
             
-            {/* Bundles Table */}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>

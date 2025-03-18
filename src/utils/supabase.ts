@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { transformProductToSupabase } from './transformers';
 
 // Supabase configuration with actual URL and anon key
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ezqvaghcrgjgyeqcsofl.supabase.co';
@@ -74,6 +75,79 @@ export async function setupSupabaseSchema() {
     return hasProductsAccess || hasBundlesAccess || hasSubscriptionsAccess || hasPurchasesAccess;
   } catch (error) {
     console.error("Error checking Supabase schema:", error);
+    return false;
+  }
+}
+
+// Function to seed the database with products from the frontend data
+export async function seedDatabaseWithFrontendData() {
+  try {
+    console.log("Checking if products need to be seeded...");
+    
+    // Check if products table exists and is empty
+    const { count: productCount, error: countError } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
+    
+    if (countError) {
+      console.error("Error checking product count:", countError);
+      return false;
+    }
+    
+    // If there are already products, no need to seed
+    if (productCount && productCount > 0) {
+      console.log(`Database already has ${productCount} products.`);
+      return true;
+    }
+    
+    console.log("Products table is empty. Importing products from frontend data...");
+    
+    // Import data from the frontend
+    const { FEATURED_SOFTWARE } = await import('@/pages/Index');
+    
+    if (!FEATURED_SOFTWARE || FEATURED_SOFTWARE.length === 0) {
+      console.log("No frontend product data found to import.");
+      return false;
+    }
+    
+    // Transform frontend data to Supabase format
+    const productsToInsert = FEATURED_SOFTWARE.map(item => {
+      // Convert price string to number if needed
+      const price = typeof item.price === 'string' 
+        ? parseFloat(item.price.replace(/[^0-9.]/g, '')) 
+        : item.price;
+      
+      return transformProductToSupabase({
+        name: item.name,
+        description: item.description || '',
+        category: item.category || 'Other',
+        logo: item.image || 'https://placehold.co/100x100',
+        price: price || 0,
+        featuredBenefit: item.featuredBenefit,
+        benefits: item.benefits || [],
+        rating: item.rating,
+        reviews: item.reviewCount,
+        popularity: item.popularity || 50,
+        inStock: true,
+        isHot: item.isHot || false
+      });
+    });
+    
+    // Insert products into the database
+    const { data: insertedProducts, error: insertError } = await supabase
+      .from('products')
+      .insert(productsToInsert)
+      .select();
+    
+    if (insertError) {
+      console.error("Error seeding products:", insertError);
+      return false;
+    }
+    
+    console.log(`Successfully seeded database with ${insertedProducts.length} products.`);
+    return true;
+  } catch (error) {
+    console.error("Error seeding database:", error);
     return false;
   }
 }

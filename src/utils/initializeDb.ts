@@ -1,5 +1,5 @@
 
-import { setupSupabaseSchema } from './supabase';
+import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 
 export async function initializeDatabase() {
   try {
@@ -8,6 +8,15 @@ export async function initializeDatabase() {
     
     if (hasTableAccess) {
       console.log("Connected to Supabase database successfully");
+      
+      // Seed database with frontend data if needed
+      const seeded = await seedDatabaseWithFrontendData();
+      if (seeded) {
+        console.log("Database is ready with product data");
+      } else {
+        console.log("Some products may need to be added manually");
+      }
+      
       return true;
     } else {
       console.log("Connected to Supabase, but no tables are accessible");
