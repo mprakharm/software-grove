@@ -122,7 +122,7 @@ const CategoryPage = () => {
     price: typeof product.price === 'number' ? `$${product.price}` : product.price,
     discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
     image: product.logo,
-    vendor: product.vendor || "Vendor", // Use vendor from product or default
+    vendor: "Vendor", // Fixed: Removed reference to non-existent product.vendor
     rating: product.rating,
     reviewCount: product.reviews,
   }));
