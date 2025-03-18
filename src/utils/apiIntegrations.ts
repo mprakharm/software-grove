@@ -28,6 +28,26 @@ export function initializeApiIntegrations() {
     }
   });
   
+  // LinkedIn Premium specific API handler
+  VendorAPI.registerApiHandler('linkedin-premium', async (product) => {
+    console.log('Calling LinkedIn Premium specific API endpoint');
+    try {
+      // This would point to your actual LinkedIn Premium API
+      const response = await fetch('https://api.example.com/linkedin-premium/plans', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer YOUR_LINKEDIN_API_KEY' }
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error calling LinkedIn Premium API:', error);
+      return null;
+    }
+  });
+  
   // Add LinkedIn test API endpoint (for development/testing)
   VendorAPI.registerApiHandler('linkedin-test', async (product) => {
     console.log('Using LinkedIn test API endpoint');
