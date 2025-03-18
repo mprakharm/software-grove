@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -33,22 +33,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 211 100% 59%;
 
-    --radius: 0.4rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -107,22 +100,22 @@
   }
 
   a {
-    @apply text-razorpay-blue transition-colors;
+    @apply text-razorpay-blue transition-colors duration-300;
   }
 
   button {
-    @apply rounded-md transition-all;
+    @apply rounded-md transition-all duration-300;
   }
 
   input, select, textarea {
-    @apply rounded-md;
+    @apply rounded-md transition-all duration-200;
   }
 }
 
 /* Additional Razorpay UI elements */
 @layer components {
   .razorpay-card {
-    @apply bg-white rounded-lg shadow-sm border-l-4 border-razorpay-blue p-5;
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md hover:border-blue-100;
   }
 
   .razorpay-button {
@@ -131,5 +124,26 @@
 
   .razorpay-badge {
     @apply bg-razorpay-lightblue text-razorpay-blue text-xs px-2 py-1 rounded-full;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-sm bg-white/80 border border-gray-100 shadow-sm rounded-xl transition-all duration-300 hover:shadow-md;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-md;
+  }
+  
+  .plan-card {
+    @apply relative overflow-hidden transition-all duration-300 hover:shadow-lg;
+  }
+  
+  .plan-card::before {
+    content: '';
+    @apply absolute -inset-1 -z-10 rounded-xl opacity-0 transition-opacity duration-300 bg-gradient-to-r from-blue-50 via-blue-100 to-indigo-50;
+  }
+  
+  .plan-card:hover::before {
+    @apply opacity-100;
   }
 }
