@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 
 // Function to initialize all API integrations
@@ -28,12 +27,12 @@ export function initializeApiIntegrations() {
     }
   });
 
-  // Register LinkedIn Premium API handler with your updated code
+  // Register LinkedIn Premium API handler with the corrected URL
   VendorAPI.registerApiHandler('linkedin-premium', async (product) => {
     console.log('Calling LinkedIn Premium API for product:', product.name);
     try {
-      // Using a CORS proxy to handle potential CORS issues
-      const apiUrl = 'https://api-dev.getfleek.app/partner/get_available_plans';
+      // Updated API URL
+      const apiUrl = 'https://api.getfleek.app/partner/get_available_plans';
       console.log('Attempting to fetch from:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -41,9 +40,7 @@ export function initializeApiIntegrations() {
         headers: { 
           'Authorization': 'devrzpay:H2fjwc5Q9yHZLv56',
           'Content-Type': 'application/json'
-        },
-        // Adding mode: 'no-cors' can help with CORS issues but will limit response usage
-        // mode: 'no-cors'
+        }
       });
       
       if (response.ok) {
