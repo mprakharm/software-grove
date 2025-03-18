@@ -2,15 +2,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
-// You can replace these values with your actual Supabase URL and anon key
-// from your Supabase dashboard: https://app.supabase.com
-// Go to Project Settings > API to find these values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+// Supabase configuration with actual URL and anon key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ezqvaghcrgjgyeqcsofl.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6cXZhZ2hjcmdqZ3llcWNzb2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIyODg4MTksImV4cCI6MjA1Nzg2NDgxOX0.IQLh5mhJy4etyzo5RDPBBFFd7VLcBnY_BEvRUj4gRg8';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
-// Instructions:
-// 1. Replace 'YOUR_SUPABASE_URL' with your actual Supabase URL
-// 2. Replace 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase anon key
-// Both can be found in your Supabase dashboard under Project Settings > API
+// Configuration is now set with your actual Supabase credentials
+// The fallback values are used if environment variables are not available
