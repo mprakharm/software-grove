@@ -87,6 +87,29 @@ class InMemoryDB {
 
   // Initialize with data from our data files
   constructor() {
+    // Add LinkedIn Premium product manually
+    this.products['linkedin-premium'] = {
+      id: 'linkedin-premium',
+      name: 'LinkedIn Premium',
+      description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
+      category: 'Professional Network',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
+      price: 29.99,
+      featuredBenefit: 'Connect and engage with industry professionals',
+      benefits: [
+        'InMail Messages',
+        'Who's Viewed Your Profile',
+        'Applicant Insights',
+        'LinkedIn Learning'
+      ],
+      rating: 4.6,
+      reviews: 12500,
+      users: 75000,
+      inStock: true,
+      isHot: true,
+      popularity: 92
+    };
+
     // Import initial data
     import('@/data/bundlesData').then(bundlesModule => {
       if (bundlesModule.BUNDLES) {

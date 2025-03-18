@@ -33,6 +33,27 @@ export const PRODUCT_CONTENT: ProductsContentMap = {
       }
     ]
   },
+  "linkedin-premium": {
+    overview: "Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.",
+    features: [
+      {
+        name: "InMail Messages",
+        description: "Send direct messages to anyone on LinkedIn, even if you're not connected"
+      },
+      {
+        name: "Who's Viewed Your Profile",
+        description: "See detailed insights about who's viewed your profile"
+      },
+      {
+        name: "Applicant Insights",
+        description: "Compare your skills and experience with other job applicants"
+      },
+      {
+        name: "LinkedIn Learning",
+        description: "Access to thousands of expert-led courses to develop your skills"
+      }
+    ]
+  },
   "notion": {
     overview: "All-in-one workspace that combines notes, documents, wikis, and project management in a highly customizable platform.",
     features: [
