@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Dialog,
@@ -111,7 +112,7 @@ const BulkUploadDialog = ({
         // Create object from headers and values
         const obj: Record<string, any> = {};
         headers.forEach((header, index) => {
-          let value = values[index] || '';
+          let value: any = values[index] || '';
           // Try to parse JSON objects or arrays
           if (value.startsWith('{') || value.startsWith('[')) {
             try {
