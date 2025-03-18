@@ -11,13 +11,10 @@ import {
   transformPurchaseToSupabase
 } from './transformers';
 
-// Simulate API response delay for development
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const ProductAPI = {
-  // Get all products with optional filtering
   async getProducts(filters?: { category?: string, searchQuery?: string }): Promise<Product[]> {
-    // Simulate network delay in development
     if (process.env.NODE_ENV === 'development') {
       await delay(300);
     }
@@ -31,7 +28,6 @@ export const ProductAPI = {
       
       if (filters.searchQuery) {
         const searchTerm = `%${filters.searchQuery.toLowerCase()}%`;
-        // Use or to search across multiple fields with ilike for case-insensitive search
         query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm},vendor.ilike.${searchTerm}`);
       }
     }
@@ -46,7 +42,6 @@ export const ProductAPI = {
     return (data || []).map(transformProductFromSupabase);
   },
   
-  // Get a single product by ID
   async getProductById(id: string): Promise<Product | null> {
     if (process.env.NODE_ENV === 'development') {
       await delay(200);
@@ -60,7 +55,6 @@ export const ProductAPI = {
     
     if (error) {
       if (error.code === 'PGRST116') {
-        // Not found error
         return null;
       }
       console.error('Error fetching product:', error);
@@ -70,14 +64,12 @@ export const ProductAPI = {
     return data ? transformProductFromSupabase(data) : null;
   },
   
-  // Get a product by name or ID - handles both UUID and string IDs
   async getProductByNameOrId(nameOrId: string): Promise<Product | null> {
     if (process.env.NODE_ENV === 'development') {
       await delay(200);
     }
     
     try {
-      // First try to get by ID (UUID)
       const { data, error } = await supabase
         .from('products')
         .select()
@@ -88,7 +80,6 @@ export const ProductAPI = {
         return transformProductFromSupabase(data);
       }
       
-      // If not found or error, try to find by slug (convert hyphen to spaces and capitalize)
       const formattedName = nameOrId
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -104,7 +95,6 @@ export const ProductAPI = {
         return transformProductFromSupabase(nameData);
       }
       
-      // If still not found, try a more flexible search
       const { data: flexData, error: flexError } = await supabase
         .from('products')
         .select()
@@ -122,7 +112,6 @@ export const ProductAPI = {
     }
   },
   
-  // Search for products with a more comprehensive approach - used for the global search
   async searchProducts(searchQuery: string): Promise<Product[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(300);
@@ -147,7 +136,6 @@ export const ProductAPI = {
     return (data || []).map(transformProductFromSupabase);
   },
   
-  // Add a new product
   async addProduct(product: Omit<Product, 'id'>): Promise<Product> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
@@ -168,19 +156,16 @@ export const ProductAPI = {
     return transformProductFromSupabase(data);
   },
   
-  // Update an existing product
   async updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
     }
     
-    // First get the existing product to transform properly
     const existingProduct = await this.getProductById(id);
     if (!existingProduct) {
       return null;
     }
     
-    // Merge with updates and transform
     const updatedProduct = { ...existingProduct, ...data };
     const supabaseProduct = transformProductToSupabase(updatedProduct);
     
@@ -199,7 +184,6 @@ export const ProductAPI = {
     return transformProductFromSupabase(result);
   },
   
-  // Delete a product
   async deleteProduct(id: string): Promise<boolean> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
@@ -218,7 +202,6 @@ export const ProductAPI = {
     return true;
   },
   
-  // Bulk upload products
   async bulkUploadProducts(products: Omit<Product, 'id'>[]): Promise<Product[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(1000);
@@ -240,7 +223,6 @@ export const ProductAPI = {
 };
 
 export const BundleAPI = {
-  // Get all bundles with optional filtering
   async getBundles(filters?: { category?: string, searchQuery?: string }): Promise<Bundle[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(300);
@@ -269,7 +251,6 @@ export const BundleAPI = {
     return (data || []).map(transformBundleFromSupabase);
   },
   
-  // Get a single bundle by ID
   async getBundleById(id: string): Promise<Bundle | null> {
     if (process.env.NODE_ENV === 'development') {
       await delay(200);
@@ -283,7 +264,6 @@ export const BundleAPI = {
     
     if (error) {
       if (error.code === 'PGRST116') {
-        // Not found error
         return null;
       }
       console.error('Error fetching bundle:', error);
@@ -293,7 +273,6 @@ export const BundleAPI = {
     return data ? transformBundleFromSupabase(data) : null;
   },
   
-  // Add a new bundle
   async addBundle(bundle: Omit<Bundle, 'id'>): Promise<Bundle> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
@@ -314,19 +293,16 @@ export const BundleAPI = {
     return transformBundleFromSupabase(data);
   },
   
-  // Update an existing bundle
   async updateBundle(id: string, data: Partial<Bundle>): Promise<Bundle | null> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
     }
     
-    // First get the existing bundle to transform properly
     const existingBundle = await this.getBundleById(id);
     if (!existingBundle) {
       return null;
     }
     
-    // Merge with updates and transform
     const updatedBundle = { ...existingBundle, ...data };
     const supabaseBundle = transformBundleToSupabase(updatedBundle);
     
@@ -345,7 +321,6 @@ export const BundleAPI = {
     return transformBundleFromSupabase(result);
   },
   
-  // Delete a bundle
   async deleteBundle(id: string): Promise<boolean> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
@@ -364,7 +339,6 @@ export const BundleAPI = {
     return true;
   },
   
-  // Bulk upload bundles
   async bulkUploadBundles(bundles: Omit<Bundle, 'id'>[]): Promise<Bundle[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(1000);
@@ -386,7 +360,6 @@ export const BundleAPI = {
 };
 
 export const SubscriptionAPI = {
-  // Create a new subscription
   async createSubscription(subscription: Omit<Subscription, 'id'>): Promise<Subscription> {
     if (process.env.NODE_ENV === 'development') {
       await delay(700);
@@ -407,7 +380,6 @@ export const SubscriptionAPI = {
     return transformSubscriptionFromSupabase(data);
   },
   
-  // Get all subscriptions for a user
   async getUserSubscriptions(userId: string): Promise<Subscription[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(300);
@@ -428,7 +400,6 @@ export const SubscriptionAPI = {
 };
 
 export const PurchaseAPI = {
-  // Create a new purchase
   async createPurchase(purchase: Omit<Purchase, 'id'>): Promise<Purchase> {
     if (process.env.NODE_ENV === 'development') {
       await delay(700);
@@ -446,7 +417,6 @@ export const PurchaseAPI = {
       throw error;
     }
     
-    // Update bundle purchase count if applicable
     if (purchase.bundleId) {
       try {
         await supabase.rpc('increment_bundle_purchases', { 
@@ -454,14 +424,12 @@ export const PurchaseAPI = {
         });
       } catch (updateError) {
         console.error('Error updating bundle purchase count:', updateError);
-        // Don't throw error here, as the purchase was successful
       }
     }
     
     return transformPurchaseFromSupabase(data);
   },
   
-  // Get all purchases for a user
   async getUserPurchases(userId: string): Promise<Purchase[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(300);
@@ -482,158 +450,157 @@ export const PurchaseAPI = {
 };
 
 export const VendorAPI = {
-  // Get all available plans for a product from the vendor's API
   async getProductPlans(productId: string): Promise<any[]> {
     if (process.env.NODE_ENV === 'development') {
       await delay(500);
     }
     
-    // This would normally be a real API call to the vendor
-    // For now, we'll simulate a response with mock data
     console.log(`Fetching plans for product: ${productId}`);
     
-    // Mock data for different products
-    const mockPlans = {
-      'linkedin-premium': [
-        {
-          id: 'linkedin-basic',
-          name: 'Career',
-          description: 'Basic plan for job seekers',
-          price: 29.99,
-          features: [
-            'See who viewed your profile',
-            'InMail messages',
-            'Job insights',
-            'Applicant insights'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 20
-        },
-        {
-          id: 'linkedin-pro',
-          name: 'Business',
-          description: 'Professional plan for networking',
-          price: 59.99,
-          features: [
-            'All Career features',
-            'Advanced search filters',
-            'Unlimited people browsing',
-            'Business insights'
-          ],
-          popular: true,
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 25
-        },
-        {
-          id: 'linkedin-premium',
-          name: 'Executive',
-          description: 'Premium plan for industry leaders',
-          price: 99.99,
-          features: [
-            'All Business features',
-            'Executive insights',
-            'Leadership analytics',
-            'Unlimited InMail messages'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 15
-        }
-      ],
-      'salesforce': [
-        {
-          id: 'salesforce-essentials',
-          name: 'Essentials',
-          description: 'Basic CRM for small business',
-          price: 25,
-          features: [
-            'Account and contact management',
-            'Opportunity tracking',
-            'Lead management',
-            'Email integration'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 15
-        },
-        {
-          id: 'salesforce-professional',
-          name: 'Professional',
-          description: 'Complete CRM for any size business',
-          price: 75,
-          features: [
-            'All Essentials features',
-            'Forecasting',
-            'Collaborative forecasting',
-            'Lead scoring'
-          ],
-          popular: true,
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 20
-        },
-        {
-          id: 'salesforce-enterprise',
-          name: 'Enterprise',
-          description: 'Deeply customizable CRM',
-          price: 150,
-          features: [
-            'All Professional features',
-            'Workflow automation',
-            'Approval automation',
-            'Custom app development'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 25
-        }
-      ],
-      // Default plans for any other product
-      'default': [
-        {
-          id: 'basic',
-          name: 'Basic',
-          description: 'Essential features for individuals',
-          price: 9.99,
-          features: [
-            'Core functionality',
-            'Email support',
-            'Basic reporting',
-            '1 user'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 10
-        },
-        {
-          id: 'pro',
-          name: 'Professional',
-          description: 'Advanced features for teams',
-          price: 19.99,
-          features: [
-            'All Basic features',
-            'Advanced reporting',
-            'Priority support',
-            'Up to 5 users'
-          ],
-          popular: true,
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 15
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          description: 'Complete solution for organizations',
-          price: 49.99,
-          features: [
-            'All Professional features',
-            'Custom integrations',
-            'Dedicated support',
-            'Unlimited users'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 20
-        }
-      ]
-    };
-    
-    // Return plans for the requested product, or default plans if not found
-    const plans = mockPlans[productId as keyof typeof mockPlans] || mockPlans['default'];
-    return plans;
+    try {
+      const mockPlans = {
+        'linkedin-premium': [
+          {
+            id: 'linkedin-basic',
+            name: 'Career',
+            description: 'Basic plan for job seekers',
+            price: 29.99,
+            features: [
+              'See who viewed your profile',
+              'InMail messages',
+              'Job insights',
+              'Applicant insights'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 20
+          },
+          {
+            id: 'linkedin-pro',
+            name: 'Business',
+            description: 'Professional plan for networking',
+            price: 59.99,
+            features: [
+              'All Career features',
+              'Advanced search filters',
+              'Unlimited people browsing',
+              'Business insights'
+            ],
+            popular: true,
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 25
+          },
+          {
+            id: 'linkedin-premium',
+            name: 'Executive',
+            description: 'Premium plan for industry leaders',
+            price: 99.99,
+            features: [
+              'All Business features',
+              'Executive insights',
+              'Leadership analytics',
+              'Unlimited InMail messages'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 15
+          }
+        ],
+        'salesforce': [
+          {
+            id: 'salesforce-essentials',
+            name: 'Essentials',
+            description: 'Basic CRM for small business',
+            price: 25,
+            features: [
+              'Account and contact management',
+              'Opportunity tracking',
+              'Lead management',
+              'Email integration'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 15
+          },
+          {
+            id: 'salesforce-professional',
+            name: 'Professional',
+            description: 'Complete CRM for any size business',
+            price: 75,
+            features: [
+              'All Essentials features',
+              'Forecasting',
+              'Collaborative forecasting',
+              'Lead scoring'
+            ],
+            popular: true,
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 20
+          },
+          {
+            id: 'salesforce-enterprise',
+            name: 'Enterprise',
+            description: 'Deeply customizable CRM',
+            price: 150,
+            features: [
+              'All Professional features',
+              'Workflow automation',
+              'Approval automation',
+              'Custom app development'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 25
+          }
+        ],
+        'default': [
+          {
+            id: 'basic',
+            name: 'Basic',
+            description: 'Essential features for individuals',
+            price: 9.99,
+            features: [
+              'Core functionality',
+              'Email support',
+              'Basic reporting',
+              '1 user'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 10
+          },
+          {
+            id: 'pro',
+            name: 'Professional',
+            description: 'Advanced features for teams',
+            price: 19.99,
+            features: [
+              'All Basic features',
+              'Advanced reporting',
+              'Priority support',
+              'Up to 5 users'
+            ],
+            popular: true,
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 15
+          },
+          {
+            id: 'enterprise',
+            name: 'Enterprise',
+            description: 'Complete solution for organizations',
+            price: 49.99,
+            features: [
+              'All Professional features',
+              'Custom integrations',
+              'Dedicated support',
+              'Unlimited users'
+            ],
+            billingOptions: ['monthly', 'annual'],
+            discountPercentage: 20
+          }
+        ]
+      };
+      
+      const plans = mockPlans[productId as keyof typeof mockPlans] || mockPlans['default'];
+      return plans;
+    } catch (error) {
+      console.error('Error fetching product plans:', error);
+      throw error;
+    }
   }
 };

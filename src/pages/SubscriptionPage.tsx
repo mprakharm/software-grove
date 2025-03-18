@@ -50,6 +50,7 @@ const SubscriptionPage = () => {
       try {
         const productData = await ProductAPI.getProductByNameOrId(productId);
         setProduct(productData);
+        console.log('Product data fetched:', productData);
       } catch (error) {
         console.error('Error fetching product:', error);
         toast({
@@ -70,7 +71,9 @@ const SubscriptionPage = () => {
     
     setIsLoadingPlans(true);
     try {
+      console.log('Fetching plans for product ID:', productId);
       const plans = await VendorAPI.getProductPlans(productId);
+      console.log('Plans fetched:', plans);
       setVendorPlans(plans);
       
       const popularPlan = plans.find(plan => plan.popular);
