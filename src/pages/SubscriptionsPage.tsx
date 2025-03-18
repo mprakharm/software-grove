@@ -113,7 +113,7 @@ const SubscriptionsPage = () => {
   const { data: userPurchases } = useQuery({
     queryKey: ['purchases', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return { data: [] };
       const response = await supabase
         .from('purchases')
         .select('*')
@@ -143,6 +143,7 @@ const SubscriptionsPage = () => {
 
   // Determine which subscriptions to display
   const subscriptionsToDisplay = userSubscriptions?.length ? userSubscriptions : ACTIVE_SUBSCRIPTIONS;
+  // Ensure we safely access the data property from the response
   const purchasesToDisplay = userPurchases?.data?.length ? userPurchases.data : PAYMENT_HISTORY;
 
   if (isLoading) {
