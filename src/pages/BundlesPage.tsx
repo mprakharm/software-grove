@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BundleCard from '@/components/BundleCard';
 import { Link } from 'react-router-dom';
@@ -7,13 +7,35 @@ import { Layers, Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BUNDLES, BUNDLE_CATEGORIES, filterBundlesByCategory } from '@/data/bundlesData';
+import { BUNDLE_CATEGORIES } from '@/data/bundlesData';
+import { BundleAPI } from '@/utils/api';
+import { Bundle } from '@/utils/db';
 
 const BundlesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [bundles, setBundles] = useState<Bundle[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const filteredBundles = filterBundlesByCategory(activeCategory).filter(bundle => 
+  // Fetch bundles from API
+  useEffect(() => {
+    const fetchBundles = async () => {
+      try {
+        const data = await BundleAPI.getBundles({ 
+          category: activeCategory !== 'All' ? activeCategory : undefined 
+        });
+        setBundles(data);
+      } catch (error) {
+        console.error('Error fetching bundles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBundles();
+  }, [activeCategory]);
+  
+  const filteredBundles = bundles.filter(bundle => 
     searchQuery.trim() === '' || 
     bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bundle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,23 +124,31 @@ const BundlesPage = () => {
 
         {/* Bundles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {filteredBundles.map(bundle => (
-            <BundleCard key={bundle.id} bundle={bundle} />
-          ))}
-          
-          {/* Custom Bundle Card */}
-          <Link to="/bundle-builder" className="block transform transition-all duration-300 hover:-translate-y-1">
-            <div className="h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 flex flex-col items-center justify-center p-8 text-center bg-gray-50 hover:bg-blue-50">
-              <div className="bg-blue-100 rounded-full p-4 mb-4">
-                <Plus className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Create Your Own Bundle</h3>
-              <p className="text-gray-600 mb-4">
-                Build a custom bundle with your favorite software and save more
-              </p>
-              <Button>Start Building</Button>
-            </div>
-          </Link>
+          {loading ? (
+            <div className="col-span-3 text-center py-8">Loading bundles...</div>
+          ) : filteredBundles.length === 0 ? (
+            <div className="col-span-3 text-center py-8">No bundles found. Try a different search.</div>
+          ) : (
+            <>
+              {filteredBundles.map(bundle => (
+                <BundleCard key={bundle.id} bundle={bundle} />
+              ))}
+              
+              {/* Custom Bundle Card */}
+              <Link to="/bundle-builder" className="block transform transition-all duration-300 hover:-translate-y-1">
+                <div className="h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 flex flex-col items-center justify-center p-8 text-center bg-gray-50 hover:bg-blue-50">
+                  <div className="bg-blue-100 rounded-full p-4 mb-4">
+                    <Plus className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Create Your Own Bundle</h3>
+                  <p className="text-gray-600 mb-4">
+                    Build a custom bundle with your favorite software and save more
+                  </p>
+                  <Button>Start Building</Button>
+                </div>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Benefits Section */}

@@ -16,6 +16,7 @@ import AccountPage from "./pages/AccountPage";
 import BundlesPage from "./pages/BundlesPage";
 import BundleDetailPage from "./pages/BundleDetailPage";
 import BundleBuilderPage from "./pages/BundleBuilderPage";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/bundles" element={<BundlesPage />} />
           <Route path="/bundles/:bundleId" element={<BundleDetailPage />} />
           <Route path="/bundle-builder" element={<BundleBuilderPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
