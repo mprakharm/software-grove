@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Breadcrumb from '@/components/Breadcrumb';
 import { FEATURED_SOFTWARE } from './Index';
@@ -11,6 +10,9 @@ import { Check } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SubscriptionAPI } from '@/utils/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const subscriptionPlans = [
   {
@@ -65,6 +67,10 @@ const SubscriptionPage = () => {
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [selectedPlan, setSelectedPlan] = useState(subscriptionPlans[1].id);
   const [userCount, setUserCount] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, refreshSubscriptions } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
   const product = FEATURED_SOFTWARE.find(item => item.id === productId);
   
@@ -111,6 +117,83 @@ const SubscriptionPage = () => {
   const monthlyTotalPrice = (selectedPlanData?.monthlyPrice || 0) * userCount * 12;
   const annualSavings = monthlyTotalPrice - yearlyTotalPrice;
   const annualSavingsPercentage = Math.round((annualSavings / monthlyTotalPrice) * 100);
+
+  const handleSubscribe = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to subscribe to this service.",
+        variant: "destructive"
+      });
+      navigate('/signin');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Calculate renewal date (1 month or 1 year from now)
+      const startDate = new Date();
+      const endDate = new Date();
+      if (billingCycle === 'yearly') {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
+
+      // Create subscription
+      const newSubscription = {
+        user_id: user.id,
+        product_id: productId,
+        plan_id: selectedPlan,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        auto_renew: true,
+        price: totalPrice,
+        name: product.name,
+        plan: selectedPlanData?.name || 'Unknown',
+        users: userCount,
+        renewalDate: endDate.toISOString(),
+        monthlyPrice: pricePerUser || 0,
+        usedStorage: 0,
+        totalStorage: 20,
+        status: 'active',
+        image: product.image
+      };
+
+      await SubscriptionAPI.createSubscription(newSubscription);
+      
+      // Create a purchase record
+      await supabase.from('purchases').insert({
+        user_id: user.id,
+        product_id: productId,
+        plan_id: selectedPlan,
+        date: new Date().toISOString(),
+        amount: billingCycle === 'yearly' ? totalPrice * 12 : totalPrice,
+        status: 'paid',
+        description: `${product.name} - ${selectedPlanData?.name} (${userCount} users)`
+      });
+
+      // Refresh subscriptions in context
+      await refreshSubscriptions();
+
+      toast({
+        title: "Subscription Successful",
+        description: `You've successfully subscribed to ${product.name}!`,
+      });
+
+      // Navigate to subscriptions page
+      navigate('/subscriptions');
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      toast({
+        title: "Subscription Failed",
+        description: "There was an error processing your subscription. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   return (
     <Layout>
@@ -250,10 +333,19 @@ const SubscriptionPage = () => {
           </div>
           
           <div className="flex justify-end">
-            <Button size="lg" asChild>
-              <Link to={`/checkout/${productId}/${selectedPlan}`}>
-                Continue to Checkout
-              </Link>
+            <Button 
+              size="lg" 
+              onClick={handleSubscribe}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Processing...
+                </>
+              ) : (
+                'Subscribe Now'
+              )}
             </Button>
           </div>
         </div>

@@ -3,13 +3,17 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { AuthUser, signIn, signUp, signOut } from '@/utils/auth';
 import { useToast } from '@/components/ui/use-toast';
+import { SubscriptionAPI } from '@/utils/api';
 
 type AuthContextType = {
   user: AuthUser | null;
   loading: boolean;
+  userSubscriptions: any[];
+  subscriptionsLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signOut: () => Promise<{ error: string | null }>;
+  refreshSubscriptions: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,7 +21,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userSubscriptions, setUserSubscriptions] = useState<any[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Function to fetch user subscriptions
+  const fetchUserSubscriptions = async (userId: string) => {
+    if (!userId) return;
+    
+    setSubscriptionsLoading(true);
+    try {
+      const subscriptions = await SubscriptionAPI.getUserSubscriptions(userId);
+      setUserSubscriptions(subscriptions || []);
+    } catch (error) {
+      console.error('Error fetching user subscriptions:', error);
+      toast({
+        title: "Failed to load subscriptions",
+        description: "Could not retrieve your subscription data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  };
+
+  // Function to refresh subscriptions (can be called after adding a new subscription)
+  const refreshSubscriptions = async () => {
+    if (user?.id) {
+      await fetchUserSubscriptions(user.id);
+    }
+  };
 
   useEffect(() => {
     // Check for user on initial load
@@ -28,6 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data && data.session?.user) {
           const { id, email } = data.session.user;
           setUser({ id, email: email || '' });
+          
+          // Fetch user subscriptions once we have the user ID
+          fetchUserSubscriptions(id);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -44,8 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_IN' && session?.user) {
           const { id, email } = session.user;
           setUser({ id, email: email || '' });
+          
+          // Fetch user subscriptions when user signs in
+          fetchUserSubscriptions(id);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          setUserSubscriptions([]);
         }
       }
     );
@@ -62,9 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        userSubscriptions,
+        subscriptionsLoading,
         signIn,
         signUp,
         signOut,
+        refreshSubscriptions,
       }}
     >
       {children}
