@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { transformProductToSupabase } from './transformers';
@@ -98,19 +97,18 @@ export async function seedDatabaseWithFrontendData() {
     if (productCount && productCount > 0) {
       console.log(`Database already has ${productCount} products.`);
       
-      // Check if LinkedIn Premium exists
+      // Check if LinkedIn Premium exists by name instead of ID
       const { data: linkedinProduct, error: linkedinError } = await supabase
         .from('products')
         .select('*')
-        .eq('id', 'linkedin-premium')
+        .eq('name', 'LinkedIn Premium')
         .single();
       
       // If LinkedIn Premium doesn't exist, add it
-      if (linkedinError && linkedinError.code === 'PGRST116') {
+      if (linkedinError || !linkedinProduct) {
         console.log("Adding LinkedIn Premium to the database...");
         
         const linkedinPremium = {
-          id: 'linkedin-premium',
           name: 'LinkedIn Premium',
           description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
           category: 'Professional Network',
@@ -160,9 +158,8 @@ export async function seedDatabaseWithFrontendData() {
       return false;
     }
     
-    // Add LinkedIn Premium to the products to insert
+    // Create LinkedIn Premium object without ID field (let Supabase generate UUID)
     const linkedinPremium = {
-      id: 'linkedin-premium',
       name: 'LinkedIn Premium',
       description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
       category: 'Professional Network',

@@ -59,9 +59,21 @@ const CategoryPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Fetch products filtered by category if categoryName is provided
-        const filters = categoryName && categoryName !== 'all' ? { category: formatCategoryName(categoryName) } : undefined;
+        // Fetch all products if on 'all' page, otherwise filter by category
+        let filters;
+        if (categoryName && categoryName !== 'all') {
+          filters = { category: formatCategoryName(categoryName) };
+        }
+        
         const data = await ProductAPI.getProducts(filters);
+        
+        // Log products for debugging
+        console.log(`Fetched ${data.length} products`);
+        if (data.length > 0) {
+          console.log("First product:", data[0].name);
+          console.log("Categories:", [...new Set(data.map(p => p.category))]);
+        }
+        
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products:", error);
