@@ -53,6 +53,14 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      backgroundImage: {
+        'grid-pattern': "linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)",
+        'gradient-radial': 'radial-gradient(circle, var(--tw-gradient-stops))',
+        'dots-pattern': 'radial-gradient(circle, #e0e7ff 1px, transparent 1px)',
+      },
+      backgroundSize: {
+        'grid': '40px 40px',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -108,6 +116,30 @@ export default {
             opacity: "0.8",
           },
         },
+        "float": {
+          "0%, 100%": {
+            transform: "translateY(0)",
+          },
+          "50%": {
+            transform: "translateY(-20px)",
+          },
+        },
+        "float-delayed": {
+          "0%, 100%": {
+            transform: "translateY(0)",
+          },
+          "50%": {
+            transform: "translateY(-15px)",
+          },
+        },
+        "shimmer": {
+          "0%": {
+            backgroundPosition: "-1000px 0",
+          },
+          "100%": {
+            backgroundPosition: "1000px 0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -117,6 +149,9 @@ export default {
         "slide-in": "slide-in 0.4s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
+        "float-delayed": "float-delayed 7s ease-in-out infinite 2s",
+        "shimmer": "shimmer 2s linear infinite",
       },
     },
   },
