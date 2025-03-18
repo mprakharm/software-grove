@@ -33,10 +33,10 @@ export function initializeApiIntegrations() {
     console.log('Calling LinkedIn Premium API for product:', product.name);
     try {
       // Replace with your actual LinkedIn API endpoint
-      const response = await fetch('https://api.yourcompany.com/linkedin/premium/plans', {
+      const response = await fetch('https://api-dev.getfleek.app/partner', {
         method: 'GET',
         headers: { 
-          'Authorization': 'Bearer YOUR_LINKEDIN_API_KEY',
+          'Authorization': 'devrzpay:H2fjwc5Q9yHZLv56',
           'Content-Type': 'application/json'
         }
       });
