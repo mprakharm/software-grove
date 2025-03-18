@@ -1,3 +1,4 @@
+
 import { VendorAPI } from './api';
 
 // Function to initialize all API integrations
@@ -27,11 +28,11 @@ export function initializeApiIntegrations() {
     }
   });
 
-  // Register LinkedIn Premium API handler with the corrected URL
+  // Register LinkedIn Premium API handler with improved error handling
   VendorAPI.registerApiHandler('linkedin-premium', async (product) => {
     console.log('Calling LinkedIn Premium API for product:', product.name);
     try {
-      // Updated API URL
+      // API URL with detailed protocol
       const apiUrl = 'https://api.getfleek.app/partner/get_available_plans';
       console.log('Attempting to fetch from:', apiUrl);
       
@@ -43,19 +44,34 @@ export function initializeApiIntegrations() {
         }
       });
       
+      console.log('LinkedIn API response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        console.log('LinkedIn Premium API response:', data);
-        return data;
+        console.log('LinkedIn Premium API response data:', data);
+        
+        // Check if the data is in the expected format
+        if (Array.isArray(data) && data.length > 0) {
+          return data;
+        } else {
+          console.warn('LinkedIn API returned unexpected data format:', data);
+          throw new Error('Unexpected data format from API');
+        }
+      } else {
+        console.error('LinkedIn Premium API returned error status:', response.status);
+        // Try to get more details from the error response
+        try {
+          const errorData = await response.text();
+          console.error('API error details:', errorData);
+        } catch (readError) {
+          console.error('Could not read error details');
+        }
+        throw new Error(`API returned status: ${response.status}`);
       }
-      
-      console.error('LinkedIn Premium API returned status:', response.status);
-      throw new Error(`API returned status: ${response.status}`);
     } catch (error) {
       console.error('Error calling LinkedIn Premium API:', error);
-      // Don't just return null - we'll try an alternative mock API first
       console.log('Attempting to use alternative LinkedIn Premium mock data');
-      return VendorAPI.getMockPlans('linkedin-premium');
+      return null; // Return null to trigger the fallback in the VendorAPI.getProductPlans method
     }
   });
   
