@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -29,6 +28,11 @@ export interface Database {
           is_hot?: boolean
           banner?: string
           created_at: string
+          color?: string
+          vendor?: string
+          discount?: string
+          image?: string
+          reviewCount?: number
         }
         Insert: {
           id?: string
@@ -48,6 +52,11 @@ export interface Database {
           is_hot?: boolean
           banner?: string
           created_at?: string
+          color?: string
+          vendor?: string
+          discount?: string
+          image?: string
+          reviewCount?: number
         }
         Update: {
           id?: string
@@ -67,6 +76,11 @@ export interface Database {
           is_hot?: boolean
           banner?: string
           created_at?: string
+          color?: string
+          vendor?: string
+          discount?: string
+          image?: string
+          reviewCount?: number
         }
       }
       bundles: {

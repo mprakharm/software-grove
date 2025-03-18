@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, X, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -31,12 +30,10 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { user, signOut, subscriptions } = useAuth();
   
-  // Update local search query when prop changes
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
 
-  // Handle search query changes
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (localSearchQuery.trim() === '') {
@@ -50,7 +47,7 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
         const products = await ProductAPI.getProducts({ 
           searchQuery: localSearchQuery 
         });
-        setSearchResults(products.slice(0, 6)); // Limit to 6 results
+        setSearchResults(products.slice(0, 6));
         setShowResults(products.length > 0);
       } catch (error) {
         console.error('Error searching products:', error);
@@ -61,7 +58,6 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
       }
     };
 
-    // Debounce search to avoid too many requests
     const debounceTimeout = setTimeout(fetchSearchResults, 300);
     return () => clearTimeout(debounceTimeout);
   }, [localSearchQuery]);
@@ -113,10 +109,7 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
     navigate('/');
   };
 
-  // Get the number of active subscriptions
   const subscriptionCount = subscriptions?.length || 0;
-
-  // Check if current page is a product page
   const isProductPage = location.pathname.includes('/product/');
 
   return (

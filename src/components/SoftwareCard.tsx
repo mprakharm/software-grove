@@ -72,7 +72,7 @@ const SoftwareCard = ({
             </div>
             <div className="flex flex-col items-end">
               <span className="font-semibold text-razorpay-blue">{price}</span>
-              {price && !price.includes('%') && (
+              {price && typeof price === 'string' && !price.includes('%') && (
                 <span className="text-xs text-razorpay-gray">per user/month</span>
               )}
             </div>

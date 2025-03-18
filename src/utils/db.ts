@@ -1,4 +1,3 @@
-
 // Simple in-memory database for demo purposes
 // In a real application, you would use a proper database like Supabase or Firebase
 
@@ -20,6 +19,11 @@ export type Product = {
   inStock: boolean;
   isHot?: boolean;
   banner?: string;
+  color?: string;
+  discount?: string;
+  image?: string;
+  vendor?: string;
+  reviewCount?: number;
 };
 
 export type BundleProduct = {

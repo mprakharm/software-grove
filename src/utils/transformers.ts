@@ -1,4 +1,3 @@
-
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -22,7 +21,12 @@ export function transformProductFromSupabase(
     users: supabaseProduct.users,
     inStock: supabaseProduct.in_stock,
     isHot: supabaseProduct.is_hot,
-    banner: supabaseProduct.banner
+    banner: supabaseProduct.banner,
+    color: supabaseProduct.color as string || "#2D88FF",
+    image: supabaseProduct.logo,
+    vendor: supabaseProduct.vendor as string || "Unknown vendor",
+    discount: "0%",
+    reviewCount: supabaseProduct.reviews
   };
 }
 

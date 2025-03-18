@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -846,12 +845,12 @@ const Index = () => {
               name={product.name}
               description={product.description}
               category={product.category}
-              price={product.price || '$0'}
+              price={typeof product.price === 'number' ? `$${product.price}` : (product.price?.toString() || '$0')}
               discount={product.discount || '0%'}
-              image={product.image || 'https://placehold.co/600x400/aaaaaa/ffffff?text=' + encodeURIComponent(product.name)}
+              image={product.image || product.logo || `https://placehold.co/600x400/aaaaaa/ffffff?text=${encodeURIComponent(product.name)}`}
               vendor={product.vendor || 'Vendor'}
               rating={product.rating || 4.5}
-              reviewCount={product.reviewCount || 100}
+              reviewCount={product.reviewCount || product.reviews || 100}
               color={product.color || '#aaaaaa'}
             />
           ))}
