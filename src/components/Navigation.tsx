@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, X, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,7 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<typeof FEATURED_SOFTWARE>([]);
   const searchRef = useRef<HTMLDivElement>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, subscriptions } = useAuth();
   
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -80,6 +81,9 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
     await signOut();
     navigate('/');
   };
+
+  // Get the number of active subscriptions
+  const subscriptionCount = subscriptions?.length || 0;
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b z-50">
@@ -175,9 +179,11 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
               <>
                 <Link to="/subscriptions" className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
                   <ShoppingCart className="h-5 w-5 text-razorpay-gray" />
-                  <span className="absolute -top-1 -right-1 bg-razorpay-blue text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    2
-                  </span>
+                  {subscriptionCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-razorpay-blue text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {subscriptionCount}
+                    </span>
+                  )}
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full transition-colors">
