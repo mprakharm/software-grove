@@ -10,7 +10,7 @@ export function initializeApiIntegrations() {
   
   // Example: Register a custom API handler for Adobe products
   VendorAPI.registerApiHandler('adobe', async (product) => {
-    console.log('Calling Adobe API for product:', product.name);
+    console.log('Server-side: Calling Adobe API for product:', product.name);
     try {
       // Server-side API call
       const response = await fetch('https://api.example.com/adobe/plans', {
@@ -23,7 +23,7 @@ export function initializeApiIntegrations() {
       }
       return null;
     } catch (error) {
-      console.error('Error calling Adobe API:', error);
+      console.error('Server-side: Error calling Adobe API:', error);
       return null;
     }
   });
@@ -172,41 +172,11 @@ export function initializeApiIntegrations() {
 }
 
 // In a real application, this would be handled by a server framework like Express
-// For this simulation, we're creating a mock API endpoint handler
+// For Next.js, we'll create API routes instead
 function setupApiRoutes() {
-  // Use the fetch API interception pattern to simulate backend routes
-  const originalFetch = window.fetch;
-  
-  window.fetch = async function(input, init) {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-    
-    // Handle vendor plans API endpoint
-    if (url.startsWith('/api/vendor-plans/')) {
-      const productId = url.split('/api/vendor-plans/')[1];
-      
-      console.log(`Mock API server: Received request for product plans: ${productId}`);
-      try {
-        const plans = await ApiProxyController.getVendorPlans(productId);
-        
-        // Create a mock Response object
-        return new Response(JSON.stringify(plans), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch (error) {
-        console.error('Mock API server: Error processing vendor plans request:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-    }
-    
-    // Pass through to the original fetch for all other requests
-    return originalFetch.call(window, input, init);
-  };
-  
-  console.log('API routes initialized');
+  // This function is now only for logging purposes
+  // The actual API routing is handled by Next.js API routes
+  console.log('API routes will be handled by Next.js API Routes');
 }
 
 // Helper function to test a specific product API
@@ -218,3 +188,4 @@ export async function testProductApi(productId: string) {
   
   return plans;
 }
+

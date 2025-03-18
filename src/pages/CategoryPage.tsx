@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { initializeDatabase } from '@/utils/initializeDb';
 import { toast } from '@/components/ui/use-toast';
-import { ProductAPI } from '@/utils/api';
+import { ApiService } from '@/utils/apiService';
 import { Product } from '@/utils/db';
 
 const CategoryPage = () => {
@@ -65,13 +65,14 @@ const CategoryPage = () => {
           filters = { category: formatCategoryName(categoryName) };
         }
         
-        const data = await ProductAPI.getProducts(filters);
+        // Use ApiService instead of direct Supabase calls
+        const data = await ApiService.getProducts(filters);
         
         // Log products for debugging
         console.log(`Fetched ${data.length} products`);
         if (data.length > 0) {
           console.log("First product:", data[0].name);
-          console.log("Categories:", [...new Set(data.map(p => p.category))]);
+          console.log("Categories:", [...new Set(data.map((p: any) => p.category))]);
         }
         
         setProducts(data);
@@ -134,7 +135,7 @@ const CategoryPage = () => {
     price: typeof product.price === 'number' ? `$${product.price}` : product.price,
     discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
     image: product.logo,
-    vendor: "Vendor", // Fixed: Removed reference to non-existent product.vendor
+    vendor: product.vendor || "Vendor", // Fixed: Added fallback for vendor
     rating: product.rating,
     reviewCount: product.reviews,
   }));
