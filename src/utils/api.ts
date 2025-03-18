@@ -557,17 +557,27 @@ export const VendorAPI = {
       console.log('Product info for API selection:', productData);
       
       if (productData) {
-        const apiHandler = this.findApiHandler(productData);
-        
-        if (apiHandler) {
-          const apiResult = await apiHandler.handler(productData);
-          if (apiResult) {
+        // Try using the registered handler for the exact product name first
+        const productName = productData.name ? productData.name.toLowerCase() : '';
+        if (productName.includes('linkedin') && this.apiRegistry['linkedin']) {
+          console.log('Trying LinkedIn specific handler first');
+          const apiResult = await this.apiRegistry['linkedin'].handler(productData);
+          if (apiResult && !apiResult.error) {
             console.log('API call successful, using returned plans');
             return apiResult;
           }
         }
         
-        const productName = productData.name ? productData.name.toLowerCase() : '';
+        // Then try the generic handler finding logic
+        const apiHandler = this.findApiHandler(productData);
+        if (apiHandler) {
+          const apiResult = await apiHandler.handler(productData);
+          if (apiResult && !apiResult.error) {
+            console.log('API call successful, using returned plans');
+            return apiResult;
+          }
+        }
+        
         const vendor = productData.vendor ? productData.vendor.toLowerCase() : '';
         
         if (productName.includes('linkedin')) {
