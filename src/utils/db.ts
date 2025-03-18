@@ -77,7 +77,8 @@ export type Purchase = {
   status: 'completed' | 'pending' | 'failed';
 };
 
-// In-memory database
+// In-memory database - NOTE: This is now maintained for backward compatibility
+// The application should use the Supabase API methods from api.ts for persistence
 class InMemoryDB {
   private products: Record<string, Product> = {};
   private bundles: Record<string, Bundle> = {};

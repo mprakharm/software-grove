@@ -94,9 +94,59 @@ export async function seedDatabaseWithFrontendData() {
       return false;
     }
     
-    // If there are already products, no need to seed
+    // If there are already products, check if LinkedIn Premium exists
     if (productCount && productCount > 0) {
       console.log(`Database already has ${productCount} products.`);
+      
+      // Check if LinkedIn Premium exists
+      const { data: linkedinProduct, error: linkedinError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', 'linkedin-premium')
+        .single();
+      
+      // If LinkedIn Premium doesn't exist, add it
+      if (linkedinError && linkedinError.code === 'PGRST116') {
+        console.log("Adding LinkedIn Premium to the database...");
+        
+        const linkedinPremium = {
+          id: 'linkedin-premium',
+          name: 'LinkedIn Premium',
+          description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
+          category: 'Professional Network',
+          logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
+          price: 29.99,
+          featured_benefit: 'Connect and engage with industry professionals',
+          benefits: [
+            'InMail Messages',
+            'Who\'s Viewed Your Profile',
+            'Applicant Insights',
+            'LinkedIn Learning'
+          ],
+          rating: 4.6,
+          reviews: 12500,
+          users: 75000,
+          in_stock: true,
+          is_hot: true,
+          popularity: 92,
+          created_at: new Date().toISOString()
+        };
+        
+        const { data, error } = await supabase
+          .from('products')
+          .insert(linkedinPremium)
+          .select();
+        
+        if (error) {
+          console.error("Error adding LinkedIn Premium:", error);
+          return false;
+        }
+        
+        console.log("Successfully added LinkedIn Premium to the database.");
+      } else {
+        console.log("LinkedIn Premium already exists in the database.");
+      }
+      
       return true;
     }
     
@@ -109,6 +159,30 @@ export async function seedDatabaseWithFrontendData() {
       console.log("No frontend product data found to import.");
       return false;
     }
+    
+    // Add LinkedIn Premium to the products to insert
+    const linkedinPremium = {
+      id: 'linkedin-premium',
+      name: 'LinkedIn Premium',
+      description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
+      category: 'Professional Network',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
+      price: 29.99,
+      featured_benefit: 'Connect and engage with industry professionals',
+      benefits: [
+        'InMail Messages',
+        'Who\'s Viewed Your Profile',
+        'Applicant Insights',
+        'LinkedIn Learning'
+      ],
+      rating: 4.6,
+      reviews: 12500,
+      users: 75000,
+      in_stock: true,
+      is_hot: true,
+      popularity: 92,
+      created_at: new Date().toISOString()
+    };
     
     // Transform frontend data to Supabase format
     const productsToInsert = FEATURED_SOFTWARE.map(item => {
@@ -134,6 +208,9 @@ export async function seedDatabaseWithFrontendData() {
         integration: []
       });
     });
+    
+    // Add LinkedIn Premium to products to insert
+    productsToInsert.push(linkedinPremium);
     
     // Insert products into the database
     const { data: insertedProducts, error: insertError } = await supabase

@@ -32,3 +32,8 @@ export async function initializeDatabase() {
     return false;
   }
 }
+
+// Initialize the database when the app starts
+initializeDatabase().catch(error => {
+  console.error("Failed to initialize database:", error);
+});
