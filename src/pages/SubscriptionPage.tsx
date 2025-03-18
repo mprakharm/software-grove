@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -11,10 +10,11 @@ import { Check, Loader2, ArrowRight, Star } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SubscriptionAPI, VendorAPI } from '@/utils/api';
+import { SubscriptionAPI, VendorAPI, ProductAPI } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
+import { Product } from '@/utils/db';
 
 interface VendorPlan {
   id: string;
@@ -33,16 +33,38 @@ const SubscriptionPage = () => {
   const [userCount, setUserCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [vendorPlans, setVendorPlans] = useState<VendorPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [showPlans, setShowPlans] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const product = FEATURED_SOFTWARE.find(item => item.id === productId);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!productId) return;
+      
+      setIsLoadingProduct(true);
+      try {
+        const productData = await ProductAPI.getProductByNameOrId(productId);
+        setProduct(productData);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        toast({
+          title: "Failed to load product",
+          description: "We couldn't find the product you're looking for.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingProduct(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [productId, toast]);
   
-  // Fetch vendor plans
   const fetchVendorPlans = async () => {
     if (!productId) return;
     
@@ -51,7 +73,6 @@ const SubscriptionPage = () => {
       const plans = await VendorAPI.getProductPlans(productId);
       setVendorPlans(plans);
       
-      // Set default selected plan (usually the popular or middle one)
       const popularPlan = plans.find(plan => plan.popular);
       setSelectedPlan(popularPlan ? popularPlan.id : plans[1]?.id || plans[0]?.id);
       
@@ -68,17 +89,26 @@ const SubscriptionPage = () => {
     }
   };
   
-  // Calculate plan price based on billing cycle and user count
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
     let price = basePrice * userCount;
     
     if (billingCycle === 'yearly') {
-      // Apply annual discount
       price = price * (1 - (discountPercentage / 100));
     }
     
     return price;
   };
+  
+  if (isLoadingProduct) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   if (!product) {
     return (
@@ -122,7 +152,7 @@ const SubscriptionPage = () => {
         description: "Please sign in to subscribe to this service.",
         variant: "destructive"
       });
-      navigate('/signin');
+      navigate('/sign-in');
       return;
     }
 
@@ -152,7 +182,7 @@ const SubscriptionPage = () => {
 
       const newSubscription = {
         userId: user.id,
-        productId: productId,
+        productId: product.id,
         planId: selectedPlan,
         startDate: startDate,
         endDate: endDate,
@@ -169,14 +199,14 @@ const SubscriptionPage = () => {
         usedStorage: 0,
         totalStorage: 20,
         status: 'active',
-        image: product.image
+        image: product.logo
       };
 
       await SubscriptionAPI.createSubscription(newSubscription);
       
       await supabase.from('purchases').insert({
         user_id: user.id,
-        product_id: productId,
+        product_id: product.id,
         plan_id: selectedPlan,
         date: new Date().toISOString(),
         amount: billingCycle === 'yearly' ? planPrice * 12 : planPrice,
@@ -229,8 +259,8 @@ const SubscriptionPage = () => {
                     <div 
                       className="h-16 w-16 rounded-lg flex-shrink-0 bg-cover bg-center"
                       style={{ 
-                        backgroundColor: product.color,
-                        backgroundImage: product.image ? `url(${product.image})` : 'none'
+                        backgroundColor: product.color || '#2D88FF',
+                        backgroundImage: product.logo ? `url(${product.logo})` : 'none'
                       }}
                     />
                     <div>
@@ -246,7 +276,7 @@ const SubscriptionPage = () => {
                             />
                           ))}
                           <span className="text-xs text-gray-600 ml-1">
-                            {product.rating} ({product.reviewCount})
+                            {product.rating} ({product.reviews || 0})
                           </span>
                         </div>
                       )}
