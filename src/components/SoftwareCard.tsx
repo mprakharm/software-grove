@@ -10,7 +10,7 @@ interface SoftwareCardProps {
   name: string;
   description: string;
   category: string;
-  price: string;
+  price: string | number;
   discount: string;
   image: string;
   vendor?: string;
@@ -32,10 +32,23 @@ const SoftwareCard = ({
   reviewCount,
   color = "#2D88FF" 
 }: SoftwareCardProps) => {
-  // Ensure price is a string
-  const formattedPrice = typeof price === 'number' 
-    ? `$${price.toFixed(2)}` 
-    : (price || 'Free');
+  // Properly handle different types of price values
+  const formattedPrice = (() => {
+    if (typeof price === 'number') {
+      return `$${price.toFixed(2)}`;
+    } else if (typeof price === 'string') {
+      // If it's already a string, return it or try to format if it's a numeric string
+      if (price.trim() === '') return 'Free';
+      
+      // Try to parse it as a number if it's a numeric string without $ sign
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+      if (!isNaN(numericPrice) && !price.includes('$')) {
+        return `$${numericPrice.toFixed(2)}`;
+      }
+      return price;
+    }
+    return 'Free'; // Default fallback
+  })();
     
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
