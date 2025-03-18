@@ -8,151 +8,72 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1N
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
-// Configuration is now set with your actual Supabase credentials
-// The fallback values are used if environment variables are not available
-
 // Function to set up the database schema
 export async function setupSupabaseSchema() {
   try {
     console.log("Setting up Supabase schema...");
     
-    // Create products table
-    const { error: productsError } = await supabase.rpc('create_products_table');
-    if (productsError && !productsError.message.includes("already exists")) {
-      console.error("Error creating products table:", productsError);
-      
-      // Try direct SQL if RPC fails (requires storage-admin policy)
-      const { error: directProductsError } = await supabase.from('products').insert({}).select();
-      
-      if (directProductsError && directProductsError.code === "42P01") {
-        console.log("Products table doesn't exist. Creating via SQL query...");
-        const { error: sqlError } = await supabase.rpc('execute_sql', { 
-          sql_query: `
-            CREATE TABLE IF NOT EXISTS products (
-              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-              name TEXT NOT NULL,
-              description TEXT NOT NULL,
-              category TEXT NOT NULL,
-              logo TEXT NOT NULL,
-              price DECIMAL NOT NULL,
-              featured_benefit TEXT,
-              benefits TEXT[],
-              integration TEXT[],
-              popularity INTEGER,
-              rating DECIMAL,
-              reviews INTEGER,
-              users INTEGER,
-              in_stock BOOLEAN NOT NULL DEFAULT true,
-              is_hot BOOLEAN,
-              banner TEXT,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-          `
-        });
-        if (sqlError) console.error("Error creating products table via SQL:", sqlError);
-      }
+    // Check if products table exists by attempting to query it
+    const { data: productsData, error: productsError } = await supabase
+      .from('products')
+      .select('id')
+      .limit(1);
+    
+    if (productsError && productsError.code === '42P01') {
+      console.log("Products table doesn't exist. You'll need to create it in the Supabase dashboard.");
+    } else {
+      console.log("Products table exists or is accessible.");
     }
     
-    // Create bundles table
-    const { error: bundlesError } = await supabase.rpc('create_bundles_table');
-    if (bundlesError && !bundlesError.message.includes("already exists")) {
-      console.error("Error creating bundles table:", bundlesError);
-      
-      // Try direct SQL if RPC fails
-      const { error: directBundlesError } = await supabase.from('bundles').insert({}).select();
-      
-      if (directBundlesError && directBundlesError.code === "42P01") {
-        console.log("Bundles table doesn't exist. Creating via SQL query...");
-        const { error: sqlError } = await supabase.rpc('execute_sql', { 
-          sql_query: `
-            CREATE TABLE IF NOT EXISTS bundles (
-              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-              name TEXT NOT NULL,
-              description TEXT NOT NULL,
-              category TEXT NOT NULL,
-              target_user TEXT NOT NULL,
-              products JSONB NOT NULL,
-              min_products INTEGER,
-              max_products INTEGER,
-              required_product_ids TEXT[],
-              image TEXT NOT NULL,
-              savings DECIMAL NOT NULL,
-              is_customizable BOOLEAN NOT NULL,
-              is_limited_time BOOLEAN,
-              expiry_date TIMESTAMP WITH TIME ZONE,
-              color TEXT NOT NULL,
-              purchases INTEGER,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-          `
-        });
-        if (sqlError) console.error("Error creating bundles table via SQL:", sqlError);
-      }
+    // Check if bundles table exists
+    const { data: bundlesData, error: bundlesError } = await supabase
+      .from('bundles')
+      .select('id')
+      .limit(1);
+    
+    if (bundlesError && bundlesError.code === '42P01') {
+      console.log("Bundles table doesn't exist. You'll need to create it in the Supabase dashboard.");
+    } else {
+      console.log("Bundles table exists or is accessible.");
     }
     
-    // Create subscriptions table
-    const { error: subscriptionsError } = await supabase.rpc('create_subscriptions_table');
-    if (subscriptionsError && !subscriptionsError.message.includes("already exists")) {
-      console.error("Error creating subscriptions table:", subscriptionsError);
-      
-      // Try direct SQL if RPC fails
-      const { error: directSubsError } = await supabase.from('subscriptions').insert({}).select();
-      
-      if (directSubsError && directSubsError.code === "42P01") {
-        console.log("Subscriptions table doesn't exist. Creating via SQL query...");
-        const { error: sqlError } = await supabase.rpc('execute_sql', { 
-          sql_query: `
-            CREATE TABLE IF NOT EXISTS subscriptions (
-              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-              user_id TEXT NOT NULL,
-              product_id UUID REFERENCES products(id),
-              bundle_id UUID REFERENCES bundles(id),
-              plan_id TEXT NOT NULL,
-              start_date TIMESTAMP WITH TIME ZONE NOT NULL,
-              end_date TIMESTAMP WITH TIME ZONE NOT NULL,
-              auto_renew BOOLEAN NOT NULL,
-              price DECIMAL NOT NULL,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-          `
-        });
-        if (sqlError) console.error("Error creating subscriptions table via SQL:", sqlError);
-      }
+    // Check if subscriptions table exists
+    const { data: subscriptionsData, error: subscriptionsError } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .limit(1);
+    
+    if (subscriptionsError && subscriptionsError.code === '42P01') {
+      console.log("Subscriptions table doesn't exist. You'll need to create it in the Supabase dashboard.");
+    } else {
+      console.log("Subscriptions table exists or is accessible.");
     }
     
-    // Create purchases table
-    const { error: purchasesError } = await supabase.rpc('create_purchases_table');
-    if (purchasesError && !purchasesError.message.includes("already exists")) {
-      console.error("Error creating purchases table:", purchasesError);
-      
-      // Try direct SQL if RPC fails
-      const { error: directPurchasesError } = await supabase.from('purchases').insert({}).select();
-      
-      if (directPurchasesError && directPurchasesError.code === "42P01") {
-        console.log("Purchases table doesn't exist. Creating via SQL query...");
-        const { error: sqlError } = await supabase.rpc('execute_sql', { 
-          sql_query: `
-            CREATE TABLE IF NOT EXISTS purchases (
-              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-              user_id TEXT NOT NULL,
-              product_id UUID REFERENCES products(id),
-              bundle_id UUID REFERENCES bundles(id),
-              plan_id TEXT NOT NULL,
-              date TIMESTAMP WITH TIME ZONE NOT NULL,
-              amount DECIMAL NOT NULL,
-              status TEXT NOT NULL,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-          `
-        });
-        if (sqlError) console.error("Error creating purchases table via SQL:", sqlError);
-      }
+    // Check if purchases table exists
+    const { data: purchasesData, error: purchasesError } = await supabase
+      .from('purchases')
+      .select('id')
+      .limit(1);
+    
+    if (purchasesError && purchasesError.code === '42P01') {
+      console.log("Purchases table doesn't exist. You'll need to create it in the Supabase dashboard.");
+    } else {
+      console.log("Purchases table exists or is accessible.");
     }
     
-    console.log("Supabase schema setup complete!");
-    return true;
+    // Determine if we have access to the tables
+    const hasProductsAccess = !productsError || productsError.code !== '42P01';
+    const hasBundlesAccess = !bundlesError || bundlesError.code !== '42P01';
+    const hasSubscriptionsAccess = !subscriptionsError || subscriptionsError.code !== '42P01';
+    const hasPurchasesAccess = !purchasesError || purchasesError.code !== '42P01';
+    
+    console.log("Schema check complete.");
+    console.log(`Tables status: Products: ${hasProductsAccess ? 'OK' : 'Missing'}, Bundles: ${hasBundlesAccess ? 'OK' : 'Missing'}, Subscriptions: ${hasSubscriptionsAccess ? 'OK' : 'Missing'}, Purchases: ${hasPurchasesAccess ? 'OK' : 'Missing'}`);
+    
+    // Return true if we have access to at least some tables
+    return hasProductsAccess || hasBundlesAccess || hasSubscriptionsAccess || hasPurchasesAccess;
   } catch (error) {
-    console.error("Error setting up Supabase schema:", error);
+    console.error("Error checking Supabase schema:", error);
     return false;
   }
 }

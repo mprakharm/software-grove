@@ -3,16 +3,21 @@ import { setupSupabaseSchema } from './supabase';
 
 export async function initializeDatabase() {
   try {
-    // Attempt to create tables
-    const success = await setupSupabaseSchema();
+    // Check table access
+    const hasTableAccess = await setupSupabaseSchema();
     
-    if (success) {
-      console.log("Database schema initialized successfully");
+    if (hasTableAccess) {
+      console.log("Connected to Supabase database successfully");
+      return true;
     } else {
-      console.error("Failed to initialize database schema");
+      console.log("Connected to Supabase, but no tables are accessible");
+      console.log("Please create the required tables in your Supabase dashboard:");
+      console.log("1. products");
+      console.log("2. bundles");
+      console.log("3. subscriptions");
+      console.log("4. purchases");
+      return false;
     }
-    
-    return success;
   } catch (error) {
     console.error("Error initializing database:", error);
     return false;

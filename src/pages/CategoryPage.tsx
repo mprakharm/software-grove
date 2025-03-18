@@ -24,17 +24,25 @@ const CategoryPage = () => {
     const init = async () => {
       setIsInitializing(true);
       try {
-        await initializeDatabase();
-        toast({
-          title: "Database Connected",
-          description: "Supabase database schema has been initialized",
-        });
+        const success = await initializeDatabase();
+        if (success) {
+          toast({
+            title: "Database Connected",
+            description: "Successfully connected to Supabase database",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Database Configuration Needed",
+            description: "Please create the required tables in your Supabase dashboard",
+          });
+        }
       } catch (error) {
         console.error("Failed to initialize database:", error);
         toast({
           variant: "destructive",
           title: "Database Error",
-          description: "Failed to initialize Supabase database",
+          description: "Failed to connect to Supabase database",
         });
       } finally {
         setIsInitializing(false);
@@ -71,7 +79,7 @@ const CategoryPage = () => {
         
         {isInitializing && (
           <div className="mb-4 p-4 bg-blue-50 text-blue-700 rounded-md">
-            Initializing database connection...
+            Connecting to database...
           </div>
         )}
         
