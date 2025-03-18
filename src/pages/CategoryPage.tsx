@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SoftwareCard from '@/components/SoftwareCard';
@@ -12,10 +12,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { initializeDatabase } from '@/utils/initializeDb';
+import { toast } from '@/components/ui/use-toast';
 
 const CategoryPage = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const [sortBy, setSortBy] = useState('popularity');
+  const [isInitializing, setIsInitializing] = useState(true);
+  
+  useEffect(() => {
+    const init = async () => {
+      setIsInitializing(true);
+      try {
+        await initializeDatabase();
+        toast({
+          title: "Database Connected",
+          description: "Supabase database schema has been initialized",
+        });
+      } catch (error) {
+        console.error("Failed to initialize database:", error);
+        toast({
+          variant: "destructive",
+          title: "Database Error",
+          description: "Failed to initialize Supabase database",
+        });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    
+    init();
+  }, []);
   
   // Filter software by category
   const filteredSoftware = FEATURED_SOFTWARE.filter(
@@ -41,6 +68,12 @@ const CategoryPage = () => {
         <div className="mb-6">
           <Breadcrumb items={breadcrumbItems} />
         </div>
+        
+        {isInitializing && (
+          <div className="mb-4 p-4 bg-blue-50 text-blue-700 rounded-md">
+            Initializing database connection...
+          </div>
+        )}
         
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <h1 className="text-3xl font-bold mb-4 md:mb-0">
