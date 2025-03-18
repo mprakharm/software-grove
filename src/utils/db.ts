@@ -98,7 +98,7 @@ class InMemoryDB {
       featuredBenefit: 'Connect and engage with industry professionals',
       benefits: [
         'InMail Messages',
-        'Who's Viewed Your Profile',
+        'Who\'s Viewed Your Profile',
         'Applicant Insights',
         'LinkedIn Learning'
       ],

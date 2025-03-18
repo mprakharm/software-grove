@@ -10,6 +10,7 @@ type AuthContextType = {
   loading: boolean;
   userSubscriptions: any[];
   subscriptionsLoading: boolean;
+  subscriptions: any[]; // Add this as an alias for userSubscriptions
   signIn: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signOut: () => Promise<{ error: string | null }>;
@@ -103,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         loading,
         userSubscriptions,
+        subscriptions: userSubscriptions, // Add this alias for backward compatibility
         subscriptionsLoading,
         signIn,
         signUp,
