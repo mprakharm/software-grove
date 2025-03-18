@@ -120,11 +120,11 @@ const BulkUploadDialog = ({
               // Keep as string if parsing fails
             }
           }
-          // Try to convert numbers
+          // Try to convert numbers - but keep as their native type, not as string
           else if (!isNaN(Number(value)) && value.trim() !== '') {
             value = Number(value);
           }
-          // Convert boolean strings
+          // Convert boolean strings - but keep as their native type, not as string
           else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
             value = value.toLowerCase() === 'true';
           }

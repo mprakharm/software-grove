@@ -98,8 +98,21 @@ class InMemoryDB {
 
     import('@/pages/Index').then(indexModule => {
       if (indexModule.FEATURED_SOFTWARE) {
-        indexModule.FEATURED_SOFTWARE.forEach((product: Product) => {
-          this.products[product.id] = product;
+        // Fixed: Map the data from FEATURED_SOFTWARE to Product type
+        indexModule.FEATURED_SOFTWARE.forEach((item: any) => {
+          const product: Product = {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            logo: item.image, // Map image to logo field
+            price: typeof item.price === 'string' ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : item.price,
+            rating: item.rating,
+            reviews: item.reviewCount,
+            inStock: true, // Default value
+            // Any additional required fields with default values
+          };
+          this.products[item.id] = product;
         });
       }
     });
