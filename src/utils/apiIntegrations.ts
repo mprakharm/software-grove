@@ -28,11 +28,11 @@ export function initializeApiIntegrations() {
     }
   });
 
-  // Register LinkedIn Premium API handler
+  // Register LinkedIn Premium API handler with your updated code
   VendorAPI.registerApiHandler('linkedin-premium', async (product) => {
     console.log('Calling LinkedIn Premium API for product:', product.name);
     try {
-      // Replace with your actual LinkedIn API endpoint
+      // Updated with your direct code changes for the LinkedIn Premium API endpoint
       const response = await fetch('https://api-dev.getfleek.app/partner', {
         method: 'GET',
         headers: { 
