@@ -10,9 +10,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // Type definitions for our tables
 export type Tables = Database['public']['Tables'];
-export type Product = Tables['products']['Row'];
-export type Bundle = Tables['bundles']['Row'];
-export type BundleProduct = Tables['bundle_products']['Row'];
-export type Subscription = Tables['subscriptions']['Row'];
-export type Purchase = Tables['purchases']['Row'];
-export type User = Tables['users']['Row'];
+export type SupabaseProduct = Tables['products']['Row'];
+export type SupabaseBundle = Tables['bundles']['Row'];
+export type SupabaseBundleProduct = Tables['bundle_products']['Row'];
+export type SupabaseSubscription = Tables['subscriptions']['Row'];
+export type SupabasePurchase = Tables['purchases']['Row'];
+export type SupabaseUser = Tables['users']['Row'];
