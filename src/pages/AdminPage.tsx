@@ -17,7 +17,8 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { Plus, Trash, Edit, Save } from 'lucide-react';
+import { Plus, Trash, Edit, Save, Upload } from 'lucide-react';
+import BulkUploadDialog from '@/components/admin/BulkUploadDialog';
 
 const AdminPage = () => {
   const { toast } = useToast();
@@ -28,6 +29,8 @@ const AdminPage = () => {
   const [editingBundle, setEditingBundle] = useState<Bundle | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isAddingBundle, setIsAddingBundle] = useState(false);
+  const [isBulkUploadingProducts, setIsBulkUploadingProducts] = useState(false);
+  const [isBulkUploadingBundles, setIsBulkUploadingBundles] = useState(false);
 
   const newProductForm = useForm({
     defaultValues: {
@@ -129,6 +132,101 @@ const AdminPage = () => {
     }
   };
 
+  // Handle bulk upload for products
+  const handleBulkUploadProducts = async (productsData: Omit<Product, 'id'>[]) => {
+    try {
+      const addedProducts = await ProductAPI.bulkUploadProducts(productsData);
+      setProducts([...products, ...addedProducts]);
+      toast({
+        title: 'Success',
+        description: `${addedProducts.length} products added successfully!`,
+      });
+    } catch (error) {
+      console.error('Error bulk uploading products:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to bulk upload products. Please try again.',
+        variant: 'destructive'
+      });
+      throw error;
+    }
+  };
+
+  // Handle bulk upload for bundles
+  const handleBulkUploadBundles = async (bundlesData: Omit<Bundle, 'id'>[]) => {
+    try {
+      const addedBundles = await BundleAPI.bulkUploadBundles(bundlesData);
+      setBundles([...bundles, ...addedBundles]);
+      toast({
+        title: 'Success',
+        description: `${addedBundles.length} bundles added successfully!`,
+      });
+    } catch (error) {
+      console.error('Error bulk uploading bundles:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to bulk upload bundles. Please try again.',
+        variant: 'destructive'
+      });
+      throw error;
+    }
+  };
+
+  // Sample data for CSV templates
+  const productSampleData = [
+    {
+      name: 'Sample Product 1',
+      description: 'Description for sample product 1',
+      category: 'CRM',
+      logo: 'https://placehold.co/100x100',
+      price: 99.99,
+      featuredBenefit: 'Main benefit',
+      benefits: '["Benefit 1", "Benefit 2", "Benefit 3"]',
+      inStock: true,
+      isHot: false,
+      popularity: 85,
+      rating: 4.5,
+    },
+    {
+      name: 'Sample Product 2',
+      description: 'Description for sample product 2',
+      category: 'Marketing',
+      logo: 'https://placehold.co/100x100',
+      price: 49.99,
+      featuredBenefit: 'Main benefit for product 2',
+      benefits: '["Benefit A", "Benefit B", "Benefit C"]',
+      inStock: true,
+      isHot: true,
+      popularity: 92,
+      rating: 4.8,
+    }
+  ];
+
+  const bundleSampleData = [
+    {
+      name: 'Sample Bundle 1',
+      description: 'Description for sample bundle 1',
+      category: 'Starter',
+      targetUser: 'Small Business',
+      products: '[{"productId":"product1_id","individualPrice":99.99,"bundlePrice":79.99},{"productId":"product2_id","individualPrice":49.99,"bundlePrice":39.99}]',
+      image: 'https://placehold.co/200x200',
+      savings: 20,
+      isCustomizable: false,
+      color: 'blue',
+    },
+    {
+      name: 'Sample Bundle 2',
+      description: 'Description for sample bundle 2',
+      category: 'Professional',
+      targetUser: 'Enterprise',
+      products: '[{"productId":"product1_id","individualPrice":99.99,"bundlePrice":69.99},{"productId":"product3_id","individualPrice":149.99,"bundlePrice":119.99}]',
+      image: 'https://placehold.co/200x200',
+      savings: 25,
+      isCustomizable: true,
+      color: 'purple',
+    }
+  ];
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
@@ -144,10 +242,19 @@ const AdminPage = () => {
           <TabsContent value="products">
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold">Products</h2>
-              <Button onClick={() => setIsAddingProduct(true)} disabled={isAddingProduct}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsBulkUploadingProducts(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </Button>
+                <Button onClick={() => setIsAddingProduct(true)} disabled={isAddingProduct}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </div>
             </div>
             
             {/* Add New Product Form */}
@@ -251,6 +358,15 @@ const AdminPage = () => {
               </div>
             )}
             
+            {/* Bulk Upload Product Dialog */}
+            <BulkUploadDialog
+              isOpen={isBulkUploadingProducts}
+              onClose={() => setIsBulkUploadingProducts(false)}
+              onUpload={handleBulkUploadProducts}
+              entityType="products"
+              sampleData={productSampleData}
+            />
+            
             {/* Products Table */}
             <div className="rounded-md border">
               <Table>
@@ -301,11 +417,29 @@ const AdminPage = () => {
           <TabsContent value="bundles">
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold">Bundles</h2>
-              <Button onClick={() => setIsAddingBundle(true)} disabled={isAddingBundle}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Bundle
-              </Button>
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsBulkUploadingBundles(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </Button>
+                <Button onClick={() => setIsAddingBundle(true)} disabled={isAddingBundle}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Bundle
+                </Button>
+              </div>
             </div>
+            
+            {/* Bulk Upload Bundle Dialog */}
+            <BulkUploadDialog
+              isOpen={isBulkUploadingBundles}
+              onClose={() => setIsBulkUploadingBundles(false)}
+              onUpload={handleBulkUploadBundles}
+              entityType="bundles"
+              sampleData={bundleSampleData}
+            />
             
             {/* Bundles Table */}
             <div className="rounded-md border">

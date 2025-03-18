@@ -1,4 +1,3 @@
-
 import { db, Product, Bundle, Subscription, Purchase } from './db';
 
 // Simulate API response delay
@@ -49,6 +48,19 @@ export const ProductAPI = {
   async deleteProduct(id: string): Promise<boolean> {
     await delay(500);
     return db.deleteProduct(id);
+  },
+  
+  // Bulk upload products
+  async bulkUploadProducts(products: Omit<Product, 'id'>[]): Promise<Product[]> {
+    await delay(1000);
+    const addedProducts: Product[] = [];
+    
+    for (const product of products) {
+      const addedProduct = await db.addProduct(product);
+      addedProducts.push(addedProduct);
+    }
+    
+    return addedProducts;
   }
 };
 
@@ -97,6 +109,19 @@ export const BundleAPI = {
   async deleteBundle(id: string): Promise<boolean> {
     await delay(500);
     return db.deleteBundle(id);
+  },
+  
+  // Bulk upload bundles
+  async bulkUploadBundles(bundles: Omit<Bundle, 'id'>[]): Promise<Bundle[]> {
+    await delay(1000);
+    const addedBundles: Bundle[] = [];
+    
+    for (const bundle of bundles) {
+      const addedBundle = await db.addBundle(bundle);
+      addedBundles.push(addedBundle);
+    }
+    
+    return addedBundles;
   }
 };
 

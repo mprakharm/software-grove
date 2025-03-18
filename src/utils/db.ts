@@ -89,15 +89,19 @@ class InMemoryDB {
   constructor() {
     // Import initial data
     import('@/data/bundlesData').then(bundlesModule => {
-      bundlesModule.BUNDLES.forEach((bundle: Bundle) => {
-        this.bundles[bundle.id] = bundle;
-      });
+      if (bundlesModule.BUNDLES) {
+        bundlesModule.BUNDLES.forEach((bundle: Bundle) => {
+          this.bundles[bundle.id] = bundle;
+        });
+      }
     });
 
     import('@/pages/Index').then(indexModule => {
-      indexModule.FEATURED_SOFTWARE.forEach((product: Product) => {
-        this.products[product.id] = product;
-      });
+      if (indexModule.FEATURED_SOFTWARE) {
+        indexModule.FEATURED_SOFTWARE.forEach((product: Product) => {
+          this.products[product.id] = product;
+        });
+      }
     });
   }
 
