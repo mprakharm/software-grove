@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -6,13 +7,14 @@ import { FEATURED_SOFTWARE } from './Index';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubscriptionAPI } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/utils/supabase';
 
 const subscriptionPlans = [
   {
@@ -140,15 +142,16 @@ const SubscriptionPage = () => {
         endDate.setMonth(endDate.getMonth() + 1);
       }
 
-      // Create subscription
+      // Create subscription - fixing the property names to match what's expected
       const newSubscription = {
-        user_id: user.id,
-        product_id: productId,
-        plan_id: selectedPlan,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        auto_renew: true,
+        userId: user.id,
+        productId: productId,
+        planId: selectedPlan,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        autoRenew: true,
         price: totalPrice,
+        // Additional fields not required by the Subscription type but useful for display
         name: product.name,
         plan: selectedPlanData?.name || 'Unknown',
         users: userCount,
