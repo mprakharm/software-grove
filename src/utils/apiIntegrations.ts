@@ -54,13 +54,8 @@ export function initializeApiIntegrations() {
       const data = await response.json();
       console.log('Server-side: LinkedIn Premium API response data:', data);
       
-      // Check if the data is in the expected format and return it directly
-      if (Array.isArray(data) && data.length > 0) {
-        return data; // Return the actual API data
-      } else {
-        console.warn('Server-side: LinkedIn API returned unexpected data format:', data);
-        throw new Error('Unexpected data format from API');
-      }
+      // Directly return the API data to be processed by the client
+      return data;
     } catch (error: any) {
       console.error('Server-side: Error calling LinkedIn Premium API:', error);
       // Return an error object instead of null

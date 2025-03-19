@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -25,6 +26,27 @@ interface VendorPlan {
   popular?: boolean;
   billingOptions: string[];
   discountPercentage: number;
+}
+
+interface ApiPlan {
+  plan_id?: string;
+  plan_name?: string;
+  coupon_type?: string;
+  plan_description?: string;
+  plan_cost?: number;
+  plan_mrp?: number;
+  vendor_name?: string;
+  vendor_logo_url?: string;
+  currency?: string;
+  // For other API formats
+  id?: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  features?: string[];
+  popular?: boolean;
+  billingOptions?: string[];
+  discountPercentage?: number;
 }
 
 const SubscriptionPage = () => {
@@ -73,26 +95,75 @@ const SubscriptionPage = () => {
     }
     
     // For LinkedIn Premium specifically
-    if (productId === 'linkedin-premium' || productId === 'linkedin') {
+    if (productId === 'linkedin-premium' || productId === 'linkedin' || (product && product.name.toLowerCase().includes('linkedin'))) {
       console.log('Normalizing LinkedIn Premium plans from API:', apiPlans);
       
-      // Attempt to map API response to our VendorPlan interface
-      return apiPlans.map((plan, index) => {
-        // For LinkedIn Premium API structure
-        const normalizedPlan: VendorPlan = {
-          id: plan.id || `linkedin-plan-${index}`,
-          name: plan.name || 'LinkedIn Plan',
-          description: plan.description || 'LinkedIn Premium Subscription',
-          price: typeof plan.price === 'number' ? plan.price : parseFloat(plan.price) || 29.99 + (index * 30),
-          features: Array.isArray(plan.features) ? plan.features : ['Premium feature'],
-          popular: index === 1, // Mark the middle plan as popular by default
-          billingOptions: plan.billingOptions || ['monthly', 'annual'],
-          discountPercentage: plan.discountPercentage || 20
-        };
+      try {
+        // Check if we have the JSON format from the ngrok API
+        if (apiPlans[0] && (apiPlans[0].plan_id || apiPlans[0].plan_list || apiPlans[0].product_name)) {
+          console.log('LinkedIn API returned the ngrok format, processing...');
+          
+          // Handle the case where plans are in "plan_list" format (nested)
+          if (apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
+            const firstProduct = apiPlans.find(p => !p.is_bundle);
+            if (firstProduct && Array.isArray(firstProduct.plan_list)) {
+              console.log('Found plans in plan_list format:', firstProduct.plan_list);
+              
+              return firstProduct.plan_list.map((plan: ApiPlan, index: number) => {
+                return {
+                  id: plan.plan_id || `linkedin-plan-${index}`,
+                  name: plan.plan_name || 'Subscription Plan',
+                  description: plan.plan_description || 'LinkedIn Premium Subscription',
+                  price: plan.plan_cost || plan.plan_mrp || 29.99,
+                  features: (plan.plan_description || '').split('\n'),
+                  popular: index === 0, // Mark the first plan as popular
+                  billingOptions: ['monthly', 'annual'],
+                  discountPercentage: 20
+                };
+              });
+            }
+          }
+          
+          // Direct plan mapping if plans are at the top level
+          return apiPlans.map((plan: ApiPlan, index: number) => {
+            // Extract features from description if available
+            const featuresList = plan.plan_description ? 
+              plan.plan_description.split('\n').filter(f => f.trim() !== '') : 
+              ['Premium feature'];
+              
+            return {
+              id: plan.plan_id || `plan-${index}`,
+              name: plan.plan_name || 'Subscription Plan',
+              description: plan.plan_description || 'LinkedIn Premium Subscription',
+              price: plan.plan_cost || plan.plan_mrp || 29.99,
+              features: featuresList,
+              popular: index === 0,
+              billingOptions: ['monthly', 'annual'],
+              discountPercentage: 20
+            };
+          });
+        }
         
-        console.log('Normalized plan:', normalizedPlan);
-        return normalizedPlan;
-      });
+        // Standard VendorPlan format
+        return apiPlans.map((plan, index) => {
+          const normalizedPlan: VendorPlan = {
+            id: plan.id || `linkedin-plan-${index}`,
+            name: plan.name || 'LinkedIn Plan',
+            description: plan.description || 'LinkedIn Premium Subscription',
+            price: typeof plan.price === 'number' ? plan.price : parseFloat(plan.price) || 29.99 + (index * 30),
+            features: Array.isArray(plan.features) ? plan.features : ['Premium feature'],
+            popular: index === 1, // Mark the middle plan as popular by default
+            billingOptions: plan.billingOptions || ['monthly', 'annual'],
+            discountPercentage: plan.discountPercentage || 20
+          };
+          
+          console.log('Normalized plan:', normalizedPlan);
+          return normalizedPlan;
+        });
+      } catch (error) {
+        console.error('Error normalizing API plans:', error);
+        return [];
+      }
     }
     
     // For other products
@@ -173,16 +244,16 @@ const SubscriptionPage = () => {
 
   const breadcrumbItems = [
     {
-      label: product.category,
-      href: `/category/${product.category.toLowerCase()}`,
+      label: product?.category || 'Products',
+      href: `/category/${product?.category?.toLowerCase() || 'all'}`,
     },
     {
-      label: product.name,
-      href: `/product/${product.id}`,
+      label: product?.name || 'Product',
+      href: `/product/${product?.id}`,
     },
     {
       label: 'Subscribe',
-      href: `/subscription/${product.id}`,
+      href: `/subscription/${product?.id}`,
     },
   ];
   
@@ -229,7 +300,7 @@ const SubscriptionPage = () => {
 
       const newSubscription = {
         userId: user.id,
-        productId: product.id,
+        productId: product!.id,
         planId: selectedPlan,
         startDate: startDate,
         endDate: endDate,
@@ -238,7 +309,7 @@ const SubscriptionPage = () => {
       };
 
       const subscriptionMetadata = {
-        name: product.name,
+        name: product!.name,
         plan: selectedVendorPlan.name,
         users: userCount,
         renewalDate: endDate.toISOString(),
@@ -246,26 +317,26 @@ const SubscriptionPage = () => {
         usedStorage: 0,
         totalStorage: 20,
         status: 'active',
-        image: product.logo
+        image: product!.logo
       };
 
       await SubscriptionAPI.createSubscription(newSubscription);
       
       await supabase.from('purchases').insert({
         user_id: user.id,
-        product_id: product.id,
+        product_id: product!.id,
         plan_id: selectedPlan,
         date: new Date().toISOString(),
         amount: billingCycle === 'yearly' ? planPrice * 12 : planPrice,
         status: 'paid',
-        description: `${product.name} - ${selectedVendorPlan.name} (${userCount} users)`
+        description: `${product!.name} - ${selectedVendorPlan.name} (${userCount} users)`
       });
 
       await refreshSubscriptions();
 
       toast({
         title: "Subscription Successful",
-        description: `You've successfully subscribed to ${product.name}!`,
+        description: `You've successfully subscribed to ${product!.name}!`,
       });
 
       navigate('/subscriptions');
@@ -280,6 +351,31 @@ const SubscriptionPage = () => {
       setIsSubmitting(false);
     }
   };
+  
+  if (isLoadingProduct) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (!product) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h2 className="text-2xl font-bold mb-4">Product not found</h2>
+          <p className="text-gray-600 mb-8">The product you're looking for doesn't exist.</p>
+          <Button asChild>
+            <Link to="/">Return to Home</Link>
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
@@ -370,61 +466,68 @@ const SubscriptionPage = () => {
                 </Tabs>
               </div>
               
-              <RadioGroup 
-                value={selectedPlan} 
-                onValueChange={setSelectedPlan}
-                className="grid md:grid-cols-3 gap-6 mb-8"
-              >
-                {vendorPlans.map((plan) => {
-                  const price = calculatePlanPrice(plan.price, plan.discountPercentage);
-                  const annualPrice = price * 12;
-                  
-                  return (
-                    <div key={plan.id} className="relative">
-                      {plan.popular && (
-                        <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 bg-primary">
-                          Most Popular
-                        </Badge>
-                      )}
-                      <Label 
-                        htmlFor={plan.id}
-                        className={`block h-full cursor-pointer transition-all ${
-                          selectedPlan === plan.id 
-                            ? 'border-primary' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Card className={`h-full border-2 ${
-                          selectedPlan === plan.id ? 'border-primary' : ''
-                        }`}>
-                          <div className="p-6">
-                            <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
-                            
-                            <h3 className="text-xl font-bold text-center mb-2">{plan.name}</h3>
-                            
-                            <div className="text-center mb-4">
-                              <div className="text-3xl font-bold">${price.toFixed(2)}</div>
-                              <div className="text-sm text-gray-500">per user / {billingCycle === 'yearly' ? 'month, billed annually' : 'month'}</div>
-                              {billingCycle === 'yearly' && (
-                                <div className="text-xs text-gray-500">${annualPrice.toFixed(2)} per year</div>
-                              )}
+              {vendorPlans.length > 0 ? (
+                <RadioGroup 
+                  value={selectedPlan} 
+                  onValueChange={setSelectedPlan}
+                  className="grid md:grid-cols-3 gap-6 mb-8"
+                >
+                  {vendorPlans.map((plan) => {
+                    const price = calculatePlanPrice(plan.price, plan.discountPercentage);
+                    const annualPrice = price * 12;
+                    
+                    return (
+                      <div key={plan.id} className="relative">
+                        {plan.popular && (
+                          <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 bg-primary">
+                            Most Popular
+                          </Badge>
+                        )}
+                        <Label 
+                          htmlFor={plan.id}
+                          className={`block h-full cursor-pointer transition-all ${
+                            selectedPlan === plan.id 
+                              ? 'border-primary' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <Card className={`h-full border-2 ${
+                            selectedPlan === plan.id ? 'border-primary' : ''
+                          }`}>
+                            <div className="p-6">
+                              <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
+                              
+                              <h3 className="text-xl font-bold text-center mb-2">{plan.name}</h3>
+                              
+                              <div className="text-center mb-4">
+                                <div className="text-3xl font-bold">${price.toFixed(2)}</div>
+                                <div className="text-sm text-gray-500">per user / {billingCycle === 'yearly' ? 'month, billed annually' : 'month'}</div>
+                                {billingCycle === 'yearly' && (
+                                  <div className="text-xs text-gray-500">${annualPrice.toFixed(2)} per year</div>
+                                )}
+                              </div>
+                              
+                              <div className="space-y-2">
+                                {plan.features.map((feature, index) => (
+                                  <div key={index} className="flex items-start">
+                                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                                    <span className="text-sm">{feature}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                            
-                            <div className="space-y-2">
-                              {plan.features.map((feature, index) => (
-                                <div key={index} className="flex items-start">
-                                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                                  <span className="text-sm">{feature}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </Card>
-                      </Label>
-                    </div>
-                  );
-                })}
-              </RadioGroup>
+                          </Card>
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
+              ) : (
+                <div className="text-center py-6">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading plan options...</p>
+                </div>
+              )}
               
               <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
                 <h3 className="font-medium mb-4">Number of Users</h3>
