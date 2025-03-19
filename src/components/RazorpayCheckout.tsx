@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ApiService } from '@/utils/apiService';
+import { RazorpayService } from '@/utils/razorpayService';
 
 declare global {
   interface Window {
@@ -59,16 +59,28 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
     setIsLoading(true);
     try {
-      // Create an order on the server
-      const orderData = await ApiService.createRazorpayOrder({
-        productId,
-        planId,
+      // Create an order directly using RazorpayService
+      const razorpayOrderRequest = {
         amount: amount * 100, // Convert to smallest unit (paise)
-        currency, // Use the provided currency or default
-        userId: user.id,
-        userEmail: user.email,
-        planName
-      });
+        currency: currency, // Use the provided currency or default
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          productId: productId,
+          planId: planId,
+          planName: planName,
+          userEmail: user.email
+        },
+        user_id: user.id,
+        product_id: productId,
+        plan_id: planId
+      };
+      
+      console.log('Creating Razorpay order request:', razorpayOrderRequest);
+      
+      // Direct call to RazorpayService instead of going through apiService
+      const orderData = await RazorpayService.createOrder(razorpayOrderRequest);
+      
+      console.log('Razorpay order created:', orderData);
 
       // Initialize Razorpay checkout
       const options = {
@@ -81,21 +93,25 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         handler: async function(response: any) {
           try {
             // Process payment success
-            await ApiService.processRazorpayPayment({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature
-            });
+            const success = await RazorpayService.processSuccessfulPayment(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature
+            );
             
-            // Refresh user subscriptions
-            await refreshSubscriptions();
-            
-            toast({
-              title: "Payment Successful",
-              description: "Your subscription has been activated successfully!",
-            });
-            
-            onSuccess();
+            if (success) {
+              // Refresh user subscriptions
+              await refreshSubscriptions();
+              
+              toast({
+                title: "Payment Successful",
+                description: "Your subscription has been activated successfully!",
+              });
+              
+              onSuccess();
+            } else {
+              throw new Error('Payment verification failed');
+            }
           } catch (error) {
             console.error('Payment verification failed:', error);
             toast({
