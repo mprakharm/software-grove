@@ -59,7 +59,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       };
 
       // Call Razorpay API directly
-      const razorpayApiUrl = '${RATAN_NGROK_API_BASE_URL}/razorpay_order_create';
+      const razorpayApiUrl = `${RATAN_NGROK_API_BASE_URL}/razorpay_order_create`;
       const response = await fetch(razorpayApiUrl, {
         method: 'POST',
         headers: {
