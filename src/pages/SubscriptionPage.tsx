@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import useRazorpay, {RazorpayOptions} from "react-razorpay";
+import {useRazorpay, RazorpayOptions} from "react-razorpay";
 
 interface VendorPlan {
   id: string;
@@ -66,6 +66,7 @@ const SubscriptionPage = () => {
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { error, isLoading, Razorpay } = useRazorpay();
   
   const isStreamingOrSocialProduct = () => {
     if (!productId || !product) return false;
@@ -311,7 +312,6 @@ const SubscriptionPage = () => {
         }
       };
 
-      const { error, isLoading, Razorpay } = useRazorpay();
       const razorpay = new Razorpay(options);
       razorpay.open();
     } catch (error) {
