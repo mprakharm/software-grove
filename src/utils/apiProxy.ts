@@ -13,7 +13,8 @@ export const ApiProxyController = {
       if (!Array.isArray(plans)) {
         console.error('Backend proxy: Invalid plans data returned:', plans);
         if (plans && typeof plans === 'object' && 'error' in plans) {
-          throw new Error(`API error: ${plans.error}`);
+          // This fixes the TS error - ensure we verify the object has an error property
+          throw new Error(`API error: ${(plans as {error: string}).error}`);
         }
         throw new Error('Invalid plans data returned from vendor API');
       }

@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -43,8 +42,8 @@ export function initializeApiIntegrations() {
           'Authorization': 'ZGV2cnpwYXk6SDJmandjNVE5eUhaTHY1Ng==',
           'Content-Type': 'application/json'
         },
-        // Use appropriate fetch options without modifying TypeScript config
-        mode: 'cors'
+        // Remove mode: 'cors' as it can cause issues with cross-origin requests in certain environments
+        // Let the browser handle the CORS policy automatically
       });
       
       console.log('Server-side: LinkedIn API response status:', response.status);
