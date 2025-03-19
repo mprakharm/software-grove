@@ -17,12 +17,12 @@ export const ApiProxyController = {
         // Check if the plans object contains an error property
         if ('error' in plans) {
           console.error('Backend proxy: API returned error:', plans);
-          // Use type assertion after checking for the presence of required properties
-          const errorObj = plans as { error: unknown };
+          
           // Create a proper error message with a safe fallback
           const errorMessage = 'message' in plans && typeof plans.message === 'string' 
             ? plans.message 
             : 'Unknown error from vendor API';
+            
           throw new Error(`API error: ${errorMessage}`);
         }
       }

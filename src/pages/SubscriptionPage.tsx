@@ -38,6 +38,8 @@ interface ApiPlan {
   vendor_name?: string;
   vendor_logo_url?: string;
   currency?: string;
+  plan_activation_message?: string;
+  steps_to_redeem_coupon?: string | null;
   // For other API formats
   id?: string;
   name?: string;
@@ -60,6 +62,7 @@ const SubscriptionPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [showPlans, setShowPlans] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
+  const [hasMultipleBillingOptions, setHasMultipleBillingOptions] = useState(true);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -99,62 +102,80 @@ const SubscriptionPage = () => {
       console.log('Normalizing LinkedIn Premium plans from API:', apiPlans);
       
       try {
-        // Check if we have the JSON format from the ngrok API
-        if (apiPlans[0] && (apiPlans[0].plan_id || apiPlans[0].plan_list || apiPlans[0].product_name)) {
-          console.log('LinkedIn API returned the ngrok format, processing...');
+        // Check for specific LinkedIn plan_id as requested
+        let linkedInPlan: ApiPlan | undefined;
+        
+        // First check if we have a plan_list format
+        if (apiPlans[0] && apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
+          console.log('Looking for plan_id=plan_A0qs3dlK in plan_list');
           
-          // Handle the case where plans are in "plan_list" format (nested)
-          if (apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
-            const firstProduct = apiPlans.find(p => !p.is_bundle);
-            if (firstProduct && Array.isArray(firstProduct.plan_list)) {
-              console.log('Found plans in plan_list format:', firstProduct.plan_list);
-              
-              return firstProduct.plan_list.map((plan: ApiPlan, index: number) => {
-                return {
-                  id: plan.plan_id || `linkedin-plan-${index}`,
-                  name: plan.plan_name || 'Subscription Plan',
-                  description: plan.plan_description || 'LinkedIn Premium Subscription',
-                  price: plan.plan_cost || plan.plan_mrp || 29.99,
-                  features: (plan.plan_description || '').split('\n'),
-                  popular: index === 0, // Mark the first plan as popular
-                  billingOptions: ['monthly', 'annual'],
-                  discountPercentage: 20
-                };
-              });
+          // Find the product that has the specific plan in its plan_list
+          for (const product of apiPlans) {
+            if (product.plan_list && Array.isArray(product.plan_list)) {
+              linkedInPlan = product.plan_list.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
+              if (linkedInPlan) break;
             }
           }
           
-          // Direct plan mapping if plans are at the top level
-          return apiPlans.map((plan: ApiPlan, index: number) => {
-            // Extract features from description if available
-            const featuresList = plan.plan_description ? 
-              plan.plan_description.split('\n').filter(f => f.trim() !== '') : 
-              ['Premium feature'];
-              
-            return {
-              id: plan.plan_id || `plan-${index}`,
-              name: plan.plan_name || 'Subscription Plan',
-              description: plan.plan_description || 'LinkedIn Premium Subscription',
-              price: plan.plan_cost || plan.plan_mrp || 29.99,
-              features: featuresList,
-              popular: index === 0,
-              billingOptions: ['monthly', 'annual'],
-              discountPercentage: 20
-            };
-          });
+          // If not found, just take the first plan from the first product
+          if (!linkedInPlan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
+            linkedInPlan = apiPlans[0].plan_list[0];
+          }
+        } else {
+          // Direct plan search at the top level
+          linkedInPlan = apiPlans.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
+          
+          // If not found, take the first plan
+          if (!linkedInPlan && apiPlans.length > 0) {
+            linkedInPlan = apiPlans[0];
+          }
         }
         
-        // Standard VendorPlan format
+        console.log('Selected LinkedIn plan:', linkedInPlan);
+        
+        if (linkedInPlan) {
+          // Set default billing options since this plan doesn't have variants
+          setHasMultipleBillingOptions(false);
+          
+          // Split features from description
+          const featuresList = linkedInPlan.plan_description 
+            ? linkedInPlan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
+            : ['Premium feature'];
+          
+          console.log('Extracted features:', featuresList);
+          
+          return [{
+            id: linkedInPlan.plan_id || 'linkedin-premium-plan',
+            name: linkedInPlan.plan_name || 'LinkedIn Premium',
+            description: linkedInPlan.plan_activation_message || 'Premium LinkedIn Subscription',
+            price: linkedInPlan.plan_cost || linkedInPlan.plan_mrp || 29.99,
+            features: featuresList,
+            popular: true,
+            billingOptions: ['standard'], // Just one option since there's no monthly/yearly
+            discountPercentage: linkedInPlan.plan_mrp && linkedInPlan.plan_cost
+              ? Math.round(((linkedInPlan.plan_mrp - linkedInPlan.plan_cost) / linkedInPlan.plan_mrp) * 100)
+              : 0
+          }];
+        }
+        
+        // Fallback to standard format if specific plan not found
         return apiPlans.map((plan, index) => {
+          setHasMultipleBillingOptions(false);
+          
           const normalizedPlan: VendorPlan = {
-            id: plan.id || `linkedin-plan-${index}`,
-            name: plan.name || 'LinkedIn Plan',
-            description: plan.description || 'LinkedIn Premium Subscription',
-            price: typeof plan.price === 'number' ? plan.price : parseFloat(plan.price) || 29.99 + (index * 30),
-            features: Array.isArray(plan.features) ? plan.features : ['Premium feature'],
-            popular: index === 1, // Mark the middle plan as popular by default
-            billingOptions: plan.billingOptions || ['monthly', 'annual'],
-            discountPercentage: plan.discountPercentage || 20
+            id: plan.id || plan.plan_id || `linkedin-plan-${index}`,
+            name: plan.name || plan.plan_name || 'LinkedIn Plan',
+            description: plan.description || plan.plan_description || 'LinkedIn Premium Subscription',
+            price: typeof plan.price === 'number' ? plan.price : 
+                   (plan.plan_cost || plan.plan_mrp || 29.99 + (index * 30)),
+            features: Array.isArray(plan.features) ? plan.features : 
+                     (plan.plan_description ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') : ['Premium feature']),
+            popular: index === 0, // Mark the first plan as popular
+            billingOptions: ['standard'], // Just one option for LinkedIn plans
+            discountPercentage: plan.discountPercentage || 
+                              (plan.plan_mrp && plan.plan_cost 
+                                ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 
+                                : 0)
           };
           
           console.log('Normalized plan:', normalizedPlan);
@@ -187,9 +208,8 @@ const SubscriptionPage = () => {
       if (normalizedPlans.length > 0) {
         setVendorPlans(normalizedPlans);
         
-        // Select a default plan (popular or first)
-        const popularPlan = normalizedPlans.find(plan => plan.popular);
-        setSelectedPlan(popularPlan ? popularPlan.id : normalizedPlans[0]?.id);
+        // Select the first plan by default
+        setSelectedPlan(normalizedPlans[0]?.id);
         
         setShowPlans(true);
       } else {
@@ -210,7 +230,8 @@ const SubscriptionPage = () => {
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
     let price = basePrice * userCount;
     
-    if (billingCycle === 'yearly') {
+    // Only apply discount if we're dealing with multiple billing options
+    if (hasMultipleBillingOptions && billingCycle === 'yearly') {
       price = price * (1 - (discountPercentage / 100));
     }
     
@@ -450,21 +471,24 @@ const SubscriptionPage = () => {
             </div>
           ) : (
             <>
-              <div className="flex justify-center mb-10">
-                <Tabs 
-                  value={billingCycle} 
-                  onValueChange={setBillingCycle}
-                  className="w-full max-w-md"
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                    <TabsTrigger value="yearly">
-                      Yearly
-                      <Badge className="ml-2 bg-green-500">Save up to 25%</Badge>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+              {/* Only show billing cycle tabs if the plan has multiple billing options */}
+              {hasMultipleBillingOptions && (
+                <div className="flex justify-center mb-10">
+                  <Tabs 
+                    value={billingCycle} 
+                    onValueChange={setBillingCycle}
+                    className="w-full max-w-md"
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                      <TabsTrigger value="yearly">
+                        Yearly
+                        <Badge className="ml-2 bg-green-500">Save up to 25%</Badge>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              )}
               
               {vendorPlans.length > 0 ? (
                 <RadioGroup 
@@ -474,13 +498,12 @@ const SubscriptionPage = () => {
                 >
                   {vendorPlans.map((plan) => {
                     const price = calculatePlanPrice(plan.price, plan.discountPercentage);
-                    const annualPrice = price * 12;
                     
                     return (
                       <div key={plan.id} className="relative">
                         {plan.popular && (
                           <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 bg-primary">
-                            Most Popular
+                            Recommended
                           </Badge>
                         )}
                         <Label 
@@ -501,11 +524,23 @@ const SubscriptionPage = () => {
                               
                               <div className="text-center mb-4">
                                 <div className="text-3xl font-bold">${price.toFixed(2)}</div>
-                                <div className="text-sm text-gray-500">per user / {billingCycle === 'yearly' ? 'month, billed annually' : 'month'}</div>
-                                {billingCycle === 'yearly' && (
-                                  <div className="text-xs text-gray-500">${annualPrice.toFixed(2)} per year</div>
+                                <div className="text-sm text-gray-500">
+                                  {hasMultipleBillingOptions 
+                                    ? `per user / ${billingCycle === 'yearly' ? 'month, billed annually' : 'month'}`
+                                    : 'per user'}
+                                </div>
+                                {plan.discountPercentage > 0 && (
+                                  <div className="text-xs text-green-600 mt-1">
+                                    Save {plan.discountPercentage}% off regular price
+                                  </div>
                                 )}
                               </div>
+                              
+                              {plan.description && (
+                                <div className="text-sm text-center text-gray-600 mb-4 italic">
+                                  {plan.description}
+                                </div>
+                              )}
                               
                               <div className="space-y-2">
                                 {plan.features.map((feature, index) => (
@@ -562,7 +597,11 @@ const SubscriptionPage = () => {
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>Billing</span>
-                    <span>{billingCycle === 'yearly' ? 'Annual' : 'Monthly'}</span>
+                    <span>
+                      {hasMultipleBillingOptions 
+                        ? (billingCycle === 'yearly' ? 'Annual' : 'Monthly')
+                        : 'Standard'}
+                    </span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>Users</span>
@@ -573,16 +612,17 @@ const SubscriptionPage = () => {
                     <span>Total</span>
                     <div className="text-right">
                       <div className="font-bold">
-                        ${calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}/mo
+                        ${calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}
+                        {hasMultipleBillingOptions ? '/mo' : ''}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {billingCycle === 'yearly' ? 
-                          `$${(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually` : 
-                          ''}
-                      </div>
+                      {hasMultipleBillingOptions && billingCycle === 'yearly' && (
+                        <div className="text-sm text-gray-500">
+                          ${(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {billingCycle === 'yearly' && (
+                  {hasMultipleBillingOptions && billingCycle === 'yearly' && selectedVendorPlan.discountPercentage > 0 && (
                     <div className="mt-2 text-sm text-green-600 text-right">
                       You save ${(selectedVendorPlan.price * userCount * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
                     </div>

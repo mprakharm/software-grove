@@ -54,7 +54,34 @@ export function initializeApiIntegrations() {
       const data = await response.json();
       console.log('Server-side: LinkedIn Premium API response data:', data);
       
-      // Directly return the API data to be processed by the client
+      // Process the API data to ensure plan_id=plan_A0qs3dlK is prioritized
+      if (Array.isArray(data) && data.length > 0) {
+        // Check if we have a plan_list format
+        if (data[0] && data[0].plan_list && Array.isArray(data[0].plan_list)) {
+          const processedData = [...data];
+          
+          // Find any product with plan_id=plan_A0qs3dlK in its plan_list
+          for (const product of processedData) {
+            if (product.plan_list && Array.isArray(product.plan_list)) {
+              // Check if the target plan exists
+              const targetPlan = product.plan_list.find((plan: any) => plan.plan_id === 'plan_A0qs3dlK');
+              
+              if (targetPlan) {
+                console.log('Server-side: Found target plan_id=plan_A0qs3dlK', targetPlan);
+                // Move the target plan to the front of the list
+                product.plan_list = [
+                  targetPlan,
+                  ...product.plan_list.filter((plan: any) => plan.plan_id !== 'plan_A0qs3dlK')
+                ];
+              }
+            }
+          }
+          
+          return processedData;
+        }
+      }
+      
+      // Return the unmodified data if it doesn't match our expected format
       return data;
     } catch (error: any) {
       console.error('Server-side: Error calling LinkedIn Premium API:', error);
