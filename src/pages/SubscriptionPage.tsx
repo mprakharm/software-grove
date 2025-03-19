@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
+import useRazorpay, {RazorpayOptions} from "react-razorpay";
 
 interface VendorPlan {
   id: string;
@@ -253,13 +253,13 @@ const SubscriptionPage = () => {
         amount: amount * 100,
         currency: 'INR',
         notes: {
-          productId: productId,
-          planId: planId,
-          planName: planName
+          product_id: productId,
+          plan_id: planId,
+          plan_name: planName
         }
       });
 
-      const options = {
+      const options: RazorpayOptions = {
         key: 'rzp_test_Qk71AJmUSRc1Oi',
         amount: amount * 100,
         currency: 'INR',
