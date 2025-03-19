@@ -1,141 +1,101 @@
 
-import { supabase, setupSupabaseSchema, seedDatabaseWithFrontendData } from '@/utils/supabase';
-import { ProductAPI } from '@/utils/api';
-import { BUNDLE_CATEGORIES } from '@/data/bundlesData';
+import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
+import { ProductAPI } from './api';
+import { VendorAPI } from './api';
 
-// Initialize the database schema and seed with demo data
 export async function initializeDatabase() {
-  console.log("Initializing database...");
-  
-  // Check/setup schema
-  const schemaReady = await setupSupabaseSchema();
-  if (!schemaReady) {
-    console.error("Failed to verify schema. Check Supabase console.");
+  try {
+    // Register Zee5 API handler (using LinkedIn's handler as a template)
+    VendorAPI.registerApiHandler('zee5', async (product) => {
+      console.log('Using Zee5 API handler');
+      // Use the same API endpoint as LinkedIn Premium
+      return await VendorAPI.apiRegistry['linkedin-premium'].handler(product);
+    });
+
+    // Check table access
+    const hasTableAccess = await setupSupabaseSchema();
+    
+    if (hasTableAccess) {
+      console.log("Connected to Supabase database successfully");
+      
+      // Seed database with frontend data if needed
+      const seeded = await seedDatabaseWithFrontendData();
+      if (seeded) {
+        console.log("Database is ready with product data");
+
+        // Add Zee5 product if it doesn't exist
+        await addZee5Product();
+        
+      } else {
+        console.log("Some products may need to be added manually");
+      }
+
+      // Force refresh of products in memory
+      await ProductAPI.getProducts();
+      
+      return true;
+    } else {
+      console.log("Connected to Supabase, but no tables are accessible");
+      console.log("Please create the required tables in your Supabase dashboard:");
+      console.log("1. products");
+      console.log("2. bundles");
+      console.log("3. subscriptions");
+      console.log("4. purchases");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error initializing database:", error);
     return false;
   }
-  
-  // Seed with frontend data if needed
-  const seeded = await seedDatabaseWithFrontendData();
-  if (!seeded) {
-    console.warn("Seeding skipped or failed. Check if data already exists.");
-  }
-  
-  // Ensure LinkedIn Premium exists
-  const linkedinProduct = await ProductAPI.getProductByNameOrId('LinkedIn Premium');
-  if (!linkedinProduct) {
-    console.log("Adding LinkedIn Premium product...");
-    try {
-      await ProductAPI.addProduct({
-        name: 'LinkedIn Premium',
-        description: 'Premium subscription service by LinkedIn that offers advanced networking, job search, and professional development features.',
-        category: 'Professional Network',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
-        price: 29.99,
-        currency: 'USD',
-        featuredBenefit: 'Connect and engage with industry professionals',
+}
+
+// Function to add Zee5 product to the database
+async function addZee5Product() {
+  try {
+    // Check if Zee5 already exists
+    const products = await ProductAPI.getProducts();
+    const zee5Product = products.find(p => p.name === "Zee5");
+    
+    if (!zee5Product) {
+      console.log("Adding Zee5 product to database...");
+      
+      // Add Zee5 product
+      const newZee5Product = {
+        name: "Zee5",
+        description: "India's largest streaming platform with 90+ live TV channels and 1.5 lakh+ hours of content across 12 languages.",
+        category: "Entertainment",
+        logo: "https://d546-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual Zee5 logo
+        price: 99,
+        featuredBenefit: "Access to premium Zee5 original shows, movies, and live TV channels",
         benefits: [
-          'InMail Messages',
-          'Who\'s Viewed Your Profile',
-          'Applicant Insights',
-          'LinkedIn Learning'
+          "Stream on 5 devices simultaneously",
+          "Full HD and 4K streaming quality",
+          "Ad-free viewing experience",
+          "Download content for offline viewing"
         ],
-        integration: [],
+        integration: ["Android", "iOS", "Smart TV", "Web"],
         popularity: 92,
         rating: 4.6,
         reviews: 12500,
-        users: 75000,
+        users: 50000000, // Changed from "50M+" string to a numeric value
         inStock: true,
         isHot: true,
-        banner: '',
-        color: '#0077B5',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
-        vendor: 'LinkedIn'
-      });
-      console.log("LinkedIn Premium added successfully.");
-    } catch (error) {
-      console.error("Error adding LinkedIn Premium:", error);
+        banner: "https://d546-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual banner
+        color: "#8B5CF6", // Purple color
+        vendor: "Zee Entertainment"
+      };
+      
+      await ProductAPI.addProduct(newZee5Product);
+      console.log("Zee5 product added successfully");
+    } else {
+      console.log("Zee5 product already exists in database");
     }
-  } else {
-    console.log("LinkedIn Premium already exists:", linkedinProduct.id);
+  } catch (error) {
+    console.error("Error adding Zee5 product:", error);
   }
-  
-  // Ensure Salesforce product exists
-  const salesforceProduct = await ProductAPI.getProductByNameOrId('Salesforce');
-  if (!salesforceProduct) {
-    console.log("Adding Salesforce product...");
-    try {
-      await ProductAPI.addProduct({
-        name: 'Salesforce',
-        description: 'Customer relationship management platform that brings companies and customers together.',
-        category: 'CRM',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/2560px-Salesforce.com_logo.svg.png',
-        price: 25,
-        currency: 'USD',
-        featuredBenefit: 'Manage customer relationships effectively',
-        benefits: [
-          'Contact Management',
-          'Lead Management',
-          'Sales Forecasting',
-          'Workflow Automation'
-        ],
-        integration: ['Microsoft 365', 'Google Workspace', 'Slack'],
-        popularity: 88,
-        rating: 4.5,
-        reviews: 15000,
-        users: 150000,
-        inStock: true,
-        isHot: true,
-        banner: '',
-        color: '#00A1E0',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/2560px-Salesforce.com_logo.svg.png',
-        vendor: 'Salesforce'
-      });
-      console.log("Salesforce added successfully.");
-    } catch (error) {
-      console.error("Error adding Salesforce:", error);
-    }
-  } else {
-    console.log("Salesforce already exists:", salesforceProduct.id);
-  }
-  
-  console.log("Database initialization completed.");
-  return true;
 }
 
-// Ensure all necessary bundles exist
-export async function initializeBundles() {
-  // Stub function for now - would create default bundles
-  return true;
-}
-
-// Check if any schema migrations are needed
-export async function checkForMigrations() {
-  // For now, this is just a placeholder
-  return true;
-}
-
-// Main initialization function - call this at application startup
-export async function initializeApp() {
-  console.log("Initializing application...");
-  
-  // Initialize database
-  const dbInitialized = await initializeDatabase();
-  if (!dbInitialized) {
-    console.warn("Database initialization incomplete. Some features may not work correctly.");
-  }
-  
-  // Initialize bundles
-  const bundlesInitialized = await initializeBundles();
-  if (!bundlesInitialized) {
-    console.warn("Bundles initialization incomplete. Some features may not work correctly.");
-  }
-  
-  // Check for migrations
-  const migrationsChecked = await checkForMigrations();
-  if (!migrationsChecked) {
-    console.warn("Migration check failed. Application may not work correctly.");
-  }
-  
-  console.log("Application initialization completed.");
-  return dbInitialized && bundlesInitialized && migrationsChecked;
-}
+// Initialize the database when the app starts
+initializeDatabase().catch(error => {
+  console.error("Failed to initialize database:", error);
+});

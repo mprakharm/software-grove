@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { transformProductToSupabase } from './transformers';
@@ -115,7 +114,6 @@ export async function seedDatabaseWithFrontendData() {
           category: 'Professional Network',
           logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
           price: 29.99,
-          currency: 'USD',
           featured_benefit: 'Connect and engage with industry professionals',
           benefits: [
             'InMail Messages',
@@ -167,7 +165,6 @@ export async function seedDatabaseWithFrontendData() {
       category: 'Professional Network',
       logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png',
       price: 29.99,
-      currency: 'USD',
       featured_benefit: 'Connect and engage with industry professionals',
       benefits: [
         'InMail Messages',
@@ -197,7 +194,6 @@ export async function seedDatabaseWithFrontendData() {
         category: item.category || 'Other',
         logo: item.image || 'https://placehold.co/100x100',
         price: price || 0,
-        currency: 'USD', // Add default currency
         // Handle missing properties in the frontend data
         featuredBenefit: null,
         benefits: [],

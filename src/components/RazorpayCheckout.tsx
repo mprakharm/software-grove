@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
+// Remove the problematic import
+// import Razorpay from 'razorpay';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -30,7 +31,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const handlePayment = async () => {
     if (!user) {
@@ -60,11 +60,11 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
       // Call Razorpay API directly
       const razorpayApiUrl = `${RATAN_NGROK_API_BASE_URL}/razorpay_order_create`;
-      console.log('Creating Razorpay order:', orderData);
       const response = await fetch(razorpayApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
         },
         body: JSON.stringify(orderData)
       });
@@ -97,71 +97,37 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
             try {
               console.log('Payment successful:', response);
               
-              // Get current date and calculate end date (1 month later)
-              const startDate = new Date();
-              const endDate = new Date(startDate);
-              endDate.setMonth(endDate.getMonth() + 1);
-              
-              // Store purchase record
-              const purchaseData = {
-                userId: user.id,
-                productId: productId,
-                bundleId: null,
-                planId: planId,
-                planName: planName,
-                amount: amount,
-                currency: currency,
-                paymentMethod: 'Razorpay',
-                transactionId: response.razorpay_payment_id,
-                invoiceUrl: null,
-                startDate: startDate.toISOString(),
-                endDate: endDate.toISOString(),
-                autoRenew: true
-              };
-              
-              console.log('Sending payment data to store-payment API:', purchaseData);
-              
-              // Store payment in database
+              // Store order in database
               const storeResult = await fetch('/api/razorpay/store-payment', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(purchaseData)
+                body: JSON.stringify({
+                  orderId: response.razorpay_order_id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                  userId: user.id,
+                  productId: productId,
+                  planId: planId,
+                  amount: amount,
+                  planName: planName
+                })
               });
               
-              const storeResultJson = await storeResult.json();
-              console.log('Store payment API response:', storeResultJson);
-              
               if (!storeResult.ok) {
-                console.error('Failed to store payment:', storeResultJson);
-                toast({
-                  title: "Payment Processing Error",
-                  description: "Your payment was successful, but we couldn't save your subscription data. Please contact support.",
-                  variant: "destructive"
-                });
-              } else {
-                // Force invalidate any existing subscription queries to ensure a refresh
-                console.log('Invalidating queries to refresh subscription data');
-                queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-                queryClient.invalidateQueries({ queryKey: ['purchases'] });
-                queryClient.invalidateQueries({ queryKey: ['subscriptions', user.id] });
-                queryClient.invalidateQueries({ queryKey: ['purchases', user.id] });
-                
-                // Also refresh subscriptions through the auth context
-                console.log('Refreshing subscriptions via auth context');
-                await refreshSubscriptions();
-                
-                toast({
-                  title: "Payment Successful",
-                  description: "Your subscription has been activated successfully!",
-                });
-                
-                // Add a small delay before calling onSuccess to allow state updates
-                setTimeout(() => {
-                  onSuccess();
-                }, 500);
+                console.error('Failed to store payment:', await storeResult.text());
               }
+              
+              // Refresh user subscriptions
+              await refreshSubscriptions();
+              
+              toast({
+                title: "Payment Successful",
+                description: "Your subscription has been activated successfully!",
+              });
+              
+              onSuccess();
             } catch (error) {
               console.error('Payment verification failed:', error);
               toast({
@@ -169,8 +135,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 description: "We couldn't verify your payment. Please contact support.",
                 variant: "destructive"
               });
-            } finally {
-              setIsLoading(false);
             }
           },
           prefill: {
@@ -208,6 +172,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         description: "We couldn't start the payment process. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setIsLoading(false);
     }
   };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BundleCard from '@/components/BundleCard';
@@ -8,39 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BUNDLE_CATEGORIES } from '@/data/bundlesData';
 import { BundleAPI } from '@/utils/api';
-import { Bundle as DbBundle } from '@/utils/db';
-import { Bundle as UiBundle } from '@/data/bundlesData';
-
-const adaptBundleToBundleCard = (dbBundle: DbBundle): UiBundle => {
-  return {
-    id: dbBundle.id,
-    name: dbBundle.name,
-    description: dbBundle.description,
-    category: dbBundle.category,
-    targetUser: dbBundle.targetUser,
-    products: (dbBundle.products || []).map(product => ({
-      productId: product.id,
-      individualPrice: product.price,
-      bundlePrice: product.price - (product.discount || 0)
-    })),
-    minProducts: dbBundle.minProducts,
-    maxProducts: dbBundle.maxProducts,
-    requiredProductIds: dbBundle.requiredProductIds,
-    image: dbBundle.image,
-    savings: dbBundle.savings,
-    isCustomizable: dbBundle.isCustomizable,
-    isLimitedTime: dbBundle.isLimitedTime,
-    expiryDate: dbBundle.expiryDate,
-    color: dbBundle.color
-  };
-};
+import { Bundle } from '@/utils/db';
 
 const BundlesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [bundles, setBundles] = useState<DbBundle[]>([]);
+  const [bundles, setBundles] = useState<Bundle[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Fetch bundles from API
   useEffect(() => {
     const fetchBundles = async () => {
       try {
@@ -67,11 +44,13 @@ const BundlesPage = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // Already filtered above
   };
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
         <div className="relative bg-blue-600 rounded-2xl overflow-hidden mb-12">
           <div className="absolute inset-0 opacity-20 bg-pattern"></div>
           <div className="relative py-16 px-8 text-center text-white">
@@ -96,6 +75,7 @@ const BundlesPage = () => {
           </div>
         </div>
 
+        {/* Search and Filter */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold mb-2">Explore Bundles</h2>
@@ -124,6 +104,7 @@ const BundlesPage = () => {
           </div>
         </div>
 
+        {/* Tabs for Categories */}
         <Tabs defaultValue="All" className="mb-8">
           <TabsList className="mb-6 flex flex-wrap h-auto">
             <TabsTrigger value="All" onClick={() => setActiveCategory('All')}>
@@ -141,6 +122,7 @@ const BundlesPage = () => {
           </TabsList>
         </Tabs>
 
+        {/* Bundles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {loading ? (
             <div className="col-span-3 text-center py-8">Loading bundles...</div>
@@ -149,9 +131,10 @@ const BundlesPage = () => {
           ) : (
             <>
               {filteredBundles.map(bundle => (
-                <BundleCard key={bundle.id} bundle={adaptBundleToBundleCard(bundle)} />
+                <BundleCard key={bundle.id} bundle={bundle} />
               ))}
               
+              {/* Custom Bundle Card */}
               <Link to="/bundle-builder" className="block transform transition-all duration-300 hover:-translate-y-1">
                 <div className="h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 flex flex-col items-center justify-center p-8 text-center bg-gray-50 hover:bg-blue-50">
                   <div className="bg-blue-100 rounded-full p-4 mb-4">
@@ -168,6 +151,7 @@ const BundlesPage = () => {
           )}
         </div>
 
+        {/* Benefits Section */}
         <div className="mt-16 mb-12">
           <h2 className="text-2xl font-bold mb-8 text-center">Benefits of Bundles</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -208,6 +192,7 @@ const BundlesPage = () => {
         </div>
       </div>
       
+      {/* CSS for the pattern background */}
       <style>
         {`
         .bg-pattern {
