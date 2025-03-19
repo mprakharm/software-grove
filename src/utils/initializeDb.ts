@@ -69,7 +69,7 @@ async function addZee5Product() {
         popularity: 92,
         rating: 4.6,
         reviews: 12500,
-        users: "50M+",
+        users: 50000000, // Changed from "50M+" string to a numeric value
         inStock: true,
         isHot: true,
         banner: "https://d546-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual banner
