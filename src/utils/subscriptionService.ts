@@ -14,7 +14,7 @@ interface SubscriptionData {
   endDate: string;
   amount: number;
   currency?: string;
-  status: 'active' | 'expired' | 'canceled';
+  status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial'
   planName?: string;
 }
 

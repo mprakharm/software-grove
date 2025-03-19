@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Subscription type definition
+// Subscription type definition with updated status type
 interface Subscription {
   id: string;
   userId: string;
@@ -46,7 +45,7 @@ interface Subscription {
   planName?: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'expired' | 'canceled';
+  status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial' as a valid status
   price: number;
   currency?: string;
   name: string;
