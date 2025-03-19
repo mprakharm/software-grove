@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import {useRazorpay, RazorpayOptions} from "react-razorpay";
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 
 interface VendorPlan {
   id: string;
@@ -66,7 +66,6 @@ const SubscriptionPage = () => {
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { error, isLoading, Razorpay } = useRazorpay();
   
   const isStreamingOrSocialProduct = () => {
     if (!productId || !product) return false;
@@ -156,7 +155,7 @@ const SubscriptionPage = () => {
             features: featuresList,
             popular: true,
             billingOptions: ['standard'],
-            discountPercentage: plan.plan_mrp && plan.plan_cost
+            discountPercentage: plan.plan_mrp && plan.plan_cost 
               ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100)
               : 0,
             currency: plan.currency?.toUpperCase() || 'INR'
@@ -243,86 +242,21 @@ const SubscriptionPage = () => {
     fetchVendorPlans();
   };
 
-  const createRazorpayOrder = async (
-    productId: string,
-    planId: string,
-    planName: string,
-    amount: number
-  ) => {
-    try {
-      const orderData = await ApiService.createRazorpayOrder({
-        amount: amount * 100,
-        currency: 'INR',
-        notes: {
-          product_id: productId,
-          plan_id: planId,
-          plan_name: planName
-        }
-      });
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful",
+      description: "Your subscription has been activated successfully!",
+    });
+    navigate('/subscriptions');
+  };
 
-      const options: RazorpayOptions = {
-        key: 'rzp_test_Qk71AJmUSRc1Oi',
-        amount: amount * 100,
-        currency: 'INR',
-        name: 'SaaS Market',
-        description: `${planName} Subscription`,
-        order_id: orderData.id,
-        handler: async function(response: any) {
-          try {
-            await ApiService.processRazorpayPayment({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature
-            });
-            
-            await refreshSubscriptions();
-            
-            toast({
-              title: "Payment Successful",
-              description: "Your subscription has been activated successfully!",
-            });
-            
-            navigate('/subscriptions');
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            toast({
-              title: "Payment Verification Failed",
-              description: "We couldn't verify your payment. Please contact support.",
-              variant: "destructive"
-            });
-          } finally {
-            setIsSubmitting(false);
-          }
-        },
-        prefill: {
-          email: user!.email,
-        },
-        theme: {
-          color: '#6366F1',
-        },
-        modal: {
-          ondismiss: function() {
-            setIsSubmitting(false);
-            toast({
-              title: "Payment Cancelled",
-              description: "You can try again when you're ready.",
-              variant: "default"
-            });
-          }
-        }
-      };
-
-      const razorpay = new Razorpay(options);
-      razorpay.open();
-    } catch (error) {
-      console.error('Error initiating payment:', error);
-      toast({
-        title: "Payment Initiation Failed",
-        description: "We couldn't start the payment process. Please try again.",
-        variant: "destructive"
-      });
-      setIsSubmitting(false);
-    }
+  const handlePaymentCancel = () => {
+    setIsSubmitting(false);
+    toast({
+      title: "Payment Cancelled",
+      description: "You can try again when you're ready.",
+      variant: "default"
+    });
   };
 
   const handleCompletePurchase = () => {
@@ -346,15 +280,6 @@ const SubscriptionPage = () => {
     }
 
     setIsSubmitting(true);
-    
-    const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
-    
-    createRazorpayOrder(
-      product!.id,
-      selectedPlan,
-      selectedVendorPlan.name,
-      amount
-    );
   };
 
   const getCurrencySymbol = (currency?: string): string => {
@@ -653,20 +578,19 @@ const SubscriptionPage = () => {
               )}
               
               <div className="flex justify-end">
-                <Button 
-                  size="lg" 
-                  onClick={handleCompletePurchase}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                      Processing...
-                    </>
-                  ) : (
-                    'Complete Purchase'
-                  )}
-                </Button>
+                {selectedVendorPlan && (
+                  <div className="w-full max-w-xs">
+                    <RazorpayCheckout
+                      productId={product?.id || ''}
+                      planId={selectedPlan}
+                      planName={selectedVendorPlan.name}
+                      amount={calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage)}
+                      currency={selectedVendorPlan.currency}
+                      onSuccess={handlePaymentSuccess}
+                      onCancel={handlePaymentCancel}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -677,4 +601,3 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
-
