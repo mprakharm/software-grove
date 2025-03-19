@@ -64,7 +64,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
         },
         body: JSON.stringify(orderData)
       });
@@ -97,26 +96,63 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
             try {
               console.log('Payment successful:', response);
               
-              // Store order in database
+              // Store purchase record
+              const purchaseData = {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                userId: user.id,
+                productId: productId,
+                planId: planId,
+                planName: planName,
+                amount: amount,
+                currency: currency,
+                paymentMethod: 'Razorpay',
+                transactionId: response.razorpay_payment_id
+              };
+              
+              // Store payment in database
               const storeResult = await fetch('/api/razorpay/store-payment', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                  orderId: response.razorpay_order_id,
-                  paymentId: response.razorpay_payment_id,
-                  signature: response.razorpay_signature,
-                  userId: user.id,
-                  productId: productId,
-                  planId: planId,
-                  amount: amount,
-                  planName: planName
-                })
+                body: JSON.stringify(purchaseData)
               });
               
               if (!storeResult.ok) {
                 console.error('Failed to store payment:', await storeResult.text());
+              }
+              
+              // Create subscription record
+              const today = new Date();
+              const subscriptionEndDate = new Date(today);
+              // Default to monthly plan (adjust as needed based on plan details)
+              subscriptionEndDate.setMonth(today.getMonth() + 1);
+              
+              const subscriptionData = {
+                userId: user.id,
+                productId: productId,
+                planId: planId,
+                planName: planName,
+                startDate: today.toISOString(),
+                endDate: subscriptionEndDate.toISOString(),
+                autoRenew: true,
+                price: amount,
+                currency: currency,
+                status: 'active',
+              };
+              
+              const subscriptionResult = await fetch('/api/subscriptions/create', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(subscriptionData)
+              });
+              
+              if (!subscriptionResult.ok) {
+                console.error('Failed to create subscription:', await subscriptionResult.text());
               }
               
               // Refresh user subscriptions

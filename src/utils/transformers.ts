@@ -1,5 +1,4 @@
 
-
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -127,11 +126,15 @@ export function transformSubscriptionFromSupabase(
     productId: supabaseSub.product_id,
     bundleId: supabaseSub.bundle_id,
     planId: supabaseSub.plan_id,
+    planName: supabaseSub.plan_name,
     startDate: new Date(supabaseSub.start_date),
     endDate: new Date(supabaseSub.end_date),
     autoRenew: supabaseSub.auto_renew,
     price: supabaseSub.price,
-    currency: supabaseSub.currency || 'USD'
+    currency: supabaseSub.currency || 'USD',
+    status: supabaseSub.status as 'active' | 'expired' | 'cancelled',
+    cancellationDate: supabaseSub.cancellation_date ? new Date(supabaseSub.cancellation_date) : undefined,
+    cancellationReason: supabaseSub.cancellation_reason
   };
 }
 
@@ -144,11 +147,15 @@ export function transformSubscriptionToSupabase(
     product_id: subscription.productId,
     bundle_id: subscription.bundleId,
     plan_id: subscription.planId,
+    plan_name: subscription.planName,
     start_date: subscription.startDate.toISOString(),
     end_date: subscription.endDate.toISOString(),
     auto_renew: subscription.autoRenew,
     price: subscription.price,
     currency: subscription.currency || 'USD',
+    status: subscription.status,
+    cancellation_date: subscription.cancellationDate?.toISOString(),
+    cancellation_reason: subscription.cancellationReason,
     created_at: new Date().toISOString()
   };
 }
@@ -163,10 +170,14 @@ export function transformPurchaseFromSupabase(
     productId: supabasePurchase.product_id,
     bundleId: supabasePurchase.bundle_id,
     planId: supabasePurchase.plan_id,
+    planName: supabasePurchase.plan_name,
     date: new Date(supabasePurchase.date),
     amount: supabasePurchase.amount,
     currency: supabasePurchase.currency || 'USD',
-    status: supabasePurchase.status as 'completed' | 'pending' | 'failed'
+    status: supabasePurchase.status as 'completed' | 'pending' | 'failed',
+    paymentMethod: supabasePurchase.payment_method,
+    transactionId: supabasePurchase.transaction_id,
+    invoiceUrl: supabasePurchase.invoice_url
   };
 }
 
@@ -179,11 +190,14 @@ export function transformPurchaseToSupabase(
     product_id: purchase.productId,
     bundle_id: purchase.bundleId,
     plan_id: purchase.planId,
+    plan_name: purchase.planName,
     date: purchase.date.toISOString(),
     amount: purchase.amount,
     currency: purchase.currency || 'USD',
     status: purchase.status,
+    payment_method: purchase.paymentMethod,
+    transaction_id: purchase.transactionId,
+    invoice_url: purchase.invoiceUrl,
     created_at: new Date().toISOString()
   };
 }
-

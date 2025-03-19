@@ -156,11 +156,15 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id: string
+          plan_name: string
           start_date: string
           end_date: string
           auto_renew: boolean
           price: number
           currency?: string
+          status: string  // 'active', 'expired', 'cancelled'
+          cancellation_date?: string
+          cancellation_reason?: string
           created_at: string
         }
         Insert: {
@@ -169,11 +173,15 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id: string
+          plan_name: string
           start_date: string
           end_date: string
           auto_renew: boolean
           price: number
           currency?: string
+          status: string
+          cancellation_date?: string
+          cancellation_reason?: string
           created_at?: string
         }
         Update: {
@@ -182,11 +190,15 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id?: string
+          plan_name?: string
           start_date?: string
           end_date?: string
           auto_renew?: boolean
           price?: number
           currency?: string
+          status?: string
+          cancellation_date?: string
+          cancellation_reason?: string
           created_at?: string
         }
       }
@@ -197,10 +209,14 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id: string
+          plan_name: string
           date: string
           amount: number
           currency?: string
           status: string
+          payment_method: string
+          transaction_id: string
+          invoice_url?: string
           created_at: string
         }
         Insert: {
@@ -209,10 +225,14 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id: string
+          plan_name: string
           date: string
           amount: number
           currency?: string
           status: string
+          payment_method: string
+          transaction_id: string
+          invoice_url?: string
           created_at?: string
         }
         Update: {
@@ -221,10 +241,14 @@ export interface Database {
           product_id?: string
           bundle_id?: string
           plan_id?: string
+          plan_name?: string
           date?: string
           amount?: number
           currency?: string
           status?: string
+          payment_method?: string
+          transaction_id?: string
+          invoice_url?: string
           created_at?: string
         }
       }
@@ -240,4 +264,3 @@ export interface Database {
     }
   }
 }
-
