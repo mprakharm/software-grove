@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import RazorpayCheckout from '@/components/RazorpayCheckout';
+import useRazorpay from 'react-razorpay';
 
 interface VendorPlan {
   id: string;
@@ -311,7 +311,8 @@ const SubscriptionPage = () => {
         }
       };
 
-      const razorpay = new window.Razorpay(options);
+      const [Razorpay] = useRazorpay();
+      const razorpay = new Razorpay(options);
       razorpay.open();
     } catch (error) {
       console.error('Error initiating payment:', error);
