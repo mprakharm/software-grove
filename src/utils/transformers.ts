@@ -68,7 +68,9 @@ export function transformBundleFromSupabase(
   supabaseBundle: Database['public']['Tables']['bundles']['Row']
 ): Bundle {
   // Parse products JSON from Supabase
-  const productsData = supabaseBundle.products as BundleProduct[] || [];
+  const productsData = Array.isArray(supabaseBundle.products) 
+    ? supabaseBundle.products as unknown as BundleProduct[] 
+    : [];
   
   return {
     id: supabaseBundle.id,
@@ -100,7 +102,7 @@ export function transformBundleToSupabase(
     description: bundle.description,
     category: bundle.category,
     target_user: bundle.targetUser,
-    products: bundle.products,
+    products: bundle.products as unknown as Database['public']['Tables']['bundles']['Insert']['products'],
     min_products: bundle.minProducts,
     max_products: bundle.maxProducts,
     required_product_ids: bundle.requiredProductIds,
@@ -132,7 +134,7 @@ export function transformSubscriptionFromSupabase(
     autoRenew: supabaseSub.auto_renew,
     price: supabaseSub.price,
     currency: supabaseSub.currency || 'USD',
-    status: supabaseSub.status as 'active' | 'expired' | 'cancelled',
+    status: supabaseSub.status as 'active' | 'expired' | 'cancelled' | 'trial',
     cancellationDate: supabaseSub.cancellation_date ? new Date(supabaseSub.cancellation_date) : undefined,
     cancellationReason: supabaseSub.cancellation_reason
   };

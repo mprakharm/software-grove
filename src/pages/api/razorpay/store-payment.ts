@@ -1,20 +1,18 @@
 
 import { supabase } from '@/utils/supabase';
-import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+  req: Request
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
     const {
-      orderId,
-      paymentId,
-      signature,
       userId,
       productId,
       bundleId,
@@ -23,56 +21,62 @@ export default async function handler(
       amount,
       currency,
       paymentMethod,
-      transactionId
-    } = req.body;
+      transactionId,
+      invoiceUrl,
+      startDate,
+      endDate,
+      autoRenew
+    } = await req.json();
 
     // Validate required fields
-    if (!userId || !planId || !amount || !paymentId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!userId || !amount || !transactionId || !planId) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    // Create the purchase record
-    const { data, error } = await supabase
+    // Create a purchase record
+    const purchaseResult = await supabase
       .from('purchases')
       .insert({
         user_id: userId,
         product_id: productId,
         bundle_id: bundleId,
         plan_id: planId,
-        plan_name: planName || 'Subscription Plan',
+        plan_name: planName,
         date: new Date().toISOString(),
-        amount: amount,
+        amount,
         currency: currency || 'USD',
         status: 'completed',
-        payment_method: paymentMethod || 'Razorpay',
-        transaction_id: transactionId || paymentId,
+        payment_method: paymentMethod,
+        transaction_id: transactionId,
+        invoice_url: invoiceUrl,
         created_at: new Date().toISOString()
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating purchase record:', error);
-      return res.status(500).json({ error: 'Failed to store payment' });
+    if (purchaseResult.error) {
+      console.error('Error creating purchase record:', purchaseResult.error);
+      return new Response(JSON.stringify({ error: 'Failed to store payment information' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    // Create or update a subscription record
-    const today = new Date();
-    const endDate = new Date(today);
-    // Default to monthly subscription (adjust as needed)
-    endDate.setMonth(today.getMonth() + 1);
-
-    const { data: subscriptionData, error: subscriptionError } = await supabase
+    // Create a subscription record
+    const subscriptionResult = await supabase
       .from('subscriptions')
       .insert({
         user_id: userId,
         product_id: productId,
         bundle_id: bundleId,
         plan_id: planId,
-        plan_name: planName || 'Subscription Plan',
-        start_date: today.toISOString(),
-        end_date: endDate.toISOString(),
-        auto_renew: true,
+        plan_name: planName,
+        start_date: startDate || new Date().toISOString(),
+        end_date: endDate,
+        auto_renew: autoRenew || false,
         price: amount,
         currency: currency || 'USD',
         status: 'active',
@@ -81,17 +85,25 @@ export default async function handler(
       .select()
       .single();
 
-    if (subscriptionError) {
-      console.error('Error creating subscription record:', subscriptionError);
-      // Continue processing even if subscription creation fails
+    if (subscriptionResult.error) {
+      console.error('Error creating subscription record:', subscriptionResult.error);
+      // Continue since we already stored the payment
     }
 
-    return res.status(201).json({
-      purchase: data,
-      subscription: subscriptionData || null
+    // Return both purchase and subscription records
+    return new Response(JSON.stringify({
+      purchase: purchaseResult.data,
+      subscription: subscriptionResult.data || null,
+      success: true
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Error in store payment API:', error);
-    return res.status(500).json({ error: 'An unexpected error occurred' });
+    console.error('Error processing payment storage:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

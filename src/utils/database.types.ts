@@ -162,7 +162,7 @@ export interface Database {
           auto_renew: boolean
           price: number
           currency?: string
-          status: string  // 'active', 'expired', 'cancelled'
+          status: string  // 'active', 'expired', 'cancelled', 'trial'
           cancellation_date?: string
           cancellation_reason?: string
           created_at: string
@@ -179,7 +179,7 @@ export interface Database {
           auto_renew: boolean
           price: number
           currency?: string
-          status: string
+          status: string  // 'active', 'expired', 'cancelled', 'trial'
           cancellation_date?: string
           cancellation_reason?: string
           created_at?: string
@@ -196,7 +196,7 @@ export interface Database {
           auto_renew?: boolean
           price?: number
           currency?: string
-          status?: string
+          status?: string  // 'active', 'expired', 'cancelled', 'trial'
           cancellation_date?: string
           cancellation_reason?: string
           created_at?: string

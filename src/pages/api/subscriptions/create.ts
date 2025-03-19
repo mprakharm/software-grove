@@ -1,13 +1,15 @@
 
 import { supabase } from '@/utils/supabase';
-import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+  req: Request
 ) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
@@ -23,11 +25,14 @@ export default async function handler(
       price,
       currency,
       status,
-    } = req.body;
+    } = await req.json();
 
     // Validate required fields
     if (!userId || !planId || !startDate || !endDate) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Create the subscription record
@@ -52,12 +57,21 @@ export default async function handler(
 
     if (error) {
       console.error('Error creating subscription:', error);
-      return res.status(500).json({ error: 'Failed to create subscription' });
+      return new Response(JSON.stringify({ error: 'Failed to create subscription' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    return res.status(201).json(data);
+    return new Response(JSON.stringify(data), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error('Error in subscription creation API:', error);
-    return res.status(500).json({ error: 'An unexpected error occurred' });
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

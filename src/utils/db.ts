@@ -67,7 +67,7 @@ export interface Subscription {
   autoRenew: boolean;
   price: number;
   currency: string;
-  status: 'active' | 'expired' | 'cancelled';
+  status: 'active' | 'expired' | 'cancelled' | 'trial';
   cancellationDate?: Date;
   cancellationReason?: string;
 }
@@ -94,7 +94,6 @@ export interface ExtendedSubscription extends Subscription {
   name: string;
   image?: string;
   plan: string;
-  status: 'active' | 'expired' | 'cancelled' | 'trial';
   renewalDate: string;
   monthlyPrice: number;
   users: number;

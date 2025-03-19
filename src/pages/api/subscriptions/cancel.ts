@@ -1,21 +1,26 @@
 
 import { supabase } from '@/utils/supabase';
-import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+  req: Request
 ) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
-    const { subscriptionId, userId, reason } = req.body;
+    const { subscriptionId, userId, reason } = await req.json();
 
     // Validate required fields
     if (!subscriptionId || !userId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Verify the user owns this subscription
@@ -27,7 +32,10 @@ export default async function handler(
       .single();
 
     if (fetchError || !subscription) {
-      return res.status(404).json({ error: 'Subscription not found or does not belong to user' });
+      return new Response(JSON.stringify({ error: 'Subscription not found or does not belong to user' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Update the subscription status
@@ -45,12 +53,21 @@ export default async function handler(
 
     if (error) {
       console.error('Error cancelling subscription:', error);
-      return res.status(500).json({ error: 'Failed to cancel subscription' });
+      return new Response(JSON.stringify({ error: 'Failed to cancel subscription' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    return res.status(200).json(data);
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error('Error in subscription cancellation API:', error);
-    return res.status(500).json({ error: 'An unexpected error occurred' });
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
