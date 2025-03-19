@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import useRazorpay from 'react-razorpay';
+import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
 
 interface VendorPlan {
   id: string;
@@ -311,7 +311,7 @@ const SubscriptionPage = () => {
         }
       };
 
-      const [Razorpay] = useRazorpay();
+      const { error, isLoading, Razorpay } = useRazorpay();
       const razorpay = new Razorpay(options);
       razorpay.open();
     } catch (error) {

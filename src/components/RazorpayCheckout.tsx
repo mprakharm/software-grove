@@ -28,7 +28,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
-  const [Razorpay] = useRazorpay();
+  const { error, isLoadingRazorpay, Razorpay } = useRazorpay();
 
   const handlePayment = async () => {
     if (!user) {
