@@ -38,7 +38,7 @@ export function initializeApiIntegrations() {
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-
+        headers: { "ngrok-skip-browser-warning": "true" }
       });
       
       console.log('Server-side: LinkedIn API response status:', response.status);
