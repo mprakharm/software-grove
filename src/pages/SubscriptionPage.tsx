@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -66,14 +67,41 @@ const SubscriptionPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // Determine if current product is a streaming or social product
   const isStreamingOrSocialProduct = () => {
     if (!productId || !product) return false;
     return productId === 'zee5' || 
            productId === 'linkedin-premium' || 
            productId === 'linkedin' ||
-           (product.name.toLowerCase().includes('zee5') || 
-            product.name.toLowerCase().includes('linkedin'));
+           (product.name && (
+             product.name.toLowerCase().includes('zee5') || 
+             product.name.toLowerCase().includes('linkedin')
+           ));
   };
+
+  // Fetch product details on component mount
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      if (!productId) return;
+      
+      setIsLoadingProduct(true);
+      try {
+        const fetchedProduct = await ProductAPI.getProductById(productId);
+        setProduct(fetchedProduct);
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        toast({
+          title: "Product not found",
+          description: "We couldn't find the product you're looking for.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingProduct(false);
+      }
+    };
+    
+    fetchProductDetails();
+  }, [productId, toast]);
 
   const normalizeAPIPlans = (apiPlans: any[]): VendorPlan[] => {
     if (!apiPlans || !Array.isArray(apiPlans) || apiPlans.length === 0) {
@@ -210,82 +238,8 @@ const SubscriptionPage = () => {
     return price;
   };
 
-  if (isLoadingProduct) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading product details...</p>
-        </div>
-      </Layout>
-    );
-  }
-  
-  if (!product) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-          <p className="text-gray-600 mb-8">The product you're looking for doesn't exist.</p>
-          <Button asChild>
-            <Link to="/">Return to Home</Link>
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-
-  const breadcrumbItems = [
-    {
-      label: product?.category || 'Products',
-      href: `/category/${product?.category?.toLowerCase() || 'all'}`,
-    },
-    {
-      label: product?.name || 'Product',
-      href: `/product/${product?.id}`,
-    },
-    {
-      label: 'Subscribe',
-      href: `/subscription/${product?.id}`,
-    },
-  ];
-  
-  const selectedVendorPlan = vendorPlans.find(plan => plan.id === selectedPlan);
-  
   const handleInitialSubscribe = () => {
     fetchVendorPlans();
-  };
-
-  const handleCompletePurchase = () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to subscribe to this service.",
-        variant: "destructive"
-      });
-      navigate('/sign-in');
-      return;
-    }
-
-    if (!selectedVendorPlan) {
-      toast({
-        title: "Please select a plan",
-        description: "You need to select a subscription plan to continue.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
-    
-    createRazorpayOrder(
-      product!.id,
-      selectedPlan,
-      selectedVendorPlan.name,
-      amount
-    );
   };
 
   const createRazorpayOrder = async (
@@ -370,6 +324,39 @@ const SubscriptionPage = () => {
     }
   };
 
+  const handleCompletePurchase = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to subscribe to this service.",
+        variant: "destructive"
+      });
+      navigate('/sign-in');
+      return;
+    }
+
+    if (!selectedVendorPlan) {
+      toast({
+        title: "Please select a plan",
+        description: "You need to select a subscription plan to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
+    
+    // Directly trigger Razorpay checkout when Complete Purchase is clicked
+    createRazorpayOrder(
+      product!.id,
+      selectedPlan,
+      selectedVendorPlan.name,
+      amount
+    );
+  };
+
   if (isLoadingProduct) {
     return (
       <Layout>
@@ -394,6 +381,23 @@ const SubscriptionPage = () => {
       </Layout>
     );
   }
+
+  const breadcrumbItems = [
+    {
+      label: product?.category || 'Products',
+      href: `/category/${product?.category?.toLowerCase() || 'all'}`,
+    },
+    {
+      label: product?.name || 'Product',
+      href: `/product/${product?.id}`,
+    },
+    {
+      label: 'Subscribe',
+      href: `/subscription/${product?.id}`,
+    },
+  ];
+  
+  const selectedVendorPlan = vendorPlans.find(plan => plan.id === selectedPlan);
   
   return (
     <Layout>
