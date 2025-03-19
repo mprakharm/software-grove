@@ -8,8 +8,8 @@ export async function initializeDatabase() {
     // Register Zee5 API handler (using LinkedIn's handler as a template)
     VendorAPI.registerApiHandler('zee5', async (product) => {
       console.log('Using Zee5 API handler');
-      // For now, use LinkedIn's mock plans with Zee5 branding
-      return await VendorAPI.getMockPlans('linkedin-premium');
+      // Use the same API endpoint as LinkedIn Premium
+      return await VendorAPI.apiRegistry['linkedin-premium'].handler(product);
     });
 
     // Check table access

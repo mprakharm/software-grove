@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -97,13 +96,15 @@ const SubscriptionPage = () => {
       return [];
     }
     
-    // For LinkedIn Premium specifically
-    if (productId === 'linkedin-premium' || productId === 'linkedin' || (product && product.name.toLowerCase().includes('linkedin'))) {
-      console.log('Normalizing LinkedIn Premium plans from API:', apiPlans);
+    // For both LinkedIn Premium and Zee5
+    if (productId === 'linkedin-premium' || productId === 'linkedin' || productId === 'zee5' ||
+        (product && (product.name.toLowerCase().includes('linkedin') || product.name.toLowerCase().includes('zee5')))) {
+      
+      console.log('Normalizing plans from API for:', product?.name, apiPlans);
       
       try {
-        // Check for specific LinkedIn plan_id as requested
-        let linkedInPlan: ApiPlan | undefined;
+        // Check for specific plan_id as requested
+        let plan: ApiPlan | undefined;
         
         // First check if we have a plan_list format
         if (apiPlans[0] && apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
@@ -112,48 +113,48 @@ const SubscriptionPage = () => {
           // Find the product that has the specific plan in its plan_list
           for (const product of apiPlans) {
             if (product.plan_list && Array.isArray(product.plan_list)) {
-              linkedInPlan = product.plan_list.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
-              if (linkedInPlan) break;
+              plan = product.plan_list.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
+              if (plan) break;
             }
           }
           
           // If not found, just take the first plan from the first product
-          if (!linkedInPlan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
-            linkedInPlan = apiPlans[0].plan_list[0];
+          if (!plan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
+            plan = apiPlans[0].plan_list[0];
           }
         } else {
           // Direct plan search at the top level
-          linkedInPlan = apiPlans.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
+          plan = apiPlans.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
           
           // If not found, take the first plan
-          if (!linkedInPlan && apiPlans.length > 0) {
-            linkedInPlan = apiPlans[0];
+          if (!plan && apiPlans.length > 0) {
+            plan = apiPlans[0];
           }
         }
         
-        console.log('Selected LinkedIn plan:', linkedInPlan);
+        console.log('Selected plan:', plan);
         
-        if (linkedInPlan) {
+        if (plan) {
           // Set default billing options since this plan doesn't have variants
           setHasMultipleBillingOptions(false);
           
           // Split features from description
-          const featuresList = linkedInPlan.plan_description 
-            ? linkedInPlan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
+          const featuresList = plan.plan_description 
+            ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
             : ['Premium feature'];
           
           console.log('Extracted features:', featuresList);
           
           return [{
-            id: linkedInPlan.plan_id || 'linkedin-premium-plan',
-            name: linkedInPlan.plan_name || 'LinkedIn Premium',
-            description: linkedInPlan.plan_activation_message || 'Premium LinkedIn Subscription',
-            price: linkedInPlan.plan_cost || linkedInPlan.plan_mrp || 29.99,
+            id: plan.plan_id || `${product?.name.toLowerCase()}-premium-plan`,
+            name: plan.plan_name || `${product?.name} Premium`,
+            description: plan.plan_activation_message || `Premium ${product?.name} Subscription`,
+            price: plan.plan_cost || plan.plan_mrp || 29.99,
             features: featuresList,
             popular: true,
             billingOptions: ['standard'], // Just one option since there's no monthly/yearly
-            discountPercentage: linkedInPlan.plan_mrp && linkedInPlan.plan_cost
-              ? Math.round(((linkedInPlan.plan_mrp - linkedInPlan.plan_cost) / linkedInPlan.plan_mrp) * 100)
+            discountPercentage: plan.plan_mrp && plan.plan_cost
+              ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100)
               : 0
           }];
         }
@@ -163,15 +164,15 @@ const SubscriptionPage = () => {
           setHasMultipleBillingOptions(false);
           
           const normalizedPlan: VendorPlan = {
-            id: plan.id || plan.plan_id || `linkedin-plan-${index}`,
-            name: plan.name || plan.plan_name || 'LinkedIn Plan',
-            description: plan.description || plan.plan_description || 'LinkedIn Premium Subscription',
+            id: plan.id || plan.plan_id || `${product?.name.toLowerCase()}-plan-${index}`,
+            name: plan.name || plan.plan_name || `${product?.name} Plan`,
+            description: plan.description || plan.plan_description || `${product?.name} Subscription`,
             price: typeof plan.price === 'number' ? plan.price : 
                    (plan.plan_cost || plan.plan_mrp || 29.99 + (index * 30)),
             features: Array.isArray(plan.features) ? plan.features : 
                      (plan.plan_description ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') : ['Premium feature']),
             popular: index === 0, // Mark the first plan as popular
-            billingOptions: ['standard'], // Just one option for LinkedIn plans
+            billingOptions: ['standard'], // Just one option
             discountPercentage: plan.discountPercentage || 
                               (plan.plan_mrp && plan.plan_cost 
                                 ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 

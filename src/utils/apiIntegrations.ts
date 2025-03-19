@@ -182,113 +182,100 @@ export function initializeApiIntegrations() {
     }
   });
 
-  // Register Zee5 API handler (same as LinkedIn Premium)
+  // Register Zee5 API handler (same API endpoint as LinkedIn Premium)
   VendorAPI.registerApiHandler('zee5', async (product) => {
-    console.log('Server-side: Using specific Zee5 API handler by product name');
+    console.log('Server-side: Using Zee5 API handler with real API endpoint');
     try {
-      // First attempt to use the linkedin-premium handler (same endpoint)
-      console.log('Server-side: Trying to use linkedin-premium API handler first for Zee5');
+      // Use the same API endpoint as LinkedIn Premium
+      const apiUrl = 'https://d547-121-242-131-242.ngrok-free.app/proxy/getfleek_list';
+      console.log('Server-side: Attempting to fetch from:', apiUrl, 'for Zee5');
       
-      // Find the handler
-      const premiumHandler = VendorAPI.apiRegistry['linkedin-premium'];
-      if (premiumHandler && premiumHandler.handler) {
-        const result = await premiumHandler.handler(product);
-        
-        // If we got a successful result (not an error object), use it
-        if (result && !result.error) {
-          console.log('Server-side: Successfully retrieved data from API handler for Zee5');
-          // Modify the data to reflect Zee5 instead of LinkedIn
-          if (Array.isArray(result) && result.length > 0) {
-            const modifiedResult = [...result];
-            for (const item of modifiedResult) {
-              if (item.name && typeof item.name === 'string') {
-                item.name = item.name.replace(/LinkedIn|Career|Business|Executive/gi, match => {
-                  switch (match.toLowerCase()) {
-                    case 'linkedin': return 'Zee5';
-                    case 'career': return 'Basic';
-                    case 'business': return 'Premium';
-                    case 'executive': return 'All Access';
-                    default: return match;
-                  }
-                });
-              }
-              if (item.description && typeof item.description === 'string') {
-                item.description = item.description.replace(/LinkedIn|professional/gi, match => 
-                  match.toLowerCase() === 'linkedin' ? 'Zee5' : 'entertainment');
-              }
-              // Update features to be entertainment focused
-              if (item.features && Array.isArray(item.features)) {
-                item.features = item.features.map((feature: string) => 
-                  feature.replace(/InMail|profile|applicant|job/gi, match => {
-                    switch (match.toLowerCase()) {
-                      case 'inmail': return 'Premium Content';
-                      case 'profile': return 'Profile';
-                      case 'applicant': return 'Streaming Quality';
-                      case 'job': return 'Content';
-                      default: return match;
-                    }
-                  })
-                );
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: { "ngrok-skip-browser-warning": "true" }
+      });
+      
+      console.log('Server-side: Zee5 API response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('Server-side: Zee5 API returned error status:', response.status);
+        const errorText = await response.text();
+        console.error('Server-side: API error details:', errorText);
+        throw new Error(`API returned status: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Server-side: Zee5 API response data:', data);
+      
+      // Process the API data to ensure plan_id=plan_A0qs3dlK is prioritized
+      if (Array.isArray(data) && data.length > 0) {
+        // Check if we have a plan_list format
+        if (data[0] && data[0].plan_list && Array.isArray(data[0].plan_list)) {
+          const processedData = [...data];
+          
+          // Find any product with plan_id=plan_A0qs3dlK in its plan_list
+          for (const product of processedData) {
+            if (product.plan_list && Array.isArray(product.plan_list)) {
+              // Check if the target plan exists
+              const targetPlan = product.plan_list.find((plan: any) => plan.plan_id === 'plan_A0qs3dlK');
+              
+              if (targetPlan) {
+                console.log('Server-side: Found target plan_id=plan_A0qs3dlK for Zee5', targetPlan);
+                // Move the target plan to the front of the list
+                product.plan_list = [
+                  targetPlan,
+                  ...product.plan_list.filter((plan: any) => plan.plan_id !== 'plan_A0qs3dlK')
+                ];
               }
             }
-            return modifiedResult;
           }
-          return result;
+          
+          // Modify plan names for Zee5
+          processedData.forEach(product => {
+            if (product.plan_list && Array.isArray(product.plan_list)) {
+              product.plan_list.forEach((plan: any) => {
+                if (plan.plan_name) {
+                  // Rename LinkedIn plans to Zee5 plans
+                  plan.plan_name = plan.plan_name.replace(/LinkedIn|Career|Business|Executive/gi, match => {
+                    switch (match.toLowerCase()) {
+                      case 'linkedin': return 'Zee5';
+                      case 'career': return 'Basic';
+                      case 'business': return 'Premium';
+                      case 'executive': return 'All Access';
+                      default: return match;
+                    }
+                  });
+                }
+              });
+            }
+          });
+          
+          return processedData;
         }
-        
-        console.log('Server-side: API handler failed for Zee5, using fallback data');
       }
-            
-      // Fallback to hardcoded Zee5 plans if the API call fails
-      console.log('Server-side: Using hardcoded Zee5 plans due to API issues');
-      return [
-        {
-          id: 'zee5-basic',
-          name: 'Zee5 Basic',
-          description: 'Basic plan for entertainment enthusiasts',
-          price: 99,
-          features: [
-            'Access to all Zee5 Originals',
-            'Stream on 1 device at a time',
-            'HD streaming quality',
-            'Ad-supported streaming'
-          ],
-          billingOptions: ['monthly'],
-          discountPercentage: 0
-        },
-        {
-          id: 'zee5-premium',
-          name: 'Zee5 Premium',
-          description: 'Premium plan for ultimate entertainment experience',
-          price: 199,
-          features: [
-            'All Basic features',
-            'Ad-free viewing experience',
-            'Stream on 3 devices simultaneously',
-            'Full HD streaming quality'
-          ],
-          popular: true,
-          billingOptions: ['monthly'],
-          discountPercentage: 0
-        },
-        {
-          id: 'zee5-all-access',
-          name: 'Zee5 All Access',
-          description: 'Complete access to all Zee5 content and features',
-          price: 299,
-          features: [
-            'All Premium features',
-            'Stream on 5 devices simultaneously',
-            '4K streaming where available',
-            'Early access to new releases'
-          ],
-          billingOptions: ['monthly'],
-          discountPercentage: 0
-        }
-      ];
-    } catch (error) {
-      console.error('Server-side: Error in Zee5 specific handler:', error);
-      return VendorAPI.getMockPlans('zee5');
+      
+      // Modify the returned data to be Zee5-specific
+      if (Array.isArray(data)) {
+        return data.map(item => ({
+          ...item,
+          plan_name: item.plan_name?.replace(/LinkedIn|Career|Business|Executive/gi, match => {
+            switch (match.toLowerCase()) {
+              case 'linkedin': return 'Zee5';
+              case 'career': return 'Basic';
+              case 'business': return 'Premium';
+              case 'executive': return 'All Access';
+              default: return match;
+            }
+          })
+        }));
+      }
+      
+      // Return the unmodified data if it doesn't match our expected format
+      return data;
+    } catch (error: any) {
+      console.error('Server-side: Error calling Zee5 API:', error);
+      // Return an error object instead of null
+      return { error: true, message: error.message };
     }
   });
   
