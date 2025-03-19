@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -29,6 +28,67 @@ export function initializeApiIntegrations() {
     }
   });
 
+  // Register Zee5 API handler with correct URL and proper error handling
+  VendorAPI.registerApiHandler('zee5', async (product) => {
+    console.log('Server-side: Calling Zee5 API for product:', product.name);
+    try {
+      // Use the same API URL since it returns the relevant plan data
+      const apiUrl = 'https://d547-121-242-131-242.ngrok-free.app/proxy/getfleek_list';
+      console.log('Server-side: Attempting to fetch from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: { "ngrok-skip-browser-warning": "true" }
+      });
+      
+      console.log('Server-side: Zee5 API response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('Server-side: Zee5 API returned error status:', response.status);
+        const errorText = await response.text();
+        console.error('Server-side: API error details:', errorText);
+        throw new Error(`API returned status: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Server-side: Zee5 API response data:', data);
+      
+      // Process the API data to ensure plan_id=plan_A0qs3dlK is prioritized
+      if (Array.isArray(data) && data.length > 0) {
+        // Check if we have a plan_list format
+        if (data[0] && data[0].plan_list && Array.isArray(data[0].plan_list)) {
+          const processedData = [...data];
+          
+          // Find any product with plan_id=plan_A0qs3dlK in its plan_list
+          for (const product of processedData) {
+            if (product.plan_list && Array.isArray(product.plan_list)) {
+              // Check if the target plan exists
+              const targetPlan = product.plan_list.find((plan: any) => plan.plan_id === 'plan_A0qs3dlK');
+              
+              if (targetPlan) {
+                console.log('Server-side: Found target plan_id=plan_A0qs3dlK', targetPlan);
+                // Move the target plan to the front of the list
+                product.plan_list = [
+                  targetPlan,
+                  ...product.plan_list.filter((plan: any) => plan.plan_id !== 'plan_A0qs3dlK')
+                ];
+              }
+            }
+          }
+          
+          return processedData;
+        }
+      }
+      
+      // Return the unmodified data if it doesn't match our expected format
+      return data;
+    } catch (error: any) {
+      console.error('Server-side: Error calling Zee5 API:', error);
+      // Return an error object instead of null
+      return { error: true, message: error.message };
+    }
+  });
+  
   // Register LinkedIn Premium API handler with correct URL and proper error handling
   VendorAPI.registerApiHandler('linkedin-premium', async (product) => {
     console.log('Server-side: Calling LinkedIn Premium API for product:', product.name);
@@ -180,6 +240,80 @@ export function initializeApiIntegrations() {
     } catch (error) {
       console.error('Server-side: Error in LinkedIn specific handler:', error);
       return VendorAPI.getMockPlans('linkedin-premium');
+    }
+  });
+
+  // Add a direct handler for "Zee5" product by name
+  VendorAPI.registerApiHandler('zee5-premium', async (product) => {
+    console.log('Server-side: Using specific Zee5 API handler by product name');
+    try {
+      // First attempt to use the zee5 handler
+      console.log('Server-side: Trying to use zee5 API handler first');
+      
+      // Find the handler
+      const premiumHandler = VendorAPI.apiRegistry['zee5'];
+      if (premiumHandler && premiumHandler.handler) {
+        const result = await premiumHandler.handler(product);
+        
+        // If we got a successful result (not an error object), use it
+        if (result && !result.error) {
+          console.log('Server-side: Successfully retrieved data from zee5 API handler');
+          return result;
+        }
+        
+        console.log('Server-side: zee5 API handler failed, using fallback data');
+      }
+            
+      // Fallback to hardcoded Zee5 plans if the API call fails
+      console.log('Server-side: Using hardcoded Zee5 plans due to API issues');
+      return [
+        {
+          id: 'zee5-basic',
+          name: 'Monthly',
+          description: 'Basic plan for streaming enthusiasts',
+          price: 99,
+          features: [
+            'Unlimited movies and shows',
+            'HD streaming',
+            'Watch on 1 screen at a time',
+            'Ad-free experience'
+          ],
+          billingOptions: ['monthly'],
+          discountPercentage: 0
+        },
+        {
+          id: 'zee5-pro',
+          name: 'Quarterly',
+          description: 'Professional plan for binge-watchers',
+          price: 249,
+          features: [
+            'All Monthly features',
+            'Premium content access',
+            'Watch on 2 screens at a time',
+            'Downloads available'
+          ],
+          popular: true,
+          billingOptions: ['quarterly'],
+          discountPercentage: 15
+        },
+        {
+          id: 'zee5-premium',
+          name: 'Annual',
+          description: 'Premium plan for ultimate entertainment',
+          price: 699,
+          features: [
+            'All Quarterly features',
+            'Ultra HD streaming',
+            'Early access to new releases',
+            'Exclusive Zee5 originals'
+          ],
+          billingOptions: ['annual'],
+          discountPercentage: 25
+        }
+      ];
+    } catch (error) {
+      console.error('Server-side: Error in Zee5 specific handler:', error);
+      return VendorAPI.getMockPlans('zee5');
     }
   });
   
