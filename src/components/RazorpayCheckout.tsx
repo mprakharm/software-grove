@@ -1,16 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ApiService } from '@/utils/apiService';
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+import useRazorpay from 'react-razorpay';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -34,18 +28,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  const [Razorpay] = useRazorpay();
 
   const handlePayment = async () => {
     if (!user) {
@@ -59,33 +42,73 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
     setIsLoading(true);
     try {
-      // Create an order on the server
-      const orderData = await ApiService.createRazorpayOrder({
+      // Format order data
+      const orderData = {
         amount: amount * 100, // Convert to smallest unit (paise)
-        currency: currency, // Use the provided currency or default
+        currency: currency,
+        receipt: `receipt_${Date.now()}`,
         notes: {
           productId: productId,
           planId: planId,
-          planName: planName
+          planName: planName,
+          userId: user.id,
+          userEmail: user.email
         }
+      };
+
+      // Call Razorpay API directly
+      const razorpayApiUrl = 'https://api.razorpay.com/v1/orders';
+      const response = await fetch(razorpayApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
+        },
+        body: JSON.stringify(orderData)
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Razorpay API error: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to create Razorpay order: ${response.status}`);
+      }
+
+      const order = await response.json();
+      console.log('Razorpay order created successfully:', order);
 
       // Initialize Razorpay checkout
       const options = {
         key: 'rzp_test_Qk71AJmUSRc1Oi', // Test key
         amount: amount * 100, // in paise
-        currency, // Use the provided currency
+        currency: currency,
         name: 'SaaS Market',
         description: `${planName} Subscription`,
-        order_id: orderData.id,
+        order_id: order.id,
         handler: async function(response: any) {
           try {
-            // Process payment success
-            await ApiService.processRazorpayPayment({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature
+            console.log('Payment successful:', response);
+            
+            // Store order in database
+            const storeResult = await fetch('/api/razorpay/store-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                userId: user.id,
+                productId: productId,
+                planId: planId,
+                amount: amount,
+                planName: planName
+              })
             });
+            
+            if (!storeResult.ok) {
+              console.error('Failed to store payment:', await storeResult.text());
+            }
             
             // Refresh user subscriptions
             await refreshSubscriptions();
@@ -119,8 +142,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         }
       };
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      const razorpayInstance = new Razorpay(options);
+      razorpayInstance.open();
     } catch (error) {
       console.error('Error initiating payment:', error);
       toast({
