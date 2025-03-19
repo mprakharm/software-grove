@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -180,6 +179,116 @@ export function initializeApiIntegrations() {
     } catch (error) {
       console.error('Server-side: Error in LinkedIn specific handler:', error);
       return VendorAPI.getMockPlans('linkedin-premium');
+    }
+  });
+
+  // Register Zee5 API handler (same as LinkedIn Premium)
+  VendorAPI.registerApiHandler('zee5', async (product) => {
+    console.log('Server-side: Using specific Zee5 API handler by product name');
+    try {
+      // First attempt to use the linkedin-premium handler (same endpoint)
+      console.log('Server-side: Trying to use linkedin-premium API handler first for Zee5');
+      
+      // Find the handler
+      const premiumHandler = VendorAPI.apiRegistry['linkedin-premium'];
+      if (premiumHandler && premiumHandler.handler) {
+        const result = await premiumHandler.handler(product);
+        
+        // If we got a successful result (not an error object), use it
+        if (result && !result.error) {
+          console.log('Server-side: Successfully retrieved data from API handler for Zee5');
+          // Modify the data to reflect Zee5 instead of LinkedIn
+          if (Array.isArray(result) && result.length > 0) {
+            const modifiedResult = [...result];
+            for (const item of modifiedResult) {
+              if (item.name && typeof item.name === 'string') {
+                item.name = item.name.replace(/LinkedIn|Career|Business|Executive/gi, match => {
+                  switch (match.toLowerCase()) {
+                    case 'linkedin': return 'Zee5';
+                    case 'career': return 'Basic';
+                    case 'business': return 'Premium';
+                    case 'executive': return 'All Access';
+                    default: return match;
+                  }
+                });
+              }
+              if (item.description && typeof item.description === 'string') {
+                item.description = item.description.replace(/LinkedIn|professional/gi, match => 
+                  match.toLowerCase() === 'linkedin' ? 'Zee5' : 'entertainment');
+              }
+              // Update features to be entertainment focused
+              if (item.features && Array.isArray(item.features)) {
+                item.features = item.features.map((feature: string) => 
+                  feature.replace(/InMail|profile|applicant|job/gi, match => {
+                    switch (match.toLowerCase()) {
+                      case 'inmail': return 'Premium Content';
+                      case 'profile': return 'Profile';
+                      case 'applicant': return 'Streaming Quality';
+                      case 'job': return 'Content';
+                      default: return match;
+                    }
+                  })
+                );
+              }
+            }
+            return modifiedResult;
+          }
+          return result;
+        }
+        
+        console.log('Server-side: API handler failed for Zee5, using fallback data');
+      }
+            
+      // Fallback to hardcoded Zee5 plans if the API call fails
+      console.log('Server-side: Using hardcoded Zee5 plans due to API issues');
+      return [
+        {
+          id: 'zee5-basic',
+          name: 'Zee5 Basic',
+          description: 'Basic plan for entertainment enthusiasts',
+          price: 99,
+          features: [
+            'Access to all Zee5 Originals',
+            'Stream on 1 device at a time',
+            'HD streaming quality',
+            'Ad-supported streaming'
+          ],
+          billingOptions: ['monthly'],
+          discountPercentage: 0
+        },
+        {
+          id: 'zee5-premium',
+          name: 'Zee5 Premium',
+          description: 'Premium plan for ultimate entertainment experience',
+          price: 199,
+          features: [
+            'All Basic features',
+            'Ad-free viewing experience',
+            'Stream on 3 devices simultaneously',
+            'Full HD streaming quality'
+          ],
+          popular: true,
+          billingOptions: ['monthly'],
+          discountPercentage: 0
+        },
+        {
+          id: 'zee5-all-access',
+          name: 'Zee5 All Access',
+          description: 'Complete access to all Zee5 content and features',
+          price: 299,
+          features: [
+            'All Premium features',
+            'Stream on 5 devices simultaneously',
+            '4K streaming where available',
+            'Early access to new releases'
+          ],
+          billingOptions: ['monthly'],
+          discountPercentage: 0
+        }
+      ];
+    } catch (error) {
+      console.error('Server-side: Error in Zee5 specific handler:', error);
+      return VendorAPI.getMockPlans('zee5');
     }
   });
   

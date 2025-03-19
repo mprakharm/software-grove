@@ -32,6 +32,9 @@ const SoftwareCard = ({
   reviewCount,
   color = "#2D88FF" 
 }: SoftwareCardProps) => {
+  // Set a different default color for Entertainment category
+  const cardColor = category === 'Entertainment' ? "#8B5CF6" : color;
+  
   // Properly handle different types of price values
   const formattedPrice = (() => {
     if (typeof price === 'number') {
@@ -49,18 +52,21 @@ const SoftwareCard = ({
     }
     return 'Free'; // Default fallback
   })();
+
+  // Customize the pricing label based on category
+  const pricingLabel = category === 'Entertainment' ? 'per month' : 'per user/month';
     
   return (
     <Link to={`/product/${id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
       <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm hover:border-razorpay-blue">
-        <div className="relative aspect-video overflow-hidden group-hover:border-2 group-hover:border-razorpay-blue" style={{ backgroundColor: color + '15' }}>
+        <div className="relative aspect-video overflow-hidden group-hover:border-2 group-hover:border-razorpay-blue" style={{ backgroundColor: cardColor + '15' }}>
           <img
             src={image}
             alt={name}
             className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
           />
           {discount && discount !== "0%" && (
-            <Badge className="absolute top-2 right-2" style={{ backgroundColor: color }}>{discount} OFF</Badge>
+            <Badge className="absolute top-2 right-2" style={{ backgroundColor: cardColor }}>{discount} OFF</Badge>
           )}
         </div>
         <div className="p-5">
@@ -91,7 +97,7 @@ const SoftwareCard = ({
             <div className="flex flex-col items-end">
               <span className="font-semibold text-razorpay-blue">{formattedPrice}</span>
               {formattedPrice && formattedPrice.includes('$') && !formattedPrice.includes('%') && (
-                <span className="text-xs text-razorpay-gray">per user/month</span>
+                <span className="text-xs text-razorpay-gray">{pricingLabel}</span>
               )}
             </div>
           </div>

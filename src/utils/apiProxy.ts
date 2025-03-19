@@ -6,6 +6,11 @@ export const ApiProxyController = {
   async getVendorPlans(productId: string): Promise<any[]> {
     console.log(`Backend proxy: Processing vendor plans request for product ID: ${productId}`);
     try {
+      // Handle Zee5 the same way as LinkedIn Premium
+      if (productId === 'zee5') {
+        console.log('Backend proxy: Processing Zee5 plans request');
+      }
+      
       // Use the VendorAPI to get the plans - this happens server-side
       const plans = await VendorAPI.getProductPlans(productId);
       

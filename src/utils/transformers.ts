@@ -1,3 +1,4 @@
+
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -5,6 +6,12 @@ import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 export function transformProductFromSupabase(
   supabaseProduct: Database['public']['Tables']['products']['Row']
 ): Product {
+  // Set default color based on category
+  let defaultColor = "#2D88FF";
+  if (supabaseProduct.category === "Entertainment") {
+    defaultColor = "#8B5CF6"; // Purple for Entertainment
+  }
+
   return {
     id: supabaseProduct.id,
     name: supabaseProduct.name,
@@ -22,7 +29,7 @@ export function transformProductFromSupabase(
     inStock: supabaseProduct.in_stock,
     isHot: supabaseProduct.is_hot,
     banner: supabaseProduct.banner,
-    color: supabaseProduct.color as string || "#2D88FF",
+    color: supabaseProduct.color as string || defaultColor,
     image: supabaseProduct.logo,
     vendor: supabaseProduct.vendor as string || "Unknown vendor",
     discount: "0%",

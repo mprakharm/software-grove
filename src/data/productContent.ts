@@ -1,4 +1,3 @@
-
 interface ProductContent {
   overview: string;
   features: {
@@ -494,7 +493,34 @@ export const PRODUCT_CONTENT: ProductsContentMap = {
         description: "Split payments automatically between multiple accounts"
       }
     ]
+  },
+  "zee5": {
+    overview: "India's largest streaming platform with 90+ live TV channels and 1.5 lakh+ hours of content across 12 languages including Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Bengali, Gujarati, Punjabi, and more.",
+    features: [
+      {
+        name: "Original Content",
+        description: "Exclusive Zee5 Originals including web series, movies, and shows not available anywhere else"
+      },
+      {
+        name: "Live TV",
+        description: "90+ live TV channels including news, entertainment, and sports channels"
+      },
+      {
+        name: "Premium Movies",
+        description: "Access to latest blockbuster movies before TV premiere"
+      },
+      {
+        name: "Multi-device Access",
+        description: "Stream on up to 5 devices simultaneously with a single subscription"
+      },
+      {
+        name: "Downloads",
+        description: "Download content to watch offline when you don't have an internet connection"
+      },
+      {
+        name: "Regional Content",
+        description: "Extensive library of content in 12 Indian languages with dedicated regional packs"
+      }
+    ]
   }
 };
-
-// The remaining products can be added as needed based on the IDs used in your system
