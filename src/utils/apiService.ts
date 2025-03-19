@@ -1,6 +1,7 @@
 
 // Front-end API service that calls our backend proxy endpoints
 const API_BASE_URL = '/api';
+const RATAN_NGROK_BASE_URL = 'https://d547-121-242-131-242.ngrok-free.app/proxy';
 
 // Front-end API service that calls our backend proxy endpoints
 export const ApiService = {
@@ -57,7 +58,7 @@ export const ApiService = {
     try {
       console.log('Creating Razorpay order:', orderData);
 
-      const response = await fetch(`${API_BASE_URL}/razorpay/create-order`, {
+      const response = await fetch(`${RATAN_NGROK_BASE_URL}/razorpay_order_create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
