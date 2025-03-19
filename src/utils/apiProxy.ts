@@ -19,8 +19,7 @@ export const ApiProxyController = {
     console.log(`Backend proxy: Processing products request with filters:`, filters);
     try {
       // This will be executed server-side in Next.js API routes
-      const supabase = (await import('./supabase')).supabase;
-      const { data, error } = await supabase
+      const { data, error } = await (await import('./supabase')).supabase
         .from('products')
         .select();
       
@@ -50,13 +49,11 @@ export const ApiProxyController = {
         }
       }
       
-      const transformers = await import('./transformers');
-      
       // Transform product data before returning
-      return Promise.all(filteredData.map(product => {
+      return filteredData.map(product => {
         // Apply any needed transformations
-        return transformers.transformProductFromSupabase(product);
-      }));
+        return (await import('./transformers')).transformProductFromSupabase(product);
+      });
     } catch (error) {
       console.error('Backend proxy: Error fetching products:', error);
       throw error;
@@ -66,10 +63,7 @@ export const ApiProxyController = {
   async getProductById(id: string): Promise<any | null> {
     console.log(`Backend proxy: Fetching product with ID: ${id}`);
     try {
-      const supabase = (await import('./supabase')).supabase;
-      const transformers = await import('./transformers');
-      
-      const { data, error } = await supabase
+      const { data, error } = await (await import('./supabase')).supabase
         .from('products')
         .select()
         .eq('id', id)
@@ -84,7 +78,7 @@ export const ApiProxyController = {
         throw error;
       }
       
-      return data ? transformers.transformProductFromSupabase(data) : null;
+      return data ? (await import('./transformers')).transformProductFromSupabase(data) : null;
     } catch (error) {
       console.error(`Backend proxy: Error fetching product with ID ${id}:`, error);
       throw error;
@@ -94,18 +88,15 @@ export const ApiProxyController = {
   async getProductByNameOrId(nameOrId: string): Promise<any | null> {
     console.log(`Backend proxy: Looking up product with name or ID: ${nameOrId}`);
     try {
-      const supabase = (await import('./supabase')).supabase;
-      const transformers = await import('./transformers');
-      
       // First try by ID
-      const { data: idData, error: idError } = await supabase
+      const { data: idData, error: idError } = await (await import('./supabase')).supabase
         .from('products')
         .select()
         .eq('id', nameOrId)
         .single();
       
       if (idData) {
-        return transformers.transformProductFromSupabase(idData);
+        return (await import('./transformers')).transformProductFromSupabase(idData);
       }
       
       // Then try by formatting the name
@@ -114,25 +105,25 @@ export const ApiProxyController = {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
       
-      const { data: nameData } = await supabase
+      const { data: nameData } = await (await import('./supabase')).supabase
         .from('products')
         .select()
         .ilike('name', formattedName)
         .single();
       
       if (nameData) {
-        return transformers.transformProductFromSupabase(nameData);
+        return (await import('./transformers')).transformProductFromSupabase(nameData);
       }
       
       // Try a more flexible match
-      const { data: flexData } = await supabase
+      const { data: flexData } = await (await import('./supabase')).supabase
         .from('products')
         .select()
         .ilike('name', `%${nameOrId.replace(/-/g, '%')}%`)
         .single();
       
       if (flexData) {
-        return transformers.transformProductFromSupabase(flexData);
+        return (await import('./transformers')).transformProductFromSupabase(flexData);
       }
       
       console.log(`No product found with name or ID: ${nameOrId}`);
