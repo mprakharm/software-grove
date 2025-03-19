@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 
 interface VendorPlan {
   id: string;
@@ -349,12 +349,7 @@ const SubscriptionPage = () => {
     
     const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
     
-    createRazorpayOrder(
-      product!.id,
-      selectedPlan,
-      selectedVendorPlan.name,
-      amount
-    );
+    setIsSubmitting(false);
   };
 
   const getCurrencySymbol = (currency?: string): string => {
@@ -653,20 +648,25 @@ const SubscriptionPage = () => {
               )}
               
               <div className="flex justify-end">
-                <Button 
-                  size="lg" 
-                  onClick={handleCompletePurchase}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                      Processing...
-                    </>
-                  ) : (
-                    'Complete Purchase'
-                  )}
-                </Button>
+                {selectedVendorPlan && (
+                  <div className="w-full sm:w-auto">
+                    <RazorpayCheckout 
+                      productId={product?.id || ''}
+                      planId={selectedPlan}
+                      planName={selectedVendorPlan.name}
+                      amount={calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage)}
+                      currency={selectedVendorPlan.currency || 'INR'}
+                      onSuccess={() => navigate('/subscriptions')}
+                      onCancel={() => {
+                        toast({
+                          title: "Payment Cancelled",
+                          description: "You can try again when you're ready.",
+                          variant: "default"
+                        });
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -677,4 +677,3 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
-
