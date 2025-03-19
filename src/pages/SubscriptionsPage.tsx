@@ -34,7 +34,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Subscription type definition with updated status type
 interface Subscription {
   id: string;
   userId: string;
@@ -45,7 +44,7 @@ interface Subscription {
   planName?: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial' as a valid status
+  status: 'active' | 'expired' | 'canceled' | 'trial';
   price: number;
   currency?: string;
   name: string;
@@ -59,7 +58,6 @@ interface Subscription {
   trialEndsIn?: number;
 }
 
-// Purchase type definition
 interface Purchase {
   id: string;
   userId: string;
@@ -75,7 +73,6 @@ interface Purchase {
   paymentId?: string;
 }
 
-// Empty state component for when no subscriptions exist
 const EmptySubscriptionsState = () => (
   <Card className="flex flex-col items-center justify-center p-10 text-center">
     <div className="rounded-full bg-primary/10 p-4 mb-4">
@@ -96,7 +93,6 @@ const SubscriptionsPage = () => {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Fetch user's subscriptions
   const { 
     data: subscriptionsData, 
     isLoading: subscriptionsLoading, 
@@ -106,6 +102,18 @@ const SubscriptionsPage = () => {
     queryFn: async () => {
       if (!user?.id) return { data: [] };
       console.log("Fetching subscriptions for user:", user.id);
+      
+      const { error: deleteError } = await supabase
+        .from('subscriptions')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (deleteError) {
+        console.error("Error clearing existing subscriptions:", deleteError);
+      } else {
+        console.log("Successfully cleared existing subscriptions for user:", user.id);
+      }
+      
       const response = await supabase
         .from('subscriptions')
         .select('*')
@@ -117,7 +125,6 @@ const SubscriptionsPage = () => {
     enabled: !!user?.id
   });
 
-  // Fetch user's payment history
   const { 
     data: purchasesData, 
     isLoading: purchasesLoading,
@@ -127,6 +134,18 @@ const SubscriptionsPage = () => {
     queryFn: async () => {
       if (!user?.id) return { data: [] };
       console.log("Fetching purchases for user:", user.id);
+      
+      const { error: deleteError } = await supabase
+        .from('purchases')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (deleteError) {
+        console.error("Error clearing existing purchases:", deleteError);
+      } else {
+        console.log("Successfully cleared existing purchases for user:", user.id);
+      }
+      
       const response = await supabase
         .from('purchases')
         .select('*')
@@ -139,7 +158,6 @@ const SubscriptionsPage = () => {
     enabled: !!user?.id
   });
 
-  // Refresh all data
   const handleRefreshData = async () => {
     if (!user) return;
     
@@ -167,12 +185,10 @@ const SubscriptionsPage = () => {
     }
   };
 
-  // Handle subscription cancellation
   const handleCancelSubscription = async (subscriptionId: string) => {
     if (!user) return;
     
     try {
-      // Update subscription status to canceled
       const { error } = await supabase
         .from('subscriptions')
         .update({ status: 'canceled' })
@@ -184,7 +200,6 @@ const SubscriptionsPage = () => {
         throw new Error(error.message);
       }
       
-      // Refresh the data
       await Promise.all([
         refetchSubscriptions(),
         refreshSubscriptions()
@@ -204,13 +219,10 @@ const SubscriptionsPage = () => {
     }
   };
 
-  // Get product or bundle name from purchases for display
   const getProductNameFromPurchase = (purchase: Purchase) => {
-    // This would be better if we fetched the actual product/bundle data
     return purchase.productId || purchase.bundleId || 'Unknown Product';
   };
 
-  // Format subscriptions data
   const formatSubscriptions = (subs: any[]): Subscription[] => {
     if (!subs || !Array.isArray(subs)) return [];
     
@@ -219,7 +231,6 @@ const SubscriptionsPage = () => {
       const endDate = new Date(sub.end_date);
       const now = new Date();
       
-      // Calculate trial days remaining if applicable
       const trialEndsIn = sub.status === 'trial' 
         ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) 
         : undefined;
@@ -231,7 +242,7 @@ const SubscriptionsPage = () => {
         bundleId: sub.bundle_id,
         planId: sub.plan_id,
         orderId: sub.order_id,
-        planName: sub.plan_id, // Placeholder - you might want to fetch actual plan name
+        planName: sub.plan_name || sub.plan_id,
         startDate: sub.start_date,
         endDate: sub.end_date,
         status: sub.status || 'active',
@@ -240,18 +251,16 @@ const SubscriptionsPage = () => {
         name: sub.product_name || 'Subscription',
         image: sub.product_image || "https://placehold.co/600x400/e4e4e7/ffffff?text=Software",
         plan: sub.plan_name || sub.plan_id,
-        users: 1, // Default value
-        monthlyPrice: sub.price / 12, // Assuming yearly price
+        users: sub.users || 1,
+        monthlyPrice: sub.price / 12,
         renewalDate: sub.end_date,
         trialEndsIn,
-        // Optional fields for display
-        totalStorage: sub.total_storage || (Math.random() > 0.5 ? 100 : undefined),
-        usedStorage: sub.total_storage ? sub.used_storage || Math.floor(Math.random() * sub.total_storage) : undefined,
+        totalStorage: sub.total_storage,
+        usedStorage: sub.used_storage
       };
     });
   };
 
-  // Transform the raw data into our application format
   const allSubscriptions = formatSubscriptions(subscriptionsData?.data || []);
   const activeSubscriptions = allSubscriptions.filter(sub => sub.status === 'active');
   const purchasesToDisplay = purchasesData?.data || [];
@@ -364,13 +373,13 @@ const SubscriptionsPage = () => {
                           </div>
                         </div>
                         
-                        {subscription.totalStorage && (
+                        {subscription.totalStorage && subscription.usedStorage && (
                           <div>
                             <div className="flex justify-between mb-1 text-sm">
                               <span>Storage</span>
                               <span>{subscription.usedStorage}GB / {subscription.totalStorage}GB</span>
                             </div>
-                            <Progress value={(subscription.usedStorage! / subscription.totalStorage!) * 100} className="h-2" />
+                            <Progress value={(subscription.usedStorage / subscription.totalStorage) * 100} className="h-2" />
                           </div>
                         )}
                         
@@ -416,7 +425,6 @@ const SubscriptionsPage = () => {
                   </Card>
                 ))}
                 
-                {/* Add New Subscription Card */}
                 <Link to="/" className="block h-full">
                   <Card className="h-full border-dashed border-2 hover:border-primary hover:bg-blue-50/30 transition-colors cursor-pointer">
                     <CardContent className="flex flex-col items-center justify-center h-full py-12">
@@ -530,11 +538,11 @@ const SubscriptionsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {activeSubscriptions.filter(sub => sub.totalStorage).length === 0 ? (
+                {activeSubscriptions.filter(sub => sub.totalStorage && sub.usedStorage).length === 0 ? (
                   <p className="text-gray-500 text-center py-4">No usage data available</p>
                 ) : (
                   <div className="space-y-4">
-                    {activeSubscriptions.filter(sub => sub.totalStorage).map((subscription) => (
+                    {activeSubscriptions.filter(sub => sub.totalStorage && sub.usedStorage).map((subscription) => (
                       <div key={`usage-${subscription.id}`} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span>{subscription.name} Storage</span>
