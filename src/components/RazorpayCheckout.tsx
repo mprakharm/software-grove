@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import Razorpay from 'react-razorpay';
+import useRazorpay from 'react-razorpay';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -28,6 +28,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
+  const { error, isLoadingRazorpay, Razorpay } = useRazorpay();
 
   const handlePayment = async () => {
     if (!user) {
@@ -141,8 +142,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         }
       };
 
-      const RazorpayCheckout = new Razorpay(options);
-      RazorpayCheckout.open();
+      const razorpayInstance = new Razorpay(options);
+      razorpayInstance.open();
     } catch (error) {
       console.error('Error initiating payment:', error);
       toast({

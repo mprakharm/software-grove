@@ -12,9 +12,9 @@ export interface RazorpayOrderRequest {
   currency: string;    // Currency code (e.g., INR)
   receipt?: string;    // Your internal order ID
   notes?: Record<string, string>; // Optional metadata
-  user_id?: string;    // The user ID from your system
-  product_id?: string; // The product ID from your system
-  plan_id?: string;    // The plan ID from your system
+  // plan_id?: string;    // The plan ID from your system
+  // product_id?: string; // The product ID from your system
+  // user_id?: string;    // The user ID from your system
 }
 
 export interface RazorpayOrderResponse {
@@ -63,18 +63,16 @@ export const RazorpayService = {
       console.log('Razorpay order created successfully:', order);
 
       // Store order in database for reference
-      if (orderData.user_id) {
-        await supabase.from('orders').insert({
-          razorpay_order_id: order.id,
-          user_id: orderData.user_id,
-          product_id: orderData.product_id,
-          plan_id: orderData.plan_id,
-          amount: orderData.amount / 100, // Convert from paise to rupees
-          currency: orderData.currency,
-          status: 'created',
-          metadata: orderData.notes
-        });
-      }
+      await supabase.from('orders').insert({
+        razorpay_order_id: order.id,
+        user_id: orderData.user_id,
+        product_id: orderData.product_id,
+        plan_id: orderData.plan_id,
+        amount: orderData.amount / 100, // Convert from paise to rupees
+        currency: orderData.currency,
+        status: 'created',
+        metadata: orderData.notes
+      });
 
       return order;
     } catch (error) {

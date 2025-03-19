@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
-import RazorpayCheckout from '@/components/RazorpayCheckout';
+import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
 
 interface VendorPlan {
   id: string;
@@ -349,7 +349,12 @@ const SubscriptionPage = () => {
     
     const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
     
-    setIsSubmitting(false);
+    createRazorpayOrder(
+      product!.id,
+      selectedPlan,
+      selectedVendorPlan.name,
+      amount
+    );
   };
 
   const getCurrencySymbol = (currency?: string): string => {
@@ -648,25 +653,20 @@ const SubscriptionPage = () => {
               )}
               
               <div className="flex justify-end">
-                {selectedVendorPlan && (
-                  <div className="w-full sm:w-auto">
-                    <RazorpayCheckout 
-                      productId={product?.id || ''}
-                      planId={selectedPlan}
-                      planName={selectedVendorPlan.name}
-                      amount={calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage)}
-                      currency={selectedVendorPlan.currency || 'INR'}
-                      onSuccess={() => navigate('/subscriptions')}
-                      onCancel={() => {
-                        toast({
-                          title: "Payment Cancelled",
-                          description: "You can try again when you're ready.",
-                          variant: "default"
-                        });
-                      }}
-                    />
-                  </div>
-                )}
+                <Button 
+                  size="lg" 
+                  onClick={handleCompletePurchase}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      Processing...
+                    </>
+                  ) : (
+                    'Complete Purchase'
+                  )}
+                </Button>
               </div>
             </>
           )}
@@ -677,3 +677,4 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
+
