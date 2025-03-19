@@ -1,3 +1,4 @@
+
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -53,9 +54,9 @@ export function initializeApiIntegrations() {
       const data = await response.json();
       console.log('Server-side: LinkedIn Premium API response data:', data);
       
-      // Check if the data is in the expected format
+      // Check if the data is in the expected format and return it directly
       if (Array.isArray(data) && data.length > 0) {
-        return data;
+        return data; // Return the actual API data
       } else {
         console.warn('Server-side: LinkedIn API returned unexpected data format:', data);
         throw new Error('Unexpected data format from API');

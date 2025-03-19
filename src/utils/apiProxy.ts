@@ -10,21 +10,24 @@ export const ApiProxyController = {
       const plans = await VendorAPI.getProductPlans(productId);
       
       // Check if plans is a valid array
-      if (!Array.isArray(plans)) {
-        console.error('Backend proxy: Invalid plans data returned:', plans);
-        if (plans && typeof plans === 'object' && 'error' in plans) {
-          // This fixes the TS error - ensure we verify the object has an error property
-          throw new Error(`API error: ${(plans as {error: string}).error}`);
+      if (Array.isArray(plans) && plans.length > 0) {
+        console.log('Backend proxy: Valid plans data returned:', plans);
+        return plans;
+      } else if (plans && typeof plans === 'object') {
+        // Check if the plans object contains an error property
+        if ('error' in plans) {
+          console.error('Backend proxy: API returned error:', plans);
+          throw new Error(`API error: ${(plans as {error: boolean, message: string}).message}`);
         }
-        throw new Error('Invalid plans data returned from vendor API');
       }
       
-      return plans;
+      console.warn('Backend proxy: Invalid plans data returned:', plans);
+      throw new Error('Invalid plans data returned from vendor API');
     } catch (error) {
       console.error('Backend proxy: Error fetching vendor plans:', error);
       // Instead of re-throwing the error, return mock data as fallback
       console.log('Backend proxy: Returning fallback mock plans');
-      return VendorAPI.getMockPlans('linkedin-premium');
+      return VendorAPI.getMockPlans(productId);
     }
   },
   

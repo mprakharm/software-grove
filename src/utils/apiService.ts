@@ -21,9 +21,19 @@ export const ApiService = {
         const data = await response.json();
         console.log('Vendor plans data received from backend:', data);
         
+        if (!data) {
+          throw new Error('Empty response from server');
+        }
+        
         if (data && data.error) {
           console.error('Backend returned an error:', data.error);
           throw new Error(data.error);
+        }
+        
+        // Ensure data is an array
+        if (!Array.isArray(data)) {
+          console.warn('API returned non-array data:', data);
+          throw new Error('Invalid response format: expected an array');
         }
         
         return data;

@@ -66,6 +66,39 @@ const SubscriptionPage = () => {
     fetchProduct();
   }, [productId, toast]);
   
+  const normalizeAPIPlans = (apiPlans: any[]): VendorPlan[] => {
+    if (!apiPlans || !Array.isArray(apiPlans) || apiPlans.length === 0) {
+      console.warn('Invalid API plans format:', apiPlans);
+      return [];
+    }
+    
+    // For LinkedIn Premium specifically
+    if (productId === 'linkedin-premium' || productId === 'linkedin') {
+      console.log('Normalizing LinkedIn Premium plans from API:', apiPlans);
+      
+      // Attempt to map API response to our VendorPlan interface
+      return apiPlans.map((plan, index) => {
+        // For LinkedIn Premium API structure
+        const normalizedPlan: VendorPlan = {
+          id: plan.id || `linkedin-plan-${index}`,
+          name: plan.name || 'LinkedIn Plan',
+          description: plan.description || 'LinkedIn Premium Subscription',
+          price: typeof plan.price === 'number' ? plan.price : parseFloat(plan.price) || 29.99 + (index * 30),
+          features: Array.isArray(plan.features) ? plan.features : ['Premium feature'],
+          popular: index === 1, // Mark the middle plan as popular by default
+          billingOptions: plan.billingOptions || ['monthly', 'annual'],
+          discountPercentage: plan.discountPercentage || 20
+        };
+        
+        console.log('Normalized plan:', normalizedPlan);
+        return normalizedPlan;
+      });
+    }
+    
+    // For other products
+    return apiPlans;
+  };
+  
   const fetchVendorPlans = async () => {
     if (!productId) return;
     
@@ -73,15 +106,24 @@ const SubscriptionPage = () => {
     try {
       console.log('Fetching plans for product ID:', productId);
       
-      const plans = await ApiService.getVendorPlans(productId);
+      const plansData = await ApiService.getVendorPlans(productId);
+      console.log('Raw plans fetched from API service:', plansData);
       
-      console.log('Plans fetched from API service:', plans);
-      setVendorPlans(plans);
+      // Normalize the API response to match our VendorPlan interface
+      const normalizedPlans = normalizeAPIPlans(plansData);
+      console.log('Normalized plans:', normalizedPlans);
       
-      const popularPlan = plans.find(plan => plan.popular);
-      setSelectedPlan(popularPlan ? popularPlan.id : plans[1]?.id || plans[0]?.id);
-      
-      setShowPlans(true);
+      if (normalizedPlans.length > 0) {
+        setVendorPlans(normalizedPlans);
+        
+        // Select a default plan (popular or first)
+        const popularPlan = normalizedPlans.find(plan => plan.popular);
+        setSelectedPlan(popularPlan ? popularPlan.id : normalizedPlans[0]?.id);
+        
+        setShowPlans(true);
+      } else {
+        throw new Error('No valid plans returned from API');
+      }
     } catch (error) {
       console.error('Error fetching vendor plans:', error);
       toast({
