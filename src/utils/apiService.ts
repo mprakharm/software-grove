@@ -16,9 +16,21 @@ export const ApiService = {
         throw new Error(`Failed to fetch vendor plans: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('Vendor plans data received from backend:', data);
-      return data;
+      // Try to parse the response as JSON
+      try {
+        const data = await response.json();
+        console.log('Vendor plans data received from backend:', data);
+        
+        if (data && data.error) {
+          console.error('Backend returned an error:', data.error);
+          throw new Error(data.error);
+        }
+        
+        return data;
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        throw new Error('Invalid response format from server');
+      }
     } catch (error) {
       console.error('Error in getVendorPlans:', error);
       throw error;
