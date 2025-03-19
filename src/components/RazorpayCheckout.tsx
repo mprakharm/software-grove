@@ -60,6 +60,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
       // Call Razorpay API directly
       const razorpayApiUrl = `${RATAN_NGROK_API_BASE_URL}/razorpay_order_create`;
+      console.log('Creating Razorpay order:', orderData);
       const response = await fetch(razorpayApiUrl, {
         method: 'POST',
         headers: {
@@ -96,6 +97,11 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
             try {
               console.log('Payment successful:', response);
               
+              // Get current date and calculate end date (1 month later)
+              const startDate = new Date();
+              const endDate = new Date(startDate);
+              endDate.setMonth(endDate.getMonth() + 1);
+              
               // Store purchase record
               const purchaseData = {
                 userId: user.id,
@@ -108,10 +114,12 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 paymentMethod: 'Razorpay',
                 transactionId: response.razorpay_payment_id,
                 invoiceUrl: null,
-                startDate: new Date().toISOString(),
-                endDate: getEndDate(new Date()).toISOString(),
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
                 autoRenew: true
               };
+              
+              console.log('Sending payment data to store-payment API:', purchaseData);
               
               // Store payment in database
               const storeResult = await fetch('/api/razorpay/store-payment', {
@@ -122,28 +130,38 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 body: JSON.stringify(purchaseData)
               });
               
+              const storeResultJson = await storeResult.json();
+              console.log('Store payment API response:', storeResultJson);
+              
               if (!storeResult.ok) {
-                console.error('Failed to store payment:', await storeResult.text());
+                console.error('Failed to store payment:', storeResultJson);
                 toast({
                   title: "Payment Processing Error",
                   description: "Your payment was successful, but we couldn't save your subscription data. Please contact support.",
                   variant: "destructive"
                 });
               } else {
-                // Invalidate any existing subscription queries to force a refresh
+                // Force invalidate any existing subscription queries to ensure a refresh
+                console.log('Invalidating queries to refresh subscription data');
                 queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
                 queryClient.invalidateQueries({ queryKey: ['purchases'] });
+                queryClient.invalidateQueries({ queryKey: ['subscriptions', user.id] });
+                queryClient.invalidateQueries({ queryKey: ['purchases', user.id] });
                 
                 // Also refresh subscriptions through the auth context
+                console.log('Refreshing subscriptions via auth context');
                 await refreshSubscriptions();
                 
                 toast({
                   title: "Payment Successful",
                   description: "Your subscription has been activated successfully!",
                 });
+                
+                // Add a small delay before calling onSuccess to allow state updates
+                setTimeout(() => {
+                  onSuccess();
+                }, 500);
               }
-              
-              onSuccess();
             } catch (error) {
               console.error('Payment verification failed:', error);
               toast({
@@ -151,6 +169,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 description: "We couldn't verify your payment. Please contact support.",
                 variant: "destructive"
               });
+            } finally {
+              setIsLoading(false);
             }
           },
           prefill: {
@@ -188,17 +208,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         description: "We couldn't start the payment process. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
-  };
-
-  // Helper function to calculate the end date based on plan
-  const getEndDate = (startDate: Date): Date => {
-    const endDate = new Date(startDate);
-    // Default to 1 month subscription
-    endDate.setMonth(endDate.getMonth() + 1);
-    return endDate;
   };
 
   return (

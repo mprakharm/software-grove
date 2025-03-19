@@ -4,6 +4,8 @@ import { supabase } from '@/utils/supabase';
 export default async function handler(
   req: Request
 ) {
+  console.log('store-payment endpoint called', { method: req.method });
+  
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -12,6 +14,9 @@ export default async function handler(
   }
 
   try {
+    const requestBody = await req.json();
+    console.log('Payment data received:', requestBody);
+    
     const {
       userId,
       productId,
@@ -26,7 +31,7 @@ export default async function handler(
       startDate,
       endDate,
       autoRenew
-    } = await req.json();
+    } = requestBody;
 
     console.log('Storing payment data:', {
       userId, productId, planId, amount, transactionId
@@ -34,11 +39,26 @@ export default async function handler(
 
     // Validate required fields
     if (!userId || !amount || !transactionId || !planId) {
+      console.error('Missing required fields:', { userId, amount, transactionId, planId });
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('Inserting purchase record with data:', {
+      user_id: userId,
+      product_id: productId,
+      bundle_id: bundleId,
+      plan_id: planId,
+      plan_name: planName,
+      date: new Date().toISOString(),
+      amount,
+      currency: currency || 'USD',
+      status: 'completed',
+      payment_method: paymentMethod,
+      transaction_id: transactionId
+    });
 
     // Create a purchase record
     const purchaseResult = await supabase
@@ -63,13 +83,27 @@ export default async function handler(
 
     if (purchaseResult.error) {
       console.error('Error creating purchase record:', purchaseResult.error);
-      return new Response(JSON.stringify({ error: 'Failed to store payment information' }), {
+      return new Response(JSON.stringify({ error: 'Failed to store payment information', details: purchaseResult.error }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
     console.log('Purchase record created successfully:', purchaseResult.data);
+
+    console.log('Inserting subscription record with data:', {
+      user_id: userId,
+      product_id: productId,
+      bundle_id: bundleId,
+      plan_id: planId,
+      plan_name: planName,
+      start_date: startDate || new Date().toISOString(),
+      end_date: endDate,
+      auto_renew: autoRenew || false,
+      price: amount,
+      currency: currency || 'USD',
+      status: 'active'
+    });
 
     // Create a subscription record
     const subscriptionResult = await supabase
@@ -109,7 +143,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error('Error processing payment storage:', error);
-    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred', details: String(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
