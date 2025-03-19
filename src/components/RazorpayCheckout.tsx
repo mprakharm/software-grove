@@ -60,11 +60,13 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
       // Call Razorpay API directly
       const razorpayApiUrl = `${RATAN_NGROK_API_BASE_URL}/razorpay_order_create`;
+      console.log("Creating Razorpay order with API URL:", razorpayApiUrl);
+      console.log("Order data:", JSON.stringify(orderData));
+      
       const response = await fetch(razorpayApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
         },
         body: JSON.stringify(orderData)
       });
@@ -97,26 +99,47 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
             try {
               console.log('Payment successful:', response);
               
-              // Store order in database
-              const storeResult = await fetch('/api/razorpay/store-payment', {
+              // Prepare subscription data
+              const today = new Date();
+              const oneMonthLater = new Date(today);
+              oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+              
+              const subscriptionData = {
+                userId: user.id,
+                productId: productId,
+                planId: planId,
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                startDate: today.toISOString(),
+                endDate: oneMonthLater.toISOString(),
+                amount: amount,
+                currency: currency,
+                status: 'active',
+                planName: planName
+              };
+              
+              console.log('Storing subscription data:', subscriptionData);
+              
+              // Store subscription in database
+              const storeResult = await fetch(`${RATAN_NGROK_API_BASE_URL}/store_subscription`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                  orderId: response.razorpay_order_id,
-                  paymentId: response.razorpay_payment_id,
-                  signature: response.razorpay_signature,
-                  userId: user.id,
-                  productId: productId,
-                  planId: planId,
-                  amount: amount,
-                  planName: planName
-                })
+                body: JSON.stringify(subscriptionData)
               });
               
               if (!storeResult.ok) {
-                console.error('Failed to store payment:', await storeResult.text());
+                const errorText = await storeResult.text();
+                console.error('Failed to store subscription:', errorText);
+                toast({
+                  title: "Subscription Record Error",
+                  description: "We couldn't store your subscription details. Please contact support.",
+                  variant: "destructive"
+                });
+              } else {
+                console.log('Subscription stored successfully');
               }
               
               // Refresh user subscriptions

@@ -162,6 +162,14 @@ export interface Database {
           price: number
           currency?: string
           created_at: string
+          order_id?: string
+          payment_id?: string
+          status?: string
+          plan_name?: string
+          product_name?: string
+          product_image?: string
+          used_storage?: number
+          total_storage?: number
         }
         Insert: {
           id?: string
@@ -175,6 +183,14 @@ export interface Database {
           price: number
           currency?: string
           created_at?: string
+          order_id?: string
+          payment_id?: string
+          status?: string
+          plan_name?: string
+          product_name?: string
+          product_image?: string
+          used_storage?: number
+          total_storage?: number
         }
         Update: {
           id?: string
@@ -188,6 +204,14 @@ export interface Database {
           price?: number
           currency?: string
           created_at?: string
+          order_id?: string
+          payment_id?: string
+          status?: string
+          plan_name?: string
+          product_name?: string
+          product_image?: string
+          used_storage?: number
+          total_storage?: number
         }
       }
       purchases: {
@@ -202,6 +226,9 @@ export interface Database {
           currency?: string
           status: string
           created_at: string
+          order_id?: string
+          payment_id?: string
+          description?: string
         }
         Insert: {
           id?: string
@@ -214,6 +241,9 @@ export interface Database {
           currency?: string
           status: string
           created_at?: string
+          order_id?: string
+          payment_id?: string
+          description?: string
         }
         Update: {
           id?: string
@@ -226,6 +256,9 @@ export interface Database {
           currency?: string
           status?: string
           created_at?: string
+          order_id?: string
+          payment_id?: string
+          description?: string
         }
       }
     }
@@ -240,4 +273,3 @@ export interface Database {
     }
   }
 }
-

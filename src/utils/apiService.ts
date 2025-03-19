@@ -113,5 +113,46 @@ export const ApiService = {
     }
   },
   
+  // Store subscription data after successful payment
+  async storeSubscription(subscriptionData: {
+    userId: string;
+    productId: string;
+    planId: string;
+    orderId: string;
+    paymentId: string;
+    signature?: string;
+    startDate: string;
+    endDate: string;
+    amount: number;
+    currency?: string;
+    status: string;
+    planName?: string;
+  }): Promise<any> {
+    try {
+      console.log('Storing subscription data:', subscriptionData);
+      
+      const response = await fetch(`${RATAN_NGROK_BASE_URL}/store_subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subscriptionData),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error storing subscription: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to store subscription: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Subscription stored successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in storeSubscription:', error);
+      throw error;
+    }
+  },
+  
   // Additional API methods can be added here
 };

@@ -1,4 +1,3 @@
-
 // Simple in-memory database for demo purposes
 // In a real application, you would use a proper database like Supabase or Firebase
 
@@ -72,6 +71,12 @@ export type Subscription = {
   autoRenew: boolean;
   price: number;
   currency?: string;
+  orderId?: string;
+  paymentId?: string;
+  status?: 'active' | 'expired' | 'canceled';
+  planName?: string;
+  productName?: string;
+  productImage?: string;
 };
 
 export type Purchase = {
@@ -84,6 +89,9 @@ export type Purchase = {
   amount: number;
   currency?: string;
   status: 'completed' | 'pending' | 'failed';
+  orderId?: string;
+  paymentId?: string;
+  description?: string;
 };
 
 // In-memory database - NOTE: This is now maintained for backward compatibility
@@ -217,6 +225,12 @@ class InMemoryDB {
 
   getUserSubscriptions(userId: string): Subscription[] {
     return Object.values(this.subscriptions).filter(sub => sub.userId === userId);
+  }
+
+  updateSubscriptionStatus(id: string, status: 'active' | 'expired' | 'canceled'): Subscription | null {
+    if (!this.subscriptions[id]) return null;
+    this.subscriptions[id] = { ...this.subscriptions[id], status };
+    return this.subscriptions[id];
   }
 
   // Purchase methods

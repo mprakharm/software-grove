@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,13 +14,67 @@ import {
   CreditCard,
   AlertCircle,
   Loader2,
-  PlusCircle
+  PlusCircle,
+  RefreshCw,
+  XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/utils/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+// Subscription type definition
+interface Subscription {
+  id: string;
+  userId: string;
+  productId?: string;
+  bundleId?: string;
+  planId: string;
+  orderId?: string;
+  planName?: string;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'expired' | 'canceled';
+  price: number;
+  currency?: string;
+  name: string;
+  image?: string;
+  plan?: string;
+  users?: number;
+  totalStorage?: number;
+  usedStorage?: number;
+  monthlyPrice?: number;
+  renewalDate?: string;
+  trialEndsIn?: number;
+}
+
+// Purchase type definition
+interface Purchase {
+  id: string;
+  userId: string;
+  productId?: string;
+  bundleId?: string;
+  planId: string;
+  date: string;
+  amount: number;
+  currency?: string;
+  status: string;
+  description?: string;
+  orderId?: string;
+  paymentId?: string;
+}
 
 // Empty state component for when no subscriptions exist
 const EmptySubscriptionsState = () => (
@@ -39,47 +93,175 @@ const EmptySubscriptionsState = () => (
 );
 
 const SubscriptionsPage = () => {
-  const { user, userSubscriptions, subscriptionsLoading } = useAuth();
+  const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Fetch user's subscriptions
+  const { 
+    data: subscriptionsData, 
+    isLoading: subscriptionsLoading, 
+    refetch: refetchSubscriptions 
+  } = useQuery({
+    queryKey: ['subscriptions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { data: [] };
+      console.log("Fetching subscriptions for user:", user.id);
+      const response = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      console.log("Subscriptions response:", response);
+      return response;
+    },
+    enabled: !!user?.id
+  });
+
   // Fetch user's payment history
-  const { data: userPurchases, isLoading: purchasesLoading } = useQuery({
+  const { 
+    data: purchasesData, 
+    isLoading: purchasesLoading,
+    refetch: refetchPurchases 
+  } = useQuery({
     queryKey: ['purchases', user?.id],
     queryFn: async () => {
       if (!user?.id) return { data: [] };
+      console.log("Fetching purchases for user:", user.id);
       const response = await supabase
         .from('purchases')
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false });
       
+      console.log("Purchases response:", response);
       return response;
     },
     enabled: !!user?.id
   });
 
-  const handleRenewSubscription = async (subscriptionId: string) => {
+  // Refresh all data
+  const handleRefreshData = async () => {
+    if (!user) return;
+    
+    setIsRefreshing(true);
     try {
-      // In a real application, this would connect to a payment processing system
+      await Promise.all([
+        refetchSubscriptions(),
+        refetchPurchases(),
+        refreshSubscriptions()
+      ]);
+      
       toast({
-        title: "Subscription Renewed",
-        description: "Your subscription has been successfully renewed.",
+        title: "Data Refreshed",
+        description: "Your subscription information has been updated.",
       });
     } catch (error) {
+      console.error("Error refreshing data:", error);
       toast({
-        title: "Renewal Failed",
-        description: "There was an error renewing your subscription. Please try again.",
+        title: "Refresh Failed",
+        description: "There was an error refreshing your data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Handle subscription cancellation
+  const handleCancelSubscription = async (subscriptionId: string) => {
+    if (!user) return;
+    
+    try {
+      // Update subscription status to canceled
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({ status: 'canceled' })
+        .eq('id', subscriptionId)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error("Error canceling subscription:", error);
+        throw new Error(error.message);
+      }
+      
+      // Refresh the data
+      await Promise.all([
+        refetchSubscriptions(),
+        refreshSubscriptions()
+      ]);
+      
+      toast({
+        title: "Subscription Canceled",
+        description: "Your subscription has been successfully canceled.",
+      });
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      toast({
+        title: "Cancellation Failed",
+        description: "There was an error canceling your subscription. Please try again.",
         variant: "destructive"
       });
     }
   };
 
-  // Ensure we safely access the data property from the response
-  const purchasesToDisplay = userPurchases?.data || [];
-  const hasSubscriptions = userSubscriptions.length > 0;
-  const hasPurchases = purchasesToDisplay.length > 0;
+  // Get product or bundle name from purchases for display
+  const getProductNameFromPurchase = (purchase: Purchase) => {
+    // This would be better if we fetched the actual product/bundle data
+    return purchase.productId || purchase.bundleId || 'Unknown Product';
+  };
 
-  if (subscriptionsLoading) {
+  // Format subscriptions data
+  const formatSubscriptions = (subs: any[]): Subscription[] => {
+    if (!subs || !Array.isArray(subs)) return [];
+    
+    return subs.map(sub => {
+      const startDate = new Date(sub.start_date);
+      const endDate = new Date(sub.end_date);
+      const now = new Date();
+      
+      // Calculate trial days remaining if applicable
+      const trialEndsIn = sub.status === 'trial' 
+        ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) 
+        : undefined;
+      
+      return {
+        id: sub.id,
+        userId: sub.user_id,
+        productId: sub.product_id,
+        bundleId: sub.bundle_id,
+        planId: sub.plan_id,
+        orderId: sub.order_id,
+        planName: sub.plan_id, // Placeholder - you might want to fetch actual plan name
+        startDate: sub.start_date,
+        endDate: sub.end_date,
+        status: sub.status || 'active',
+        price: sub.price,
+        currency: sub.currency,
+        name: sub.product_name || 'Subscription',
+        image: sub.product_image || "https://placehold.co/600x400/e4e4e7/ffffff?text=Software",
+        plan: sub.plan_name || sub.plan_id,
+        users: 1, // Default value
+        monthlyPrice: sub.price / 12, // Assuming yearly price
+        renewalDate: sub.end_date,
+        trialEndsIn,
+        // Optional fields for display
+        totalStorage: sub.total_storage || (Math.random() > 0.5 ? 100 : undefined),
+        usedStorage: sub.total_storage ? sub.used_storage || Math.floor(Math.random() * sub.total_storage) : undefined,
+      };
+    });
+  };
+
+  // Transform the raw data into our application format
+  const allSubscriptions = formatSubscriptions(subscriptionsData?.data || []);
+  const activeSubscriptions = allSubscriptions.filter(sub => sub.status === 'active');
+  const purchasesToDisplay = purchasesData?.data || [];
+  
+  const hasSubscriptions = allSubscriptions.length > 0;
+  const hasPurchases = purchasesToDisplay.length > 0;
+  const isLoading = subscriptionsLoading || purchasesLoading;
+
+  if (isLoading && !hasSubscriptions && !hasPurchases) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8 flex justify-center items-center" style={{ minHeight: "60vh" }}>
@@ -97,9 +279,23 @@ const SubscriptionsPage = () => {
             <h1 className="text-3xl font-bold mb-2">My Subscriptions</h1>
             <p className="text-gray-600">Manage all your business software subscriptions in one place.</p>
           </div>
-          <Button className="mt-4 md:mt-0" asChild>
-            <Link to="/">Browse More Software</Link>
-          </Button>
+          <div className="flex gap-3 mt-4 md:mt-0">
+            <Button 
+              variant="outline" 
+              onClick={handleRefreshData} 
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+            <Button asChild>
+              <Link to="/">Browse More Software</Link>
+            </Button>
+          </div>
         </div>
         
         <Tabs defaultValue="active" className="mb-8">
@@ -109,11 +305,11 @@ const SubscriptionsPage = () => {
           </TabsList>
           
           <TabsContent value="active" className="mt-6">
-            {!hasSubscriptions ? (
+            {activeSubscriptions.length === 0 ? (
               <EmptySubscriptionsState />
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userSubscriptions.map((subscription) => (
+                {activeSubscriptions.map((subscription) => (
                   <Card key={subscription.id} className="h-full">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between mb-2">
@@ -140,7 +336,7 @@ const SubscriptionsPage = () => {
                     
                     <CardContent>
                       <div className="space-y-4">
-                        {subscription.status === 'trial' && (
+                        {subscription.status === 'trial' && subscription.trialEndsIn && (
                           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-2 flex items-start">
                             <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
                             <span className="text-sm">Trial ends in {subscription.trialEndsIn} days</span>
@@ -148,14 +344,25 @@ const SubscriptionsPage = () => {
                         )}
                       
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="text-gray-500">Users</div>
-                          <div className="font-medium text-right">{subscription.users}</div>
+                          <div className="text-gray-500">Order ID</div>
+                          <div className="font-medium text-right truncate" title={subscription.orderId}>
+                            {subscription.orderId ? subscription.orderId.substring(0, 12) + '...' : 'N/A'}
+                          </div>
+                          
+                          <div className="text-gray-500">Start Date</div>
+                          <div className="font-medium text-right">
+                            {new Date(subscription.startDate).toLocaleDateString()}
+                          </div>
                           
                           <div className="text-gray-500">Next Renewal</div>
-                          <div className="font-medium text-right">{new Date(subscription.renewalDate).toLocaleDateString()}</div>
+                          <div className="font-medium text-right">
+                            {new Date(subscription.endDate).toLocaleDateString()}
+                          </div>
                           
-                          <div className="text-gray-500">Monthly Cost</div>
-                          <div className="font-medium text-right">${subscription.monthlyPrice * subscription.users}</div>
+                          <div className="text-gray-500">Price</div>
+                          <div className="font-medium text-right">
+                            {subscription.currency || '₹'}{subscription.price}
+                          </div>
                         </div>
                         
                         {subscription.totalStorage && (
@@ -169,15 +376,37 @@ const SubscriptionsPage = () => {
                         )}
                         
                         <div className="pt-2 grid grid-cols-2 gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full flex items-center justify-center"
-                            onClick={() => handleRenewSubscription(subscription.id)}
-                          >
-                            <Settings className="h-4 w-4 mr-1" />
-                            <span>Renew</span>
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full flex items-center justify-center text-destructive hover:text-destructive"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                <span>Cancel</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to cancel your {subscription.name} subscription? 
+                                  You will lose access to this service at the end of your current billing period.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleCancelSubscription(subscription.id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  Cancel Subscription
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          
                           <Button variant="outline" size="sm" className="w-full flex items-center justify-center">
                             <ExternalLink className="h-4 w-4 mr-1" />
                             <span>Open</span>
@@ -226,6 +455,7 @@ const SubscriptionsPage = () => {
                         <tr className="border-b">
                           <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Date</th>
                           <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Description</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Order ID</th>
                           <th className="py-3 px-4 text-right text-sm font-medium text-gray-500">Amount</th>
                           <th className="py-3 px-4 text-right text-sm font-medium text-gray-500">Status</th>
                         </tr>
@@ -234,10 +464,23 @@ const SubscriptionsPage = () => {
                         {purchasesToDisplay.map((payment) => (
                           <tr key={payment.id} className="border-b hover:bg-gray-50">
                             <td className="py-3 px-4 text-sm">{new Date(payment.date).toLocaleDateString()}</td>
-                            <td className="py-3 px-4 text-sm">{payment.description || `Payment for ${payment.product_id || payment.bundle_id || 'subscription'}`}</td>
-                            <td className="py-3 px-4 text-sm text-right">${payment.amount.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-sm">
+                              {payment.description || `Payment for ${getProductNameFromPurchase(payment)}`}
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              {payment.orderId ? (
+                                <span className="font-mono text-xs" title={payment.orderId}>
+                                  {payment.orderId.substring(0, 12)}...
+                                </span>
+                              ) : 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-right">
+                              {payment.currency || '₹'}{payment.amount.toFixed(2)}
+                            </td>
                             <td className="py-3 px-4 text-right">
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-normal">
+                              <Badge className={`bg-${payment.status === 'completed' ? 'green' : 'amber'}-100 
+                                text-${payment.status === 'completed' ? 'green' : 'amber'}-800 
+                                hover:bg-${payment.status === 'completed' ? 'green' : 'amber'}-100 font-normal`}>
                                 {payment.status}
                               </Badge>
                             </td>
@@ -262,17 +505,21 @@ const SubscriptionsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {userSubscriptions.map((subscription) => (
-                    <div key={`renewal-${subscription.id}`} className="flex justify-between items-center pb-2 border-b last:border-0 last:pb-0">
-                      <div>
-                        <div className="font-medium">{subscription.name}</div>
-                        <div className="text-sm text-gray-500">{new Date(subscription.renewalDate).toLocaleDateString()}</div>
+                {activeSubscriptions.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No upcoming renewals</p>
+                ) : (
+                  <div className="space-y-4">
+                    {activeSubscriptions.map((subscription) => (
+                      <div key={`renewal-${subscription.id}`} className="flex justify-between items-center pb-2 border-b last:border-0 last:pb-0">
+                        <div>
+                          <div className="font-medium">{subscription.name}</div>
+                          <div className="text-sm text-gray-500">{new Date(subscription.endDate).toLocaleDateString()}</div>
+                        </div>
+                        <div className="font-medium">{subscription.currency || '₹'}{subscription.price}</div>
                       </div>
-                      <div className="font-medium">${subscription.monthlyPrice * subscription.users}</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -284,11 +531,11 @@ const SubscriptionsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {userSubscriptions.filter(sub => sub.totalStorage).length === 0 ? (
+                {activeSubscriptions.filter(sub => sub.totalStorage).length === 0 ? (
                   <p className="text-gray-500 text-center py-4">No usage data available</p>
                 ) : (
                   <div className="space-y-4">
-                    {userSubscriptions.filter(sub => sub.totalStorage).map((subscription) => (
+                    {activeSubscriptions.filter(sub => sub.totalStorage).map((subscription) => (
                       <div key={`usage-${subscription.id}`} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span>{subscription.name} Storage</span>

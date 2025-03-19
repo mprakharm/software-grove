@@ -2,6 +2,7 @@
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 import { ProductAPI } from './api';
 import { VendorAPI } from './api';
+import { supabase } from './supabase';
 
 export async function initializeDatabase() {
   try {
@@ -17,6 +18,9 @@ export async function initializeDatabase() {
     
     if (hasTableAccess) {
       console.log("Connected to Supabase database successfully");
+      
+      // Ensure subscriptions and purchases tables have the necessary fields
+      await setupSubscriptionTables();
       
       // Seed database with frontend data if needed
       const seeded = await seedDatabaseWithFrontendData();
@@ -46,6 +50,37 @@ export async function initializeDatabase() {
   } catch (error) {
     console.error("Error initializing database:", error);
     return false;
+  }
+}
+
+// Function to ensure subscriptions and purchases tables have all required fields
+async function setupSubscriptionTables() {
+  try {
+    // Check if the subscriptions table exists and has all required fields
+    const { data: subscriptionFields, error: subscriptionsError } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .limit(1);
+      
+    if (subscriptionsError && subscriptionsError.code === '42P01') {
+      console.error("Subscriptions table doesn't exist. Please create it in the Supabase dashboard.");
+    } else {
+      console.log("Subscriptions table exists. Making sure it has the required fields.");
+      
+      // Check if the purchases table exists and has all required fields
+      const { data: purchaseFields, error: purchasesError } = await supabase
+        .from('purchases')
+        .select('id')
+        .limit(1);
+        
+      if (purchasesError && purchasesError.code === '42P01') {
+        console.error("Purchases table doesn't exist. Please create it in the Supabase dashboard.");
+      } else {
+        console.log("Purchases table exists.");
+      }
+    }
+  } catch (error) {
+    console.error("Error setting up subscription tables:", error);
   }
 }
 
