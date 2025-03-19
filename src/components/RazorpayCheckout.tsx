@@ -17,6 +17,8 @@ interface RazorpayCheckoutProps {
   onCancel: () => void;
 }
 
+const RATAN_NGROK_API_BASE_URL = 'https://d547-121-242-131-242.ngrok-free.app/proxy';
+
 const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   productId,
   planId,
@@ -57,12 +59,12 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       };
 
       // Call Razorpay API directly
-      const razorpayApiUrl = 'https://api.razorpay.com/v1/orders';
+      const razorpayApiUrl = '${RATAN_NGROK_API_BASE_URL}/razorpay_order_create';
       const response = await fetch(razorpayApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
+          // 'Authorization': 'Basic ' + btoa('rzp_test_Qk71AJmUSRc1Oi:i5GWHCPoDcSV14JLbZWV73uQ')
         },
         body: JSON.stringify(orderData)
       });
