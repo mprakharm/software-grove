@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import Razorpay from 'razorpay';
+// Remove the problematic import
+// import Razorpay from 'razorpay';
 
 interface RazorpayCheckoutProps {
   productId: string;

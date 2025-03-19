@@ -12,9 +12,10 @@ export interface RazorpayOrderRequest {
   currency: string;    // Currency code (e.g., INR)
   receipt?: string;    // Your internal order ID
   notes?: Record<string, string>; // Optional metadata
-  // plan_id?: string;    // The plan ID from your system
-  // product_id?: string; // The product ID from your system
-  // user_id?: string;    // The user ID from your system
+  // Add the missing properties to the type
+  user_id?: string;    // The user ID from your system
+  product_id?: string; // The product ID from your system
+  plan_id?: string;    // The plan ID from your system
 }
 
 export interface RazorpayOrderResponse {
