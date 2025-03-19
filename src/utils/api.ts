@@ -28,7 +28,7 @@ export const ProductAPI = {
       
       if (filters.searchQuery) {
         const searchTerm = `%${filters.searchQuery.toLowerCase()}%`;
-        query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm},vendor.ilike.${searchTerm}`);
+        query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm}`);
       }
     }
     
@@ -126,7 +126,7 @@ export const ProductAPI = {
     const { data, error } = await supabase
       .from('products')
       .select()
-      .or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm},vendor.ilike.${searchTerm}`);
+      .or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm}`);
     
     if (error) {
       console.error('Error searching products:', error);

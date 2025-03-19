@@ -134,7 +134,7 @@ const CategoryPage = () => {
     price: typeof product.price === 'number' ? `$${product.price}` : product.price,
     discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
     image: product.logo,
-    vendor: "Vendor", // Fixed: Removed reference to non-existent product.vendor
+    vendor: product.vendor || "Unknown vendor", // Use vendor from product or default
     rating: product.rating,
     reviewCount: product.reviews,
   }));
