@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 
 interface VendorPlan {
   id: string;
@@ -25,6 +26,7 @@ interface VendorPlan {
   popular?: boolean;
   billingOptions: string[];
   discountPercentage: number;
+  currency?: string;
 }
 
 interface ApiPlan {
@@ -39,7 +41,6 @@ interface ApiPlan {
   currency?: string;
   plan_activation_message?: string;
   steps_to_redeem_coupon?: string | null;
-  // For other API formats
   id?: string;
   name?: string;
   description?: string;
@@ -66,19 +67,29 @@ const SubscriptionPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  const isStreamingOrSocialProduct = () => {
+    if (!productId || !product) return false;
+    return productId === 'zee5' || 
+           productId === 'linkedin-premium' || 
+           productId === 'linkedin' ||
+           (product.name && (
+             product.name.toLowerCase().includes('zee5') || 
+             product.name.toLowerCase().includes('linkedin')
+           ));
+  };
+
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductDetails = async () => {
       if (!productId) return;
       
       setIsLoadingProduct(true);
       try {
-        const productData = await ProductAPI.getProductByNameOrId(productId);
-        setProduct(productData);
-        console.log('Product data fetched:', productData);
+        const fetchedProduct = await ProductAPI.getProductById(productId);
+        setProduct(fetchedProduct);
       } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('Error fetching product details:', error);
         toast({
-          title: "Failed to load product",
+          title: "Product not found",
           description: "We couldn't find the product you're looking for.",
           variant: "destructive"
         });
@@ -87,30 +98,26 @@ const SubscriptionPage = () => {
       }
     };
     
-    fetchProduct();
+    fetchProductDetails();
   }, [productId, toast]);
-  
+
   const normalizeAPIPlans = (apiPlans: any[]): VendorPlan[] => {
     if (!apiPlans || !Array.isArray(apiPlans) || apiPlans.length === 0) {
       console.warn('Invalid API plans format:', apiPlans);
       return [];
     }
     
-    // For both LinkedIn Premium and Zee5
     if (productId === 'linkedin-premium' || productId === 'linkedin' || productId === 'zee5' ||
         (product && (product.name.toLowerCase().includes('linkedin') || product.name.toLowerCase().includes('zee5')))) {
       
       console.log('Normalizing plans from API for:', product?.name, apiPlans);
       
       try {
-        // Check for specific plan_id as requested
         let plan: ApiPlan | undefined;
         
-        // First check if we have a plan_list format
         if (apiPlans[0] && apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
           console.log('Looking for plan_id=plan_A0qs3dlK in plan_list');
           
-          // Find the product that has the specific plan in its plan_list
           for (const product of apiPlans) {
             if (product.plan_list && Array.isArray(product.plan_list)) {
               plan = product.plan_list.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
@@ -118,15 +125,12 @@ const SubscriptionPage = () => {
             }
           }
           
-          // If not found, just take the first plan from the first product
           if (!plan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
             plan = apiPlans[0].plan_list[0];
           }
         } else {
-          // Direct plan search at the top level
           plan = apiPlans.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
           
-          // If not found, take the first plan
           if (!plan && apiPlans.length > 0) {
             plan = apiPlans[0];
           }
@@ -135,10 +139,8 @@ const SubscriptionPage = () => {
         console.log('Selected plan:', plan);
         
         if (plan) {
-          // Set default billing options since this plan doesn't have variants
           setHasMultipleBillingOptions(false);
           
-          // Split features from description
           const featuresList = plan.plan_description 
             ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
             : ['Premium feature'];
@@ -152,14 +154,14 @@ const SubscriptionPage = () => {
             price: plan.plan_cost || plan.plan_mrp || 29.99,
             features: featuresList,
             popular: true,
-            billingOptions: ['standard'], // Just one option since there's no monthly/yearly
+            billingOptions: ['standard'],
             discountPercentage: plan.plan_mrp && plan.plan_cost
               ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100)
-              : 0
+              : 0,
+            currency: plan.currency?.toUpperCase() || 'INR'
           }];
         }
         
-        // Fallback to standard format if specific plan not found
         return apiPlans.map((plan, index) => {
           setHasMultipleBillingOptions(false);
           
@@ -171,12 +173,13 @@ const SubscriptionPage = () => {
                    (plan.plan_cost || plan.plan_mrp || 29.99 + (index * 30)),
             features: Array.isArray(plan.features) ? plan.features : 
                      (plan.plan_description ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') : ['Premium feature']),
-            popular: index === 0, // Mark the first plan as popular
-            billingOptions: ['standard'], // Just one option
+            popular: index === 0,
+            billingOptions: ['standard'],
             discountPercentage: plan.discountPercentage || 
                               (plan.plan_mrp && plan.plan_cost 
                                 ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 
-                                : 0)
+                                : 0),
+            currency: plan.currency?.toUpperCase() || 'INR'
           };
           
           console.log('Normalized plan:', normalizedPlan);
@@ -188,7 +191,6 @@ const SubscriptionPage = () => {
       }
     }
     
-    // For other products
     return apiPlans;
   };
   
@@ -202,14 +204,12 @@ const SubscriptionPage = () => {
       const plansData = await ApiService.getVendorPlans(productId);
       console.log('Raw plans fetched from API service:', plansData);
       
-      // Normalize the API response to match our VendorPlan interface
       const normalizedPlans = normalizeAPIPlans(plansData);
       console.log('Normalized plans:', normalizedPlans);
       
       if (normalizedPlans.length > 0) {
         setVendorPlans(normalizedPlans);
         
-        // Select the first plan by default
         setSelectedPlan(normalizedPlans[0]?.id);
         
         setShowPlans(true);
@@ -229,14 +229,148 @@ const SubscriptionPage = () => {
   };
 
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
-    let price = basePrice * userCount;
+    let price = isStreamingOrSocialProduct() ? basePrice : basePrice * userCount;
     
-    // Only apply discount if we're dealing with multiple billing options
     if (hasMultipleBillingOptions && billingCycle === 'yearly') {
       price = price * (1 - (discountPercentage / 100));
     }
     
     return price;
+  };
+
+  const handleInitialSubscribe = () => {
+    fetchVendorPlans();
+  };
+
+  const createRazorpayOrder = async (
+    productId: string,
+    planId: string,
+    planName: string,
+    amount: number
+  ) => {
+    try {
+      const orderData = await ApiService.createRazorpayOrder({
+        productId,
+        planId,
+        amount: amount * 100,
+        currency: 'INR',
+        userId: user!.id,
+        userEmail: user!.email,
+        planName
+      });
+
+      const options = {
+        key: 'rzp_test_1DP5mmOlF5G5ag',
+        amount: amount * 100,
+        currency: 'INR',
+        name: 'SaaS Market',
+        description: `${planName} Subscription`,
+        order_id: orderData.id,
+        handler: async function(response: any) {
+          try {
+            await ApiService.processRazorpayPayment({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature
+            });
+            
+            await refreshSubscriptions();
+            
+            toast({
+              title: "Payment Successful",
+              description: "Your subscription has been activated successfully!",
+            });
+            
+            navigate('/subscriptions');
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            toast({
+              title: "Payment Verification Failed",
+              description: "We couldn't verify your payment. Please contact support.",
+              variant: "destructive"
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          email: user!.email,
+        },
+        theme: {
+          color: '#6366F1',
+        },
+        modal: {
+          ondismiss: function() {
+            setIsSubmitting(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You can try again when you're ready.",
+              variant: "default"
+            });
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      toast({
+        title: "Payment Initiation Failed",
+        description: "We couldn't start the payment process. Please try again.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCompletePurchase = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to subscribe to this service.",
+        variant: "destructive"
+      });
+      navigate('/sign-in');
+      return;
+    }
+
+    if (!selectedVendorPlan) {
+      toast({
+        title: "Please select a plan",
+        description: "You need to select a subscription plan to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
+    
+    createRazorpayOrder(
+      product!.id,
+      selectedPlan,
+      selectedVendorPlan.name,
+      amount
+    );
+  };
+
+  const getCurrencySymbol = (currency?: string): string => {
+    if (!currency) return '₹'; // Default to INR symbol for Indian Rupee
+    
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '$';
+      case 'INR':
+        return '₹';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      default:
+        return '₹'; // Default to INR symbol
+    }
   };
 
   if (isLoadingProduct) {
@@ -280,124 +414,6 @@ const SubscriptionPage = () => {
   ];
   
   const selectedVendorPlan = vendorPlans.find(plan => plan.id === selectedPlan);
-  
-  const handleInitialSubscribe = () => {
-    fetchVendorPlans();
-  };
-
-  const handleCompletePurchase = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to subscribe to this service.",
-        variant: "destructive"
-      });
-      navigate('/sign-in');
-      return;
-    }
-
-    if (!selectedVendorPlan) {
-      toast({
-        title: "Please select a plan",
-        description: "You need to select a subscription plan to continue.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const startDate = new Date();
-      const endDate = new Date();
-      if (billingCycle === 'yearly') {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      } else {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
-
-      const planPrice = calculatePlanPrice(
-        selectedVendorPlan.price, 
-        selectedVendorPlan.discountPercentage
-      );
-
-      const newSubscription = {
-        userId: user.id,
-        productId: product!.id,
-        planId: selectedPlan,
-        startDate: startDate,
-        endDate: endDate,
-        autoRenew: true,
-        price: planPrice,
-      };
-
-      const subscriptionMetadata = {
-        name: product!.name,
-        plan: selectedVendorPlan.name,
-        users: userCount,
-        renewalDate: endDate.toISOString(),
-        monthlyPrice: planPrice,
-        usedStorage: 0,
-        totalStorage: 20,
-        status: 'active',
-        image: product!.logo
-      };
-
-      await SubscriptionAPI.createSubscription(newSubscription);
-      
-      await supabase.from('purchases').insert({
-        user_id: user.id,
-        product_id: product!.id,
-        plan_id: selectedPlan,
-        date: new Date().toISOString(),
-        amount: billingCycle === 'yearly' ? planPrice * 12 : planPrice,
-        status: 'paid',
-        description: `${product!.name} - ${selectedVendorPlan.name} (${userCount} users)`
-      });
-
-      await refreshSubscriptions();
-
-      toast({
-        title: "Subscription Successful",
-        description: `You've successfully subscribed to ${product!.name}!`,
-      });
-
-      navigate('/subscriptions');
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast({
-        title: "Subscription Failed",
-        description: "There was an error processing your subscription. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  if (isLoadingProduct) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading product details...</p>
-        </div>
-      </Layout>
-    );
-  }
-  
-  if (!product) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-          <p className="text-gray-600 mb-8">The product you're looking for doesn't exist.</p>
-          <Button asChild>
-            <Link to="/">Return to Home</Link>
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
   
   return (
     <Layout>
@@ -472,7 +488,6 @@ const SubscriptionPage = () => {
             </div>
           ) : (
             <>
-              {/* Only show billing cycle tabs if the plan has multiple billing options */}
               {hasMultipleBillingOptions && (
                 <div className="flex justify-center mb-10">
                   <Tabs 
@@ -499,6 +514,7 @@ const SubscriptionPage = () => {
                 >
                   {vendorPlans.map((plan) => {
                     const price = calculatePlanPrice(plan.price, plan.discountPercentage);
+                    const currencySymbol = getCurrencySymbol(plan.currency);
                     
                     return (
                       <div key={plan.id} className="relative">
@@ -524,7 +540,7 @@ const SubscriptionPage = () => {
                               <h3 className="text-xl font-bold text-center mb-2">{plan.name}</h3>
                               
                               <div className="text-center mb-4">
-                                <div className="text-3xl font-bold">${price.toFixed(2)}</div>
+                                <div className="text-3xl font-bold">{currencySymbol}{price.toFixed(2)}</div>
                                 <div className="text-sm text-gray-500">
                                   {hasMultipleBillingOptions 
                                     ? `per user / ${billingCycle === 'yearly' ? 'month, billed annually' : 'month'}`
@@ -565,30 +581,32 @@ const SubscriptionPage = () => {
                 </div>
               )}
               
-              <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
-                <h3 className="font-medium mb-4">Number of Users</h3>
-                <div className="flex items-center space-x-4 mb-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setUserCount(Math.max(1, userCount - 1))}
-                    disabled={userCount <= 1}
-                  >
-                    -
-                  </Button>
-                  <span className="font-medium">{userCount}</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setUserCount(userCount + 1)}
-                  >
-                    +
-                  </Button>
+              {!isStreamingOrSocialProduct() && (
+                <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+                  <h3 className="font-medium mb-4">Number of Users</h3>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setUserCount(Math.max(1, userCount - 1))}
+                      disabled={userCount <= 1}
+                    >
+                      -
+                    </Button>
+                    <span className="font-medium">{userCount}</span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setUserCount(userCount + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    You can add more users at any time from your account dashboard.
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600">
-                  You can add more users at any time from your account dashboard.
-                </p>
-              </div>
+              )}
               
               {selectedVendorPlan && (
                 <div className="bg-gray-50 p-6 rounded-lg border mb-8">
@@ -604,28 +622,30 @@ const SubscriptionPage = () => {
                         : 'Standard'}
                     </span>
                   </div>
-                  <div className="flex justify-between mb-2">
-                    <span>Users</span>
-                    <span>{userCount}</span>
-                  </div>
+                  {!isStreamingOrSocialProduct() && (
+                    <div className="flex justify-between mb-2">
+                      <span>Users</span>
+                      <span>{userCount}</span>
+                    </div>
+                  )}
                   <div className="border-t my-4"></div>
                   <div className="flex justify-between font-medium">
                     <span>Total</span>
                     <div className="text-right">
                       <div className="font-bold">
-                        ${calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}
+                        {getCurrencySymbol(selectedVendorPlan.currency)}{calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}
                         {hasMultipleBillingOptions ? '/mo' : ''}
                       </div>
                       {hasMultipleBillingOptions && billingCycle === 'yearly' && (
                         <div className="text-sm text-gray-500">
-                          ${(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually
+                          {getCurrencySymbol(selectedVendorPlan.currency)}{(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually
                         </div>
                       )}
                     </div>
                   </div>
                   {hasMultipleBillingOptions && billingCycle === 'yearly' && selectedVendorPlan.discountPercentage > 0 && (
                     <div className="mt-2 text-sm text-green-600 text-right">
-                      You save ${(selectedVendorPlan.price * userCount * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
+                      You save {getCurrencySymbol(selectedVendorPlan.currency)}{(selectedVendorPlan.price * (isStreamingOrSocialProduct() ? 1 : userCount) * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
                     </div>
                   )}
                 </div>
@@ -656,3 +676,4 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
+
