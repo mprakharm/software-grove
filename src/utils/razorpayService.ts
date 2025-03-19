@@ -4,13 +4,13 @@ import { supabase } from './supabase';
 
 // Razorpay test credentials (these would normally be in environment variables)
 // Do not use these credentials in production
-const RAZORPAY_KEY_ID = 'rzp_test_Qk71AJmUSRc1Oi';
+const RAZORPAY_KEY_ID = 'rzp_test_1DP5mmOlF5G5ag';
 const RAZORPAY_KEY_SECRET = 'i5GWHCPoDcSV14JLbZWV73uQ';
 
 export interface RazorpayOrderRequest {
   amount: number;      // Amount in smallest currency unit (paise for INR)
   currency: string;    // Currency code (e.g., INR)
-  receipt: string;     // Your internal order ID
+  receipt?: string;    // Your internal order ID
   notes?: Record<string, string>; // Optional metadata
   plan_id?: string;    // The plan ID from your system
   product_id?: string; // The product ID from your system
@@ -35,19 +35,32 @@ export const RazorpayService = {
     try {
       console.log('Creating Razorpay order with data:', orderData);
 
-      // For testing purposes, we'll create a mock order without calling the actual API
-      // In production, you would call Razorpay's API here
-      const order: RazorpayOrderResponse = {
-        id: `order_${Math.random().toString(36).substring(2, 15)}`,
-        entity: 'order',
+      // Prepare data for Razorpay API
+      const razorpayRequestData = {
         amount: orderData.amount,
-        amount_paid: 0,
-        amount_due: orderData.amount,
-        currency: orderData.currency,
-        receipt: orderData.receipt,
-        status: 'created',
-        created_at: Math.floor(Date.now() / 1000)
+        currency: orderData.currency || 'INR',
+        receipt: orderData.receipt || `receipt_${Date.now()}`,
+        notes: orderData.notes || {}
       };
+
+      // Make direct API call to Razorpay
+      const response = await fetch('https://api.razorpay.com/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)
+        },
+        body: JSON.stringify(razorpayRequestData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Razorpay API error: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to create Razorpay order: ${response.status}`);
+      }
+
+      const order = await response.json();
+      console.log('Razorpay order created successfully:', order);
 
       // Store order in database for reference
       await supabase.from('orders').insert({

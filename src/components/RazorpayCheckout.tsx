@@ -73,11 +73,11 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       // Initialize Razorpay checkout
       const options = {
         key: 'rzp_test_1DP5mmOlF5G5ag', // Test key
-        amount: amount * 100, // in paise
-        currency, // Use the provided currency
+        amount: orderData.amount, // Use amount from order response
+        currency: orderData.currency, // Use currency from order response
         name: 'SaaS Market',
         description: `${planName} Subscription`,
-        order_id: orderData.id,
+        order_id: orderData.id, // Use order ID from response
         handler: async function(response: any) {
           try {
             // Process payment success
