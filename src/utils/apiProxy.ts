@@ -53,14 +53,12 @@ export const ApiProxyController = {
         currency: orderData.currency || 'INR',
         receipt: `receipt_${Date.now()}`,
         notes: {
-          productId: orderData.productId,
-          planId: orderData.planId,
-          planName: orderData.planName,
-          userEmail: orderData.userEmail
+          product_id: orderData.productId,
+          plan_id: orderData.planId,
+          plan_name: orderData.planName,
+          user_email: orderData.userEmail,
+          user_id: orderData.userId
         },
-        user_id: orderData.userId,
-        product_id: orderData.productId,
-        plan_id: orderData.planId
       };
       
       // Call Razorpay service to create order

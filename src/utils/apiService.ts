@@ -49,17 +49,14 @@ export const ApiService = {
   
   // Create a Razorpay order
   async createRazorpayOrder(orderData: {
-    productId: string;
-    planId: string;
-    amount: number;
-    currency: string;
-    userId: string;
-    userEmail?: string;
-    planName?: string;
+    amount: number;      // Amount in smallest currency unit (paise for INR)
+    currency: string;    // Currency code (e.g., INR)
+    receipt?: string;    // Your internal order ID
+    notes?: Record<string, string>; // Optional metadata
   }): Promise<any> {
     try {
       console.log('Creating Razorpay order:', orderData);
-      
+
       const response = await fetch(`${API_BASE_URL}/razorpay/create-order`, {
         method: 'POST',
         headers: {
