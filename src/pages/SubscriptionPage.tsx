@@ -250,7 +250,7 @@ const SubscriptionPage = () => {
   ) => {
     try {
       const orderData = await ApiService.createRazorpayOrder({
-        amount: amount,
+        amount: amount * 100,
         currency: 'INR',
         receipt: `receipt_${Date.now()}`,
         notes: {
