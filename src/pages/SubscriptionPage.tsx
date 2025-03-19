@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -96,13 +97,13 @@ const SubscriptionPage = () => {
       return [];
     }
     
-    // For Zee5 specifically
-    if (productId === 'zee5' || productId === 'zee5-premium' || (product && product.name.toLowerCase().includes('zee5'))) {
-      console.log('Normalizing Zee5 plans from API:', apiPlans);
+    // For LinkedIn Premium specifically
+    if (productId === 'linkedin-premium' || productId === 'linkedin' || (product && product.name.toLowerCase().includes('linkedin'))) {
+      console.log('Normalizing LinkedIn Premium plans from API:', apiPlans);
       
       try {
-        // Check for specific Zee5 plan_id as requested
-        let zee5Plan: ApiPlan | undefined;
+        // Check for specific LinkedIn plan_id as requested
+        let linkedInPlan: ApiPlan | undefined;
         
         // First check if we have a plan_list format
         if (apiPlans[0] && apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
@@ -111,48 +112,48 @@ const SubscriptionPage = () => {
           // Find the product that has the specific plan in its plan_list
           for (const product of apiPlans) {
             if (product.plan_list && Array.isArray(product.plan_list)) {
-              zee5Plan = product.plan_list.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
-              if (zee5Plan) break;
+              linkedInPlan = product.plan_list.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
+              if (linkedInPlan) break;
             }
           }
           
           // If not found, just take the first plan from the first product
-          if (!zee5Plan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
-            zee5Plan = apiPlans[0].plan_list[0];
+          if (!linkedInPlan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
+            linkedInPlan = apiPlans[0].plan_list[0];
           }
         } else {
           // Direct plan search at the top level
-          zee5Plan = apiPlans.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
+          linkedInPlan = apiPlans.find((plan: ApiPlan) => plan.plan_id === 'plan_A0qs3dlK');
           
           // If not found, take the first plan
-          if (!zee5Plan && apiPlans.length > 0) {
-            zee5Plan = apiPlans[0];
+          if (!linkedInPlan && apiPlans.length > 0) {
+            linkedInPlan = apiPlans[0];
           }
         }
         
-        console.log('Selected Zee5 plan:', zee5Plan);
+        console.log('Selected LinkedIn plan:', linkedInPlan);
         
-        if (zee5Plan) {
+        if (linkedInPlan) {
           // Set default billing options since this plan doesn't have variants
           setHasMultipleBillingOptions(false);
           
           // Split features from description
-          const featuresList = zee5Plan.plan_description 
-            ? zee5Plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
+          const featuresList = linkedInPlan.plan_description 
+            ? linkedInPlan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
             : ['Premium feature'];
           
           console.log('Extracted features:', featuresList);
           
           return [{
-            id: zee5Plan.plan_id || 'zee5-premium-plan',
-            name: zee5Plan.plan_name || 'Zee5 Premium',
-            description: zee5Plan.plan_activation_message || 'Premium Zee5 Subscription',
-            price: zee5Plan.plan_cost || zee5Plan.plan_mrp || 60,
+            id: linkedInPlan.plan_id || 'linkedin-premium-plan',
+            name: linkedInPlan.plan_name || 'LinkedIn Premium',
+            description: linkedInPlan.plan_activation_message || 'Premium LinkedIn Subscription',
+            price: linkedInPlan.plan_cost || linkedInPlan.plan_mrp || 29.99,
             features: featuresList,
             popular: true,
             billingOptions: ['standard'], // Just one option since there's no monthly/yearly
-            discountPercentage: zee5Plan.plan_mrp && zee5Plan.plan_cost
-              ? Math.round(((zee5Plan.plan_mrp - zee5Plan.plan_cost) / zee5Plan.plan_mrp) * 100)
+            discountPercentage: linkedInPlan.plan_mrp && linkedInPlan.plan_cost
+              ? Math.round(((linkedInPlan.plan_mrp - linkedInPlan.plan_cost) / linkedInPlan.plan_mrp) * 100)
               : 0
           }];
         }
@@ -162,15 +163,15 @@ const SubscriptionPage = () => {
           setHasMultipleBillingOptions(false);
           
           const normalizedPlan: VendorPlan = {
-            id: plan.id || plan.plan_id || `zee5-plan-${index}`,
-            name: plan.name || plan.plan_name || 'Zee5 Plan',
-            description: plan.description || plan.plan_description || 'Zee5 Premium Subscription',
+            id: plan.id || plan.plan_id || `linkedin-plan-${index}`,
+            name: plan.name || plan.plan_name || 'LinkedIn Plan',
+            description: plan.description || plan.plan_description || 'LinkedIn Premium Subscription',
             price: typeof plan.price === 'number' ? plan.price : 
-                   (plan.plan_cost || plan.plan_mrp || 60 + (index * 30)),
+                   (plan.plan_cost || plan.plan_mrp || 29.99 + (index * 30)),
             features: Array.isArray(plan.features) ? plan.features : 
                      (plan.plan_description ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') : ['Premium feature']),
             popular: index === 0, // Mark the first plan as popular
-            billingOptions: ['standard'], // Just one option for Zee5 plans
+            billingOptions: ['standard'], // Just one option for LinkedIn plans
             discountPercentage: plan.discountPercentage || 
                               (plan.plan_mrp && plan.plan_cost 
                                 ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 
@@ -409,7 +410,7 @@ const SubscriptionPage = () => {
             <h1 className="text-3xl font-bold mb-3">Subscribe to {product.name}</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
               {showPlans ? 
-                "Select the plan that best fits your entertainment needs." : 
+                "Select the plan that best fits your business needs." : 
                 "Click the button below to see available plans and pricing options."}
             </p>
           </div>
@@ -417,12 +418,12 @@ const SubscriptionPage = () => {
           {!showPlans ? (
             <div className="text-center mb-12">
               <div className="relative mb-8">
-                <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-100 p-6 max-w-xl mx-auto">
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 p-6 max-w-xl mx-auto">
                   <div className="flex items-center gap-4 mb-4">
                     <div 
                       className="h-16 w-16 rounded-lg flex-shrink-0 bg-cover bg-center"
                       style={{ 
-                        backgroundColor: product.color || "#6F42C1",
+                        backgroundColor: product.color || '#2D88FF',
                         backgroundImage: product.logo ? `url(${product.logo})` : 'none'
                       }}
                     />
@@ -449,7 +450,7 @@ const SubscriptionPage = () => {
                     {product.description}
                   </p>
                   <Button 
-                    className="w-full bg-purple-600 hover:bg-purple-700" 
+                    className="w-full" 
                     onClick={handleInitialSubscribe}
                     disabled={isLoadingPlans}
                   >

@@ -1,3 +1,4 @@
+
 interface ProductContent {
   overview: string;
   features: {
@@ -29,27 +30,6 @@ export const PRODUCT_CONTENT: ProductsContentMap = {
       {
         name: "Google Meet",
         description: "Secure video meetings with screen sharing and recording capabilities"
-      }
-    ]
-  },
-  "zee5": {
-    overview: "Zee5 is India's premium streaming platform with a vast library of movies, TV shows, originals, and live TV across multiple languages.",
-    features: [
-      {
-        name: "Unlimited Streaming",
-        description: "Stream unlimited movies, TV shows, and Zee5 Originals anytime, anywhere"
-      },
-      {
-        name: "Multi-device Access",
-        description: "Watch content on up to 2 screens simultaneously across devices"
-      },
-      {
-        name: "HD Content",
-        description: "Enjoy high-definition streaming quality for the best viewing experience"
-      },
-      {
-        name: "Ad-free Experience",
-        description: "Premium subscribers enjoy content without interruptions from advertisements"
       }
     ]
   },
@@ -516,3 +496,5 @@ export const PRODUCT_CONTENT: ProductsContentMap = {
     ]
   }
 };
+
+// The remaining products can be added as needed based on the IDs used in your system
