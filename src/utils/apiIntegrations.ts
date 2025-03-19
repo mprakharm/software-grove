@@ -33,17 +33,12 @@ export function initializeApiIntegrations() {
     console.log('Server-side: Calling LinkedIn Premium API for product:', product.name);
     try {
       // Correct API URL - this is a server-side call
-      const apiUrl = 'https://d547-121-242-131-242.ngrok-free.app/proxy/getfleek';
+      const apiUrl = 'https://d547-121-242-131-242.ngrok-free.app/proxy/getfleek_list';
       console.log('Server-side: Attempting to fetch from:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 
-          'Authorization': 'ZGV2cnpwYXk6SDJmandjNVE5eUhaTHY1Ng==',
-          'Content-Type': 'application/json'
-        },
-        // Remove mode: 'cors' as it can cause issues with cross-origin requests in certain environments
-        // Let the browser handle the CORS policy automatically
+
       });
       
       console.log('Server-side: LinkedIn API response status:', response.status);
