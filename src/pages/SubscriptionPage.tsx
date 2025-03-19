@@ -40,7 +40,6 @@ interface ApiPlan {
   currency?: string;
   plan_activation_message?: string;
   steps_to_redeem_coupon?: string | null;
-  // For other API formats
   id?: string;
   name?: string;
   description?: string;
@@ -63,35 +62,19 @@ const SubscriptionPage = () => {
   const [showPlans, setShowPlans] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [hasMultipleBillingOptions, setHasMultipleBillingOptions] = useState(true);
-  const [showRazorpay, setShowRazorpay] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) return;
-      
-      setIsLoadingProduct(true);
-      try {
-        const productData = await ProductAPI.getProductByNameOrId(productId);
-        setProduct(productData);
-        console.log('Product data fetched:', productData);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        toast({
-          title: "Failed to load product",
-          description: "We couldn't find the product you're looking for.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoadingProduct(false);
-      }
-    };
-    
-    fetchProduct();
-  }, [productId, toast]);
-  
+  const isStreamingOrSocialProduct = () => {
+    if (!productId || !product) return false;
+    return productId === 'zee5' || 
+           productId === 'linkedin-premium' || 
+           productId === 'linkedin' ||
+           (product.name.toLowerCase().includes('zee5') || 
+            product.name.toLowerCase().includes('linkedin'));
+  };
+
   const normalizeAPIPlans = (apiPlans: any[]): VendorPlan[] => {
     if (!apiPlans || !Array.isArray(apiPlans) || apiPlans.length === 0) {
       console.warn('Invalid API plans format:', apiPlans);
@@ -218,7 +201,7 @@ const SubscriptionPage = () => {
   };
 
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
-    let price = basePrice * userCount;
+    let price = isStreamingOrSocialProduct() ? basePrice : basePrice * userCount;
     
     if (hasMultipleBillingOptions && billingCycle === 'yearly') {
       price = price * (1 - (discountPercentage / 100));
@@ -293,26 +276,98 @@ const SubscriptionPage = () => {
       return;
     }
 
-    setShowRazorpay(true);
-  };
-
-  const handlePaymentSuccess = async () => {
-    toast({
-      title: "Subscription Successful",
-      description: `You've successfully subscribed to ${product!.name}!`,
-    });
+    setIsSubmitting(true);
     
-    await refreshSubscriptions();
-    navigate('/subscriptions');
+    const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
+    
+    createRazorpayOrder(
+      product!.id,
+      selectedPlan,
+      selectedVendorPlan.name,
+      amount
+    );
   };
 
-  const handlePaymentCancel = () => {
-    setShowRazorpay(false);
-    toast({
-      title: "Payment Cancelled",
-      description: "You can try again when you're ready.",
-      variant: "default"
-    });
+  const createRazorpayOrder = async (
+    productId: string,
+    planId: string,
+    planName: string,
+    amount: number
+  ) => {
+    try {
+      const orderData = await ApiService.createRazorpayOrder({
+        productId,
+        planId,
+        amount: amount * 100,
+        currency: 'INR',
+        userId: user!.id,
+        userEmail: user!.email,
+        planName
+      });
+
+      const options = {
+        key: 'rzp_test_1DP5mmOlF5G5ag',
+        amount: amount * 100,
+        currency: 'INR',
+        name: 'SaaS Market',
+        description: `${planName} Subscription`,
+        order_id: orderData.id,
+        handler: async function(response: any) {
+          try {
+            await ApiService.processRazorpayPayment({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature
+            });
+            
+            await refreshSubscriptions();
+            
+            toast({
+              title: "Payment Successful",
+              description: "Your subscription has been activated successfully!",
+            });
+            
+            navigate('/subscriptions');
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            toast({
+              title: "Payment Verification Failed",
+              description: "We couldn't verify your payment. Please contact support.",
+              variant: "destructive"
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          email: user!.email,
+        },
+        theme: {
+          color: '#6366F1',
+        },
+        modal: {
+          ondismiss: function() {
+            setIsSubmitting(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You can try again when you're ready.",
+              variant: "default"
+            });
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      toast({
+        title: "Payment Initiation Failed",
+        description: "We couldn't start the payment process. Please try again.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoadingProduct) {
@@ -505,30 +560,32 @@ const SubscriptionPage = () => {
                 </div>
               )}
               
-              <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
-                <h3 className="font-medium mb-4">Number of Users</h3>
-                <div className="flex items-center space-x-4 mb-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setUserCount(Math.max(1, userCount - 1))}
-                    disabled={userCount <= 1}
-                  >
-                    -
-                  </Button>
-                  <span className="font-medium">{userCount}</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setUserCount(userCount + 1)}
-                  >
-                    +
-                  </Button>
+              {!isStreamingOrSocialProduct() && (
+                <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+                  <h3 className="font-medium mb-4">Number of Users</h3>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setUserCount(Math.max(1, userCount - 1))}
+                      disabled={userCount <= 1}
+                    >
+                      -
+                    </Button>
+                    <span className="font-medium">{userCount}</span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setUserCount(userCount + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    You can add more users at any time from your account dashboard.
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600">
-                  You can add more users at any time from your account dashboard.
-                </p>
-              </div>
+              )}
               
               {selectedVendorPlan && (
                 <div className="bg-gray-50 p-6 rounded-lg border mb-8">
@@ -544,10 +601,12 @@ const SubscriptionPage = () => {
                         : 'Standard'}
                     </span>
                   </div>
-                  <div className="flex justify-between mb-2">
-                    <span>Users</span>
-                    <span>{userCount}</span>
-                  </div>
+                  {!isStreamingOrSocialProduct() && (
+                    <div className="flex justify-between mb-2">
+                      <span>Users</span>
+                      <span>{userCount}</span>
+                    </div>
+                  )}
                   <div className="border-t my-4"></div>
                   <div className="flex justify-between font-medium">
                     <span>Total</span>
@@ -565,41 +624,28 @@ const SubscriptionPage = () => {
                   </div>
                   {hasMultipleBillingOptions && billingCycle === 'yearly' && selectedVendorPlan.discountPercentage > 0 && (
                     <div className="mt-2 text-sm text-green-600 text-right">
-                      You save ${(selectedVendorPlan.price * userCount * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
+                      You save ${(selectedVendorPlan.price * (isStreamingOrSocialProduct() ? 1 : userCount) * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
                     </div>
                   )}
                 </div>
               )}
               
-              {showRazorpay && selectedVendorPlan ? (
-                <div className="w-full max-w-md">
-                  <RazorpayCheckout
-                    productId={product!.id}
-                    planId={selectedPlan}
-                    planName={selectedVendorPlan.name}
-                    amount={calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage)}
-                    onSuccess={handlePaymentSuccess}
-                    onCancel={handlePaymentCancel}
-                  />
-                </div>
-              ) : (
-                <div className="flex justify-end">
-                  <Button 
-                    size="lg" 
-                    onClick={handleCompletePurchase}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                        Processing...
-                      </>
-                    ) : (
-                      'Complete Purchase'
-                    )}
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-end">
+                <Button 
+                  size="lg" 
+                  onClick={handleCompletePurchase}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      Processing...
+                    </>
+                  ) : (
+                    'Complete Purchase'
+                  )}
+                </Button>
+              </div>
             </>
           )}
         </div>
