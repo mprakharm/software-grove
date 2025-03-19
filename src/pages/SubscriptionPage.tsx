@@ -252,10 +252,10 @@ const SubscriptionPage = () => {
       const orderData = await ApiService.createRazorpayOrder({
         amount: amount * 100,
         currency: 'INR',
-        receipt: `receipt_${Date.now()}`,
         notes: {
-          product_id: productId,
-          plan_id: planId
+          productId: productId,
+          planId: planId,
+          planName: planName
         }
       });
 
@@ -263,8 +263,8 @@ const SubscriptionPage = () => {
         key: 'rzp_test_Qk71AJmUSRc1Oi',
         amount: amount * 100,
         currency: 'INR',
-        // name: 'SaaS Market',
-        // description: `${planName} Subscription`,
+        name: 'SaaS Market',
+        description: `${planName} Subscription`,
         order_id: orderData.id,
         handler: async function(response: any) {
           try {

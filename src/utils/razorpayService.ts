@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 
 // Razorpay test credentials (these would normally be in environment variables)
 // Do not use these credentials in production
-const RAZORPAY_KEY_ID = 'rzp_test_1DP5mmOlF5G5ag';
+const RAZORPAY_KEY_ID = 'rzp_test_Qk71AJmUSRc1Oi';
 const RAZORPAY_KEY_SECRET = 'i5GWHCPoDcSV14JLbZWV73uQ';
 
 export interface RazorpayOrderRequest {
