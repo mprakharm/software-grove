@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/utils/supabase';
 import { Product } from '@/utils/db';
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 
 interface VendorPlan {
   id: string;
@@ -62,6 +63,7 @@ const SubscriptionPage = () => {
   const [showPlans, setShowPlans] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [hasMultipleBillingOptions, setHasMultipleBillingOptions] = useState(true);
+  const [showRazorpay, setShowRazorpay] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -96,21 +98,17 @@ const SubscriptionPage = () => {
       return [];
     }
     
-    // For both LinkedIn Premium and Zee5
     if (productId === 'linkedin-premium' || productId === 'linkedin' || productId === 'zee5' ||
         (product && (product.name.toLowerCase().includes('linkedin') || product.name.toLowerCase().includes('zee5')))) {
       
       console.log('Normalizing plans from API for:', product?.name, apiPlans);
       
       try {
-        // Check for specific plan_id as requested
         let plan: ApiPlan | undefined;
         
-        // First check if we have a plan_list format
         if (apiPlans[0] && apiPlans[0].plan_list && Array.isArray(apiPlans[0].plan_list)) {
           console.log('Looking for plan_id=plan_A0qs3dlK in plan_list');
           
-          // Find the product that has the specific plan in its plan_list
           for (const product of apiPlans) {
             if (product.plan_list && Array.isArray(product.plan_list)) {
               plan = product.plan_list.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
@@ -118,15 +116,12 @@ const SubscriptionPage = () => {
             }
           }
           
-          // If not found, just take the first plan from the first product
           if (!plan && apiPlans[0].plan_list && apiPlans[0].plan_list.length > 0) {
             plan = apiPlans[0].plan_list[0];
           }
         } else {
-          // Direct plan search at the top level
           plan = apiPlans.find((p: ApiPlan) => p.plan_id === 'plan_A0qs3dlK');
           
-          // If not found, take the first plan
           if (!plan && apiPlans.length > 0) {
             plan = apiPlans[0];
           }
@@ -135,10 +130,8 @@ const SubscriptionPage = () => {
         console.log('Selected plan:', plan);
         
         if (plan) {
-          // Set default billing options since this plan doesn't have variants
           setHasMultipleBillingOptions(false);
           
-          // Split features from description
           const featuresList = plan.plan_description 
             ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') 
             : ['Premium feature'];
@@ -152,14 +145,13 @@ const SubscriptionPage = () => {
             price: plan.plan_cost || plan.plan_mrp || 29.99,
             features: featuresList,
             popular: true,
-            billingOptions: ['standard'], // Just one option since there's no monthly/yearly
+            billingOptions: ['standard'],
             discountPercentage: plan.plan_mrp && plan.plan_cost
               ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100)
               : 0
           }];
         }
         
-        // Fallback to standard format if specific plan not found
         return apiPlans.map((plan, index) => {
           setHasMultipleBillingOptions(false);
           
@@ -171,8 +163,8 @@ const SubscriptionPage = () => {
                    (plan.plan_cost || plan.plan_mrp || 29.99 + (index * 30)),
             features: Array.isArray(plan.features) ? plan.features : 
                      (plan.plan_description ? plan.plan_description.split(/\r?\n/).filter(f => f.trim() !== '') : ['Premium feature']),
-            popular: index === 0, // Mark the first plan as popular
-            billingOptions: ['standard'], // Just one option
+            popular: index === 0,
+            billingOptions: ['standard'],
             discountPercentage: plan.discountPercentage || 
                               (plan.plan_mrp && plan.plan_cost 
                                 ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 
@@ -188,7 +180,6 @@ const SubscriptionPage = () => {
       }
     }
     
-    // For other products
     return apiPlans;
   };
   
@@ -202,14 +193,12 @@ const SubscriptionPage = () => {
       const plansData = await ApiService.getVendorPlans(productId);
       console.log('Raw plans fetched from API service:', plansData);
       
-      // Normalize the API response to match our VendorPlan interface
       const normalizedPlans = normalizeAPIPlans(plansData);
       console.log('Normalized plans:', normalizedPlans);
       
       if (normalizedPlans.length > 0) {
         setVendorPlans(normalizedPlans);
         
-        // Select the first plan by default
         setSelectedPlan(normalizedPlans[0]?.id);
         
         setShowPlans(true);
@@ -231,7 +220,6 @@ const SubscriptionPage = () => {
   const calculatePlanPrice = (basePrice: number, discountPercentage: number) => {
     let price = basePrice * userCount;
     
-    // Only apply discount if we're dealing with multiple billing options
     if (hasMultipleBillingOptions && billingCycle === 'yearly') {
       price = price * (1 - (discountPercentage / 100));
     }
@@ -285,7 +273,7 @@ const SubscriptionPage = () => {
     fetchVendorPlans();
   };
 
-  const handleCompletePurchase = async () => {
+  const handleCompletePurchase = () => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -305,75 +293,28 @@ const SubscriptionPage = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const startDate = new Date();
-      const endDate = new Date();
-      if (billingCycle === 'yearly') {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      } else {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
-
-      const planPrice = calculatePlanPrice(
-        selectedVendorPlan.price, 
-        selectedVendorPlan.discountPercentage
-      );
-
-      const newSubscription = {
-        userId: user.id,
-        productId: product!.id,
-        planId: selectedPlan,
-        startDate: startDate,
-        endDate: endDate,
-        autoRenew: true,
-        price: planPrice,
-      };
-
-      const subscriptionMetadata = {
-        name: product!.name,
-        plan: selectedVendorPlan.name,
-        users: userCount,
-        renewalDate: endDate.toISOString(),
-        monthlyPrice: planPrice,
-        usedStorage: 0,
-        totalStorage: 20,
-        status: 'active',
-        image: product!.logo
-      };
-
-      await SubscriptionAPI.createSubscription(newSubscription);
-      
-      await supabase.from('purchases').insert({
-        user_id: user.id,
-        product_id: product!.id,
-        plan_id: selectedPlan,
-        date: new Date().toISOString(),
-        amount: billingCycle === 'yearly' ? planPrice * 12 : planPrice,
-        status: 'paid',
-        description: `${product!.name} - ${selectedVendorPlan.name} (${userCount} users)`
-      });
-
-      await refreshSubscriptions();
-
-      toast({
-        title: "Subscription Successful",
-        description: `You've successfully subscribed to ${product!.name}!`,
-      });
-
-      navigate('/subscriptions');
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast({
-        title: "Subscription Failed",
-        description: "There was an error processing your subscription. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setShowRazorpay(true);
   };
-  
+
+  const handlePaymentSuccess = async () => {
+    toast({
+      title: "Subscription Successful",
+      description: `You've successfully subscribed to ${product!.name}!`,
+    });
+    
+    await refreshSubscriptions();
+    navigate('/subscriptions');
+  };
+
+  const handlePaymentCancel = () => {
+    setShowRazorpay(false);
+    toast({
+      title: "Payment Cancelled",
+      description: "You can try again when you're ready.",
+      variant: "default"
+    });
+  };
+
   if (isLoadingProduct) {
     return (
       <Layout>
@@ -472,7 +413,6 @@ const SubscriptionPage = () => {
             </div>
           ) : (
             <>
-              {/* Only show billing cycle tabs if the plan has multiple billing options */}
               {hasMultipleBillingOptions && (
                 <div className="flex justify-center mb-10">
                   <Tabs 
@@ -631,22 +571,35 @@ const SubscriptionPage = () => {
                 </div>
               )}
               
-              <div className="flex justify-end">
-                <Button 
-                  size="lg" 
-                  onClick={handleCompletePurchase}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                      Processing...
-                    </>
-                  ) : (
-                    'Complete Purchase'
-                  )}
-                </Button>
-              </div>
+              {showRazorpay && selectedVendorPlan ? (
+                <div className="w-full max-w-md">
+                  <RazorpayCheckout
+                    productId={product!.id}
+                    planId={selectedPlan}
+                    planName={selectedVendorPlan.name}
+                    amount={calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage)}
+                    onSuccess={handlePaymentSuccess}
+                    onCancel={handlePaymentCancel}
+                  />
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <Button 
+                    size="lg" 
+                    onClick={handleCompletePurchase}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                        Processing...
+                      </>
+                    ) : (
+                      'Complete Purchase'
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

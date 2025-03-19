@@ -1,5 +1,6 @@
 
 import { VendorAPI } from './api';
+import { RazorpayService } from './razorpayService';
 
 // Server-side proxy controller for vendor API calls
 export const ApiProxyController = {
@@ -42,5 +43,53 @@ export const ApiProxyController = {
     }
   },
   
-  // Additional proxy methods can be added here as needed
+  // Create Razorpay order
+  async createRazorpayOrder(orderData: any): Promise<any> {
+    console.log('Backend proxy: Creating Razorpay order with data:', orderData);
+    try {
+      // Convert frontend order data to Razorpay format
+      const razorpayOrderRequest = {
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          productId: orderData.productId,
+          planId: orderData.planId,
+          planName: orderData.planName,
+          userEmail: orderData.userEmail
+        },
+        user_id: orderData.userId,
+        product_id: orderData.productId,
+        plan_id: orderData.planId
+      };
+      
+      // Call Razorpay service to create order
+      const order = await RazorpayService.createOrder(razorpayOrderRequest);
+      return order;
+    } catch (error) {
+      console.error('Backend proxy: Error creating Razorpay order:', error);
+      throw error;
+    }
+  },
+  
+  // Verify Razorpay payment
+  async verifyRazorpayPayment(paymentData: any): Promise<any> {
+    console.log('Backend proxy: Verifying Razorpay payment:', paymentData);
+    try {
+      const success = await RazorpayService.processSuccessfulPayment(
+        paymentData.orderId,
+        paymentData.paymentId,
+        paymentData.signature
+      );
+      
+      if (success) {
+        return { success: true, message: 'Payment verified successfully' };
+      } else {
+        throw new Error('Payment verification failed');
+      }
+    } catch (error) {
+      console.error('Backend proxy: Error verifying Razorpay payment:', error);
+      throw error;
+    }
+  }
 };
