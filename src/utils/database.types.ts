@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -18,7 +17,6 @@ export interface Database {
           category: string
           logo: string
           price: number
-          currency?: string
           featured_benefit?: string
           benefits?: string[]
           integration?: string[]
@@ -43,7 +41,6 @@ export interface Database {
           category: string
           logo: string
           price: number
-          currency?: string
           featured_benefit?: string
           benefits?: string[]
           integration?: string[]
@@ -68,7 +65,6 @@ export interface Database {
           category?: string
           logo?: string
           price?: number
-          currency?: string
           featured_benefit?: string
           benefits?: string[]
           integration?: string[]
@@ -106,7 +102,6 @@ export interface Database {
           color: string
           purchases?: number
           created_at: string
-          currency?: string
         }
         Insert: {
           id?: string
@@ -126,7 +121,6 @@ export interface Database {
           color: string
           purchases?: number
           created_at?: string
-          currency?: string
         }
         Update: {
           id?: string
@@ -146,7 +140,6 @@ export interface Database {
           color?: string
           purchases?: number
           created_at?: string
-          currency?: string
         }
       }
       subscriptions: {
@@ -160,7 +153,6 @@ export interface Database {
           end_date: string
           auto_renew: boolean
           price: number
-          currency?: string
           created_at: string
         }
         Insert: {
@@ -173,7 +165,6 @@ export interface Database {
           end_date: string
           auto_renew: boolean
           price: number
-          currency?: string
           created_at?: string
         }
         Update: {
@@ -186,7 +177,6 @@ export interface Database {
           end_date?: string
           auto_renew?: boolean
           price?: number
-          currency?: string
           created_at?: string
         }
       }
@@ -199,7 +189,6 @@ export interface Database {
           plan_id: string
           date: string
           amount: number
-          currency?: string
           status: string
           created_at: string
         }
@@ -211,7 +200,6 @@ export interface Database {
           plan_id: string
           date: string
           amount: number
-          currency?: string
           status: string
           created_at?: string
         }
@@ -223,7 +211,6 @@ export interface Database {
           plan_id?: string
           date?: string
           amount?: number
-          currency?: string
           status?: string
           created_at?: string
         }
@@ -240,4 +227,3 @@ export interface Database {
     }
   }
 }
-

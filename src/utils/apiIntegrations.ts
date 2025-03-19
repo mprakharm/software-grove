@@ -1,4 +1,3 @@
-
 import { VendorAPI } from './api';
 import { ApiProxyController } from './apiProxy';
 
@@ -39,13 +38,10 @@ export function initializeApiIntegrations() {
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 
-          "ngrok-skip-browser-warning": "true",
-          "Content-Type": "application/json"
-        }
+        headers: { "ngrok-skip-browser-warning": "true" }
       });
       
-      console.log('Server-side: LinkedIn Premium API response status:', response.status);
+      console.log('Server-side: LinkedIn API response status:', response.status);
       
       if (!response.ok) {
         console.error('Server-side: LinkedIn Premium API returned error status:', response.status);
@@ -89,7 +85,7 @@ export function initializeApiIntegrations() {
     } catch (error: any) {
       console.error('Server-side: Error calling LinkedIn Premium API:', error);
       // Return an error object instead of null
-      return { error: true, message: error.message || 'Unknown error' };
+      return { error: true, message: error.message };
     }
   });
   
@@ -196,10 +192,7 @@ export function initializeApiIntegrations() {
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 
-          "ngrok-skip-browser-warning": "true",
-          "Content-Type": "application/json"
-        }
+        headers: { "ngrok-skip-browser-warning": "true" }
       });
       
       console.log('Server-side: Zee5 API response status:', response.status);
@@ -277,107 +270,12 @@ export function initializeApiIntegrations() {
         }));
       }
       
-      // Use fallback if none of the above worked
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        console.log('Server-side: Empty or invalid Zee5 API response, using fallback data');
-        return [
-          {
-            id: 'zee5-basic',
-            name: 'Basic',
-            description: 'Basic streaming plan',
-            price: 99,
-            features: [
-              'Access to all Zee5 shows',
-              'Watch on 1 device at a time',
-              'SD quality streaming',
-              'Ad-supported viewing'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 20
-          },
-          {
-            id: 'zee5-premium',
-            name: 'Premium',
-            description: 'Enhanced streaming experience',
-            price: 199,
-            features: [
-              'All Basic plan features',
-              'HD quality streaming',
-              'Watch on 2 devices simultaneously',
-              'Ad-free viewing'
-            ],
-            popular: true,
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 25
-          },
-          {
-            id: 'zee5-all-access',
-            name: 'All Access',
-            description: 'Ultimate streaming package',
-            price: 299,
-            features: [
-              'All Premium plan features',
-              '4K Ultra HD streaming',
-              'Watch on 4 devices simultaneously',
-              'Early access to select shows'
-            ],
-            billingOptions: ['monthly', 'annual'],
-            discountPercentage: 15
-          }
-        ];
-      }
-      
       // Return the unmodified data if it doesn't match our expected format
       return data;
     } catch (error: any) {
       console.error('Server-side: Error calling Zee5 API:', error);
-      // Return fallback mock data instead of an error
-      console.log('Server-side: Using fallback Zee5 plans due to API error');
-      return [
-        {
-          id: 'zee5-basic',
-          name: 'Basic',
-          description: 'Basic streaming plan',
-          price: 99,
-          features: [
-            'Access to all Zee5 shows',
-            'Watch on 1 device at a time',
-            'SD quality streaming',
-            'Ad-supported viewing'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 20
-        },
-        {
-          id: 'zee5-premium',
-          name: 'Premium',
-          description: 'Enhanced streaming experience',
-          price: 199,
-          features: [
-            'All Basic plan features',
-            'HD quality streaming',
-            'Watch on 2 devices simultaneously',
-            'Ad-free viewing'
-          ],
-          popular: true,
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 25
-        },
-        {
-          id: 'zee5-all-access',
-          name: 'All Access',
-          description: 'Ultimate streaming package',
-          price: 299,
-          features: [
-            'All Premium plan features',
-            '4K Ultra HD streaming',
-            'Watch on 4 devices simultaneously',
-            'Early access to select shows'
-          ],
-          billingOptions: ['monthly', 'annual'],
-          discountPercentage: 15
-        }
-      ];
+      // Return an error object instead of null
+      return { error: true, message: error.message };
     }
   });
   

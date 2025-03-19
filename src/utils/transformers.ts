@@ -1,5 +1,4 @@
 
-
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -20,7 +19,6 @@ export function transformProductFromSupabase(
     category: supabaseProduct.category,
     logo: supabaseProduct.logo,
     price: supabaseProduct.price,
-    currency: supabaseProduct.currency || 'USD',
     featuredBenefit: supabaseProduct.featured_benefit,
     benefits: supabaseProduct.benefits || [],
     integration: supabaseProduct.integration || [],
@@ -49,7 +47,6 @@ export function transformProductToSupabase(
     category: product.category,
     logo: product.logo,
     price: product.price,
-    currency: product.currency || 'USD',
     featured_benefit: product.featuredBenefit,
     benefits: product.benefits || [],
     integration: product.integration || [],
@@ -87,7 +84,6 @@ export function transformBundleFromSupabase(
     isLimitedTime: supabaseBundle.is_limited_time,
     expiryDate: supabaseBundle.expiry_date,
     color: supabaseBundle.color,
-    currency: supabaseBundle.currency || 'USD',
     purchases: supabaseBundle.purchases || 0
   };
 }
@@ -111,7 +107,6 @@ export function transformBundleToSupabase(
     is_limited_time: bundle.isLimitedTime,
     expiry_date: bundle.expiryDate,
     color: bundle.color,
-    currency: bundle.currency || 'USD',
     purchases: bundle.purchases || 0,
     created_at: new Date().toISOString()
   };
@@ -130,8 +125,7 @@ export function transformSubscriptionFromSupabase(
     startDate: new Date(supabaseSub.start_date),
     endDate: new Date(supabaseSub.end_date),
     autoRenew: supabaseSub.auto_renew,
-    price: supabaseSub.price,
-    currency: supabaseSub.currency || 'USD'
+    price: supabaseSub.price
   };
 }
 
@@ -148,7 +142,6 @@ export function transformSubscriptionToSupabase(
     end_date: subscription.endDate.toISOString(),
     auto_renew: subscription.autoRenew,
     price: subscription.price,
-    currency: subscription.currency || 'USD',
     created_at: new Date().toISOString()
   };
 }
@@ -165,7 +158,6 @@ export function transformPurchaseFromSupabase(
     planId: supabasePurchase.plan_id,
     date: new Date(supabasePurchase.date),
     amount: supabasePurchase.amount,
-    currency: supabasePurchase.currency || 'USD',
     status: supabasePurchase.status as 'completed' | 'pending' | 'failed'
   };
 }
@@ -181,9 +173,7 @@ export function transformPurchaseToSupabase(
     plan_id: purchase.planId,
     date: purchase.date.toISOString(),
     amount: purchase.amount,
-    currency: purchase.currency || 'USD',
     status: purchase.status,
     created_at: new Date().toISOString()
   };
 }
-

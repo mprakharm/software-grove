@@ -1,4 +1,3 @@
-
 // Simple in-memory database for demo purposes
 // In a real application, you would use a proper database like Supabase or Firebase
 
@@ -10,7 +9,6 @@ export type Product = {
   category: string;
   logo: string;
   price: number;
-  currency?: string;
   featuredBenefit?: string;
   benefits?: string[];
   integration?: string[];
@@ -51,7 +49,6 @@ export type Bundle = {
   expiryDate?: string;
   color: string;
   purchases?: number;
-  currency?: string;
 };
 
 export type User = {
@@ -71,7 +68,6 @@ export type Subscription = {
   endDate: Date;
   autoRenew: boolean;
   price: number;
-  currency?: string;
 };
 
 export type Purchase = {
@@ -82,7 +78,6 @@ export type Purchase = {
   planId: string;
   date: Date;
   amount: number;
-  currency?: string;
   status: 'completed' | 'pending' | 'failed';
 };
 
