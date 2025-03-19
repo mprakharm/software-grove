@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-// Remove the problematic import
-// import Razorpay from 'razorpay';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -31,6 +30,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handlePayment = async () => {
     if (!user) {
@@ -98,17 +98,19 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               
               // Store purchase record
               const purchaseData = {
-                orderId: response.razorpay_order_id,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
                 userId: user.id,
                 productId: productId,
+                bundleId: null,
                 planId: planId,
                 planName: planName,
                 amount: amount,
                 currency: currency,
                 paymentMethod: 'Razorpay',
-                transactionId: response.razorpay_payment_id
+                transactionId: response.razorpay_payment_id,
+                invoiceUrl: null,
+                startDate: new Date().toISOString(),
+                endDate: getEndDate(new Date()).toISOString(),
+                autoRenew: true
               };
               
               // Store payment in database
@@ -122,46 +124,24 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               
               if (!storeResult.ok) {
                 console.error('Failed to store payment:', await storeResult.text());
+                toast({
+                  title: "Payment Processing Error",
+                  description: "Your payment was successful, but we couldn't save your subscription data. Please contact support.",
+                  variant: "destructive"
+                });
+              } else {
+                // Invalidate any existing subscription queries to force a refresh
+                queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+                queryClient.invalidateQueries({ queryKey: ['purchases'] });
+                
+                // Also refresh subscriptions through the auth context
+                await refreshSubscriptions();
+                
+                toast({
+                  title: "Payment Successful",
+                  description: "Your subscription has been activated successfully!",
+                });
               }
-              
-              // Create subscription record
-              const today = new Date();
-              const subscriptionEndDate = new Date(today);
-              // Default to monthly plan (adjust as needed based on plan details)
-              subscriptionEndDate.setMonth(today.getMonth() + 1);
-              
-              const subscriptionData = {
-                userId: user.id,
-                productId: productId,
-                planId: planId,
-                planName: planName,
-                startDate: today.toISOString(),
-                endDate: subscriptionEndDate.toISOString(),
-                autoRenew: true,
-                price: amount,
-                currency: currency,
-                status: 'active',
-              };
-              
-              const subscriptionResult = await fetch('/api/subscriptions/create', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(subscriptionData)
-              });
-              
-              if (!subscriptionResult.ok) {
-                console.error('Failed to create subscription:', await subscriptionResult.text());
-              }
-              
-              // Refresh user subscriptions
-              await refreshSubscriptions();
-              
-              toast({
-                title: "Payment Successful",
-                description: "Your subscription has been activated successfully!",
-              });
               
               onSuccess();
             } catch (error) {
@@ -211,6 +191,14 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to calculate the end date based on plan
+  const getEndDate = (startDate: Date): Date => {
+    const endDate = new Date(startDate);
+    // Default to 1 month subscription
+    endDate.setMonth(endDate.getMonth() + 1);
+    return endDate;
   };
 
   return (

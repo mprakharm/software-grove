@@ -40,6 +40,7 @@ export const SubscriptionService = {
 
   async getUserSubscriptions(userId: string): Promise<Subscription[]> {
     try {
+      console.log('Fetching subscriptions for user:', userId);
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
@@ -50,6 +51,7 @@ export const SubscriptionService = {
         return [];
       }
 
+      console.log('Retrieved subscriptions:', data?.length || 0);
       return (data || []).map(transformSubscriptionFromSupabase);
     } catch (error) {
       console.error('Error in getUserSubscriptions:', error);
@@ -59,6 +61,7 @@ export const SubscriptionService = {
 
   async getUserPurchases(userId: string): Promise<Purchase[]> {
     try {
+      console.log('Fetching purchases for user:', userId);
       const { data, error } = await supabase
         .from('purchases')
         .select('*')
@@ -70,6 +73,7 @@ export const SubscriptionService = {
         return [];
       }
 
+      console.log('Retrieved purchases:', data?.length || 0);
       return (data || []).map(transformPurchaseFromSupabase);
     } catch (error) {
       console.error('Error in getUserPurchases:', error);
@@ -104,7 +108,12 @@ export const SubscriptionService = {
 
   async getExtendedUserSubscriptions(userId: string): Promise<ExtendedSubscription[]> {
     try {
+      console.log('Fetching extended subscriptions for user:', userId);
       const subscriptions = await this.getUserSubscriptions(userId);
+      
+      if (subscriptions.length === 0) {
+        console.log('No subscriptions found for user:', userId);
+      }
       
       const extendedSubscriptions: ExtendedSubscription[] = [];
       
@@ -114,10 +123,14 @@ export const SubscriptionService = {
         
         // If we have a product ID, fetch the product details
         if (subscription.productId) {
-          const product = await ProductAPI.getProductById(subscription.productId);
-          if (product) {
-            productName = product.name;
-            productImage = product.logo || product.image || '';
+          try {
+            const product = await ProductAPI.getProductById(subscription.productId);
+            if (product) {
+              productName = product.name;
+              productImage = product.logo || product.image || '';
+            }
+          } catch (error) {
+            console.error('Error fetching product details:', error);
           }
         }
         
@@ -151,6 +164,7 @@ export const SubscriptionService = {
         });
       }
       
+      console.log('Extended subscriptions:', extendedSubscriptions.length);
       return extendedSubscriptions;
     } catch (error) {
       console.error('Error in getExtendedUserSubscriptions:', error);
@@ -167,15 +181,77 @@ export const SubscriptionService = {
         .from('subscriptions')
         .update({ status: 'expired' })
         .eq('status', 'active')
-        .lt('end_date', now);
+        .lt('end_date', now)
+        .select();
       
       if (error) {
         console.error('Error updating expired subscriptions:', error);
       } else {
-        console.log('Updated expired subscriptions:', data);
+        console.log('Updated expired subscriptions:', data?.length || 0);
       }
     } catch (error) {
       console.error('Error in updateExpiredSubscriptions:', error);
+    }
+  },
+  
+  // Insert a test subscription for debugging purposes
+  async insertTestSubscription(userId: string): Promise<boolean> {
+    try {
+      // Generate dates
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 1);
+      
+      const testData = {
+        user_id: userId,
+        product_id: 'product123',
+        plan_id: 'basic',
+        plan_name: 'Basic Plan',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        auto_renew: true,
+        price: 9.99,
+        currency: 'USD',
+        status: 'active',
+        created_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('subscriptions')
+        .insert(testData);
+        
+      if (error) {
+        console.error('Error inserting test subscription:', error);
+        return false;
+      }
+      
+      // Also insert a test purchase record
+      const purchaseData = {
+        user_id: userId,
+        product_id: 'product123',
+        plan_id: 'basic',
+        plan_name: 'Basic Plan',
+        date: new Date().toISOString(),
+        amount: 9.99,
+        currency: 'USD',
+        status: 'completed',
+        payment_method: 'Test',
+        transaction_id: `test-${Date.now()}`,
+        created_at: new Date().toISOString()
+      };
+      
+      const purchaseResult = await supabase
+        .from('purchases')
+        .insert(purchaseData);
+        
+      if (purchaseResult.error) {
+        console.error('Error inserting test purchase:', purchaseResult.error);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in insertTestSubscription:', error);
+      return false;
     }
   }
 };

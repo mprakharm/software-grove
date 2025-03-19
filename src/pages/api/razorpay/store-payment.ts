@@ -28,6 +28,10 @@ export default async function handler(
       autoRenew
     } = await req.json();
 
+    console.log('Storing payment data:', {
+      userId, productId, planId, amount, transactionId
+    });
+
     // Validate required fields
     if (!userId || !amount || !transactionId || !planId) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -65,6 +69,8 @@ export default async function handler(
       });
     }
 
+    console.log('Purchase record created successfully:', purchaseResult.data);
+
     // Create a subscription record
     const subscriptionResult = await supabase
       .from('subscriptions')
@@ -88,6 +94,8 @@ export default async function handler(
     if (subscriptionResult.error) {
       console.error('Error creating subscription record:', subscriptionResult.error);
       // Continue since we already stored the payment
+    } else {
+      console.log('Subscription record created successfully:', subscriptionResult.data);
     }
 
     // Return both purchase and subscription records

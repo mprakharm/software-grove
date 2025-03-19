@@ -1,10 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -35,6 +35,7 @@ const SubscriptionsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Update expired subscriptions when the page loads
   useEffect(() => {
@@ -43,11 +44,12 @@ const SubscriptionsPage = () => {
         await SubscriptionService.updateExpiredSubscriptions();
         // Refresh the subscriptions data
         queryClient.invalidateQueries({ queryKey: ['subscriptions', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['purchases', user.id] });
       }
     };
     
     updateExpiredSubs();
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, refreshKey]);
   
   // Fetch user's subscriptions with extended data
   const { 
@@ -55,10 +57,13 @@ const SubscriptionsPage = () => {
     isLoading: subscriptionsLoading,
     refetch: refetchSubscriptions
   } = useQuery<ExtendedSubscription[]>({
-    queryKey: ['subscriptions', user?.id],
+    queryKey: ['subscriptions', user?.id, refreshKey],
     queryFn: async () => {
       if (!user?.id) return [];
-      return await SubscriptionService.getExtendedUserSubscriptions(user.id);
+      console.log('Fetching extended user subscriptions...');
+      const subs = await SubscriptionService.getExtendedUserSubscriptions(user.id);
+      console.log('Fetched subscriptions:', subs.length);
+      return subs;
     },
     enabled: !!user?.id
   });
@@ -66,12 +71,16 @@ const SubscriptionsPage = () => {
   // Fetch user's payment history
   const { 
     data: purchases, 
-    isLoading: purchasesLoading 
+    isLoading: purchasesLoading,
+    refetch: refetchPurchases
   } = useQuery<Purchase[]>({
-    queryKey: ['purchases', user?.id],
+    queryKey: ['purchases', user?.id, refreshKey],
     queryFn: async () => {
       if (!user?.id) return [];
-      return await SubscriptionService.getUserPurchases(user.id);
+      console.log('Fetching user purchases...');
+      const purcs = await SubscriptionService.getUserPurchases(user.id);
+      console.log('Fetched purchases:', purcs.length);
+      return purcs;
     },
     enabled: !!user?.id
   });
@@ -84,8 +93,23 @@ const SubscriptionsPage = () => {
     sub.status === 'cancelled' || sub.status === 'expired'
   ) || [];
 
-  const handleRefreshSubscriptions = () => {
-    refetchSubscriptions();
+  const handleRefreshSubscriptions = async () => {
+    try {
+      await refetchSubscriptions();
+      await refetchPurchases();
+      setRefreshKey(prev => prev + 1);
+      toast({
+        title: "Refreshed",
+        description: "Your subscription data has been refreshed.",
+      });
+    } catch (error) {
+      console.error('Error refreshing subscriptions:', error);
+      toast({
+        title: "Refresh failed",
+        description: "Could not refresh your subscription data. Try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const isLoading = subscriptionsLoading || purchasesLoading;
@@ -110,9 +134,15 @@ const SubscriptionsPage = () => {
             <h1 className="text-3xl font-bold mb-2">My Subscriptions</h1>
             <p className="text-gray-600">Manage all your software subscriptions in one place.</p>
           </div>
-          <Button className="mt-4 md:mt-0" asChild>
-            <Link to="/">Browse More Software</Link>
-          </Button>
+          <div className="flex gap-2 mt-4 md:mt-0">
+            <Button variant="outline" onClick={handleRefreshSubscriptions} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            <Button asChild>
+              <Link to="/">Browse More Software</Link>
+            </Button>
+          </div>
         </div>
         
         <Tabs defaultValue="active" className="mb-8">
@@ -143,7 +173,7 @@ const SubscriptionsPage = () => {
                           </svg>
                         </div>
                         <h3 className="font-medium text-lg mb-1">Add New Software</h3>
-                        <p className="text-gray-500 text-sm text-center">Browse our marketplace to find new software for your business</p>
+                        <p className="text-sm text-gray-500 text-center">Browse our marketplace to find new software for your business</p>
                       </CardContent>
                     </Card>
                   </Link>
@@ -168,7 +198,15 @@ const SubscriptionsPage = () => {
           </TabsContent>
           
           <TabsContent value="billing" className="mt-6">
-            <BillingHistory purchases={purchases || []} />
+            {!hasPurchases ? (
+              <Card className="text-center p-8">
+                <CardContent className="pt-6">
+                  <p className="text-gray-500 mb-4">You don't have any billing history yet.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <BillingHistory purchases={purchases || []} />
+            )}
           </TabsContent>
         </Tabs>
         
