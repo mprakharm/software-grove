@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -27,6 +26,7 @@ interface VendorPlan {
   popular?: boolean;
   billingOptions: string[];
   discountPercentage: number;
+  currency?: string;
 }
 
 interface ApiPlan {
@@ -67,7 +67,6 @@ const SubscriptionPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Determine if current product is a streaming or social product
   const isStreamingOrSocialProduct = () => {
     if (!productId || !product) return false;
     return productId === 'zee5' || 
@@ -79,7 +78,6 @@ const SubscriptionPage = () => {
            ));
   };
 
-  // Fetch product details on component mount
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!productId) return;
@@ -159,7 +157,8 @@ const SubscriptionPage = () => {
             billingOptions: ['standard'],
             discountPercentage: plan.plan_mrp && plan.plan_cost
               ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100)
-              : 0
+              : 0,
+            currency: plan.currency?.toUpperCase() || 'INR'
           }];
         }
         
@@ -179,7 +178,8 @@ const SubscriptionPage = () => {
             discountPercentage: plan.discountPercentage || 
                               (plan.plan_mrp && plan.plan_cost 
                                 ? Math.round(((plan.plan_mrp - plan.plan_cost) / plan.plan_mrp) * 100) 
-                                : 0)
+                                : 0),
+            currency: plan.currency?.toUpperCase() || 'INR'
           };
           
           console.log('Normalized plan:', normalizedPlan);
@@ -348,13 +348,29 @@ const SubscriptionPage = () => {
     
     const amount = calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage);
     
-    // Directly trigger Razorpay checkout when Complete Purchase is clicked
     createRazorpayOrder(
       product!.id,
       selectedPlan,
       selectedVendorPlan.name,
       amount
     );
+  };
+
+  const getCurrencySymbol = (currency?: string): string => {
+    if (!currency) return '₹'; // Default to INR symbol for Indian Rupee
+    
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '$';
+      case 'INR':
+        return '₹';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      default:
+        return '₹'; // Default to INR symbol
+    }
   };
 
   if (isLoadingProduct) {
@@ -498,6 +514,7 @@ const SubscriptionPage = () => {
                 >
                   {vendorPlans.map((plan) => {
                     const price = calculatePlanPrice(plan.price, plan.discountPercentage);
+                    const currencySymbol = getCurrencySymbol(plan.currency);
                     
                     return (
                       <div key={plan.id} className="relative">
@@ -523,7 +540,7 @@ const SubscriptionPage = () => {
                               <h3 className="text-xl font-bold text-center mb-2">{plan.name}</h3>
                               
                               <div className="text-center mb-4">
-                                <div className="text-3xl font-bold">${price.toFixed(2)}</div>
+                                <div className="text-3xl font-bold">{currencySymbol}{price.toFixed(2)}</div>
                                 <div className="text-sm text-gray-500">
                                   {hasMultipleBillingOptions 
                                     ? `per user / ${billingCycle === 'yearly' ? 'month, billed annually' : 'month'}`
@@ -616,19 +633,19 @@ const SubscriptionPage = () => {
                     <span>Total</span>
                     <div className="text-right">
                       <div className="font-bold">
-                        ${calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}
+                        {getCurrencySymbol(selectedVendorPlan.currency)}{calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage).toFixed(2)}
                         {hasMultipleBillingOptions ? '/mo' : ''}
                       </div>
                       {hasMultipleBillingOptions && billingCycle === 'yearly' && (
                         <div className="text-sm text-gray-500">
-                          ${(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually
+                          {getCurrencySymbol(selectedVendorPlan.currency)}{(calculatePlanPrice(selectedVendorPlan.price, selectedVendorPlan.discountPercentage) * 12).toFixed(2)} billed annually
                         </div>
                       )}
                     </div>
                   </div>
                   {hasMultipleBillingOptions && billingCycle === 'yearly' && selectedVendorPlan.discountPercentage > 0 && (
                     <div className="mt-2 text-sm text-green-600 text-right">
-                      You save ${(selectedVendorPlan.price * (isStreamingOrSocialProduct() ? 1 : userCount) * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
+                      You save {getCurrencySymbol(selectedVendorPlan.currency)}{(selectedVendorPlan.price * (isStreamingOrSocialProduct() ? 1 : userCount) * 12 * (selectedVendorPlan.discountPercentage / 100)).toFixed(2)} per year
                     </div>
                   )}
                 </div>
@@ -659,3 +676,4 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
+
