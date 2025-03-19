@@ -34,7 +34,7 @@ export function initializeApiIntegrations() {
     console.log('Server-side: Calling LinkedIn Premium API for product:', product.name);
     try {
       // Correct API URL - this is a server-side call
-      const apiUrl = 'https://api.getfleek.app/partner/get_available_plans';
+      const apiUrl = 'https://d547-121-242-131-242.ngrok-free.app/proxy/getfleek';
       console.log('Server-side: Attempting to fetch from:', apiUrl);
       
       const response = await fetch(apiUrl, {
