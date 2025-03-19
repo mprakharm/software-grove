@@ -17,6 +17,7 @@ interface RazorpayCheckoutProps {
   planId: string;
   planName: string;
   amount: number; // in rupees
+  currency?: string; // Added currency prop
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -26,6 +27,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   planId,
   planName,
   amount,
+  currency = 'INR', // Default to INR for Razorpay
   onSuccess,
   onCancel
 }) => {
@@ -62,7 +64,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         productId,
         planId,
         amount: amount * 100, // Convert to smallest unit (paise)
-        currency: 'INR',
+        currency, // Use the provided currency or default
         userId: user.id,
         userEmail: user.email,
         planName
@@ -72,7 +74,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       const options = {
         key: 'rzp_test_1DP5mmOlF5G5ag', // Test key
         amount: amount * 100, // in paise
-        currency: 'INR',
+        currency, // Use the provided currency
         name: 'SaaS Market',
         description: `${planName} Subscription`,
         order_id: orderData.id,
