@@ -1,4 +1,3 @@
-
 import { supabase } from './supabase';
 
 // Interface for subscription data
@@ -8,7 +7,7 @@ interface SubscriptionData {
   bundleId?: string;
   planId: string;
   orderId: string;
-  paymentId?: string; // Made optional
+  paymentId?: string;
   signature?: string;
   startDate: string;
   endDate: string;
@@ -16,7 +15,7 @@ interface SubscriptionData {
   currency?: string;
   status: 'active' | 'expired' | 'canceled' | 'trial';
   planName?: string;
-  autoRenew?: boolean; // Will set default if not provided
+  autoRenew?: boolean;
 }
 
 // Interface for purchase data
@@ -42,7 +41,7 @@ export const SubscriptionService = {
     console.log("Creating subscription with data:", data);
     
     try {
-      // Format data for Supabase
+      // Format data for Supabase - only include fields known to exist in the schema
       const subscriptionData = {
         user_id: data.userId,
         product_id: data.productId,
@@ -53,14 +52,13 @@ export const SubscriptionService = {
         ...(data.paymentId ? { payment_id: data.paymentId } : {}),
         start_date: data.startDate,
         end_date: data.endDate,
-        auto_renew: data.autoRenew !== undefined ? data.autoRenew : true, // Ensure auto_renew is always set with a default
+        auto_renew: data.autoRenew !== undefined ? data.autoRenew : true,
         price: data.amount,
         currency: data.currency || 'INR',
         status: data.status,
         created_at: new Date().toISOString(),
-        // Additional metadata
-        plan_name: data.planName,
-        product_name: data.planName, // This should be fetched from product data in a real app
+        // Only include plan_name if provided
+        ...(data.planName ? { plan_name: data.planName } : {})
       };
       
       // Try to catch specific schema cache errors
@@ -95,6 +93,7 @@ export const SubscriptionService = {
             product_id: data.productId || null,
             bundle_id: data.bundleId || null,
             plan_id: data.planId,
+            order_id: data.orderId,
             start_date: data.startDate,
             end_date: data.endDate,
             auto_renew: true, // Always set to true - this is required
@@ -334,7 +333,7 @@ export const SubscriptionService = {
     productId: string;
     planId: string;
     orderId: string;
-    paymentId?: string; // Made optional
+    paymentId?: string; 
     signature?: string;
     startDate: string;
     endDate: string;
@@ -351,13 +350,11 @@ export const SubscriptionService = {
       
       try {
         // Create subscription record with autoRenew defaulted to true
-        // Note that we don't pass paymentId to createSubscription
         subscription = await this.createSubscription({
           userId: paymentData.userId,
           productId: paymentData.productId,
           planId: paymentData.planId,
           orderId: paymentData.orderId,
-          // Removed paymentId here
           signature: paymentData.signature,
           startDate: paymentData.startDate,
           endDate: paymentData.endDate,

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -101,7 +102,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 userId: user.id,
                 productId: productId,
                 planId: planId,
-                orderId: order.id, // Make sure to include the orderId from the Razorpay order
+                orderId: order.id,
                 signature: response.razorpay_signature,
                 startDate: today.toISOString(),
                 endDate: oneMonthLater.toISOString(),
@@ -109,7 +110,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 currency: currency,
                 status: 'active',
                 planName: planName,
-                autoRenew: true // Explicitly set auto_renew to true
+                autoRenew: true
               };
               
               console.log('Storing subscription data:', subscriptionData);
