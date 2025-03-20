@@ -99,7 +99,7 @@ async function addZee5Product() {
         name: "Zee5",
         description: "India's largest streaming platform with 90+ live TV channels and 1.5 lakh+ hours of content across 12 languages.",
         category: "Entertainment",
-        logo: "https://d546-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual Zee5 logo
+        logo: "https://8bf8-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual Zee5 logo
         price: 99,
         featuredBenefit: "Access to premium Zee5 original shows, movies, and live TV channels",
         benefits: [
@@ -115,7 +115,7 @@ async function addZee5Product() {
         users: 50000000, // Changed from "50M+" string to a numeric value
         inStock: true,
         isHot: true,
-        banner: "https://d546-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual banner
+        banner: "https://8bf8-121-242-131-242.ngrok-free.app/zeeTV.png", // Use a placeholder or update with actual banner
         color: "#8B5CF6", // Purple color
         vendor: "Zee Entertainment"
       };

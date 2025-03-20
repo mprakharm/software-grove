@@ -17,7 +17,7 @@ interface RazorpayCheckoutProps {
   onCancel: () => void;
 }
 
-const RATAN_NGROK_API_BASE_URL = 'https://d547-121-242-131-242.ngrok-free.app/proxy';
+const RATAN_NGROK_API_BASE_URL = 'https://8bf8-121-242-131-242.ngrok-free.app/';
 
 const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   productId,
