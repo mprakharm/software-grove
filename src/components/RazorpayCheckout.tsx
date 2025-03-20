@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -115,25 +116,31 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               console.log('Storing subscription data:', subscriptionData);
               
               try {
+                // Store payment data using the improved SubscriptionService
                 await SubscriptionService.storeSuccessfulPayment(subscriptionData);
                 console.log('Subscription stored successfully');
-              } catch (storeError) {
-                console.error('Failed to store subscription:', storeError);
+                
+                // Refresh user's subscriptions
+                await refreshSubscriptions();
+                
                 toast({
-                  title: "Subscription Record Error",
-                  description: "We couldn't store your subscription details. Please contact support.",
+                  title: "Payment Successful",
+                  description: "Your subscription has been activated successfully!",
+                });
+                
+                onSuccess();
+              } catch (storeError: any) {
+                console.error('Failed to store subscription details:', storeError);
+                
+                toast({
+                  title: "Payment Processed",
+                  description: "Your payment was successful, but we had trouble updating your account. Please contact support if you don't see your subscription.",
                   variant: "destructive"
                 });
+                
+                // Still call onSuccess since payment was processed
+                onSuccess();
               }
-              
-              await refreshSubscriptions();
-              
-              toast({
-                title: "Payment Successful",
-                description: "Your subscription has been activated successfully!",
-              });
-              
-              onSuccess();
             } catch (error) {
               console.error('Payment verification failed:', error);
               toast({
