@@ -110,7 +110,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 amount: amount,
                 currency: currency,
                 status: 'active',
-                planName: planName
+                planName: planName,
+                autoRenew: true // Add this to solve the auto_renew constraint issue
               };
               
               console.log('Storing subscription data:', subscriptionData);
