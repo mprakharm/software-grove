@@ -1,4 +1,3 @@
-
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 import { ProductAPI } from './api';
 import { VendorAPI } from './api';
@@ -60,28 +59,26 @@ export async function initializeDatabase() {
 async function refreshSupabaseSchemaCache() {
   console.log("Refreshing Supabase schema cache...");
   try {
-    // First approach: Perform a simple query to force schema refresh
-    const { data, error } = await supabase
+    // Perform simple queries to force schema refresh
+    const { data: subscriptionsData, error: subscriptionsError } = await supabase
       .from('subscriptions')
       .select('*')
       .limit(1);
       
-    // Second approach: Try to explicitly refresh the schema (if supported by the client)
-    try {
-      // @ts-ignore - This is not in the official API but may work in some versions
-      if (typeof supabase.refreshSchema === 'function') {
-        await supabase.refreshSchema();
-      }
-    } catch (schemaRefreshError) {
-      console.log("Schema refresh method not available, continuing with queries");
+    if (subscriptionsError) {
+      console.log("Note: Error querying subscriptions during schema refresh:", subscriptionsError.message);
     }
     
     // Also refresh purchases table schema
-    await supabase
+    const { data: purchasesData, error: purchasesError } = await supabase
       .from('purchases')
       .select('*')
       .limit(1);
       
+    if (purchasesError) {
+      console.log("Note: Error querying purchases during schema refresh:", purchasesError.message);
+    }
+    
     console.log("Schema cache refresh completed");
   } catch (refreshError) {
     console.error("Error refreshing schema cache:", refreshError);
