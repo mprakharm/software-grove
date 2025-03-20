@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-// Remove the problematic import
-// import Razorpay from 'razorpay';
+import { SubscriptionService } from '@/utils/subscriptionService';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -44,7 +42,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
     setIsLoading(true);
     try {
-      // Format order data
       const orderData = {
         amount: amount * 100, // Convert to smallest unit (paise)
         currency: currency,
@@ -58,7 +55,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         }
       };
 
-      // Call Razorpay API directly
       const razorpayApiUrl = `${RATAN_NGROK_API_BASE_URL}/razorpay_order_create`;
       console.log("Creating Razorpay order with API URL:", razorpayApiUrl);
       console.log("Order data:", JSON.stringify(orderData));
@@ -80,14 +76,12 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       const order = await response.json();
       console.log('Razorpay order created successfully:', order);
 
-      // Load Razorpay script dynamically
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       document.body.appendChild(script);
 
       script.onload = () => {
-        // Initialize Razorpay checkout
         const options = {
           key: 'rzp_test_Qk71AJmUSRc1Oi', // Test key
           amount: amount * 100, // in paise
@@ -99,7 +93,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
             try {
               console.log('Payment successful:', response);
               
-              // Prepare subscription data
               const today = new Date();
               const oneMonthLater = new Date(today);
               oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
@@ -121,28 +114,18 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               
               console.log('Storing subscription data:', subscriptionData);
               
-              // Store subscription in database
-              const storeResult = await fetch(`${RATAN_NGROK_API_BASE_URL}/store_subscription`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(subscriptionData)
-              });
-              
-              if (!storeResult.ok) {
-                const errorText = await storeResult.text();
-                console.error('Failed to store subscription:', errorText);
+              try {
+                await SubscriptionService.storeSuccessfulPayment(subscriptionData);
+                console.log('Subscription stored successfully');
+              } catch (storeError) {
+                console.error('Failed to store subscription:', storeError);
                 toast({
                   title: "Subscription Record Error",
                   description: "We couldn't store your subscription details. Please contact support.",
                   variant: "destructive"
                 });
-              } else {
-                console.log('Subscription stored successfully');
               }
               
-              // Refresh user subscriptions
               await refreshSubscriptions();
               
               toast({
@@ -174,7 +157,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
           }
         };
 
-        // @ts-ignore - Razorpay is loaded via script
         const razorpayInstance = new (window as any).Razorpay(options);
         razorpayInstance.open();
       };
