@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -33,7 +32,17 @@ export default {
           DEFAULT: "#818CF8",
           foreground: "#FFFFFF",
         },
-        // Razorpay inspired colors
+        apple: {
+          blue: "#0071E3",
+          darkblue: "#06c",
+          lightblue: "#EBF5FF",
+          gray: "#86868B",
+          lightgray: "#F5F5F7",
+          darkgray: "#333336",
+          black: "#1D1D1F",
+          green: "#00C853",
+          red: "#FF5252",
+        },
         razorpay: {
           blue: "#2D88FF",
           navy: "#0F2361",
@@ -57,9 +66,13 @@ export default {
         'grid-pattern': "linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)",
         'gradient-radial': 'radial-gradient(circle, var(--tw-gradient-stops))',
         'dots-pattern': 'radial-gradient(circle, #e0e7ff 1px, transparent 1px)',
+        'apple-gradient': 'linear-gradient(to bottom, #fbfbfd 0%, #f5f5f7 100%)',
       },
       backgroundSize: {
         'grid': '40px 40px',
+      },
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
