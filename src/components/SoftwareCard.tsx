@@ -39,7 +39,7 @@ const SoftwareCard = ({
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     // If the product is Zee5, use the uploaded logo
     if (name === "Zee5") {
-      e.currentTarget.src = "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png";
+      e.currentTarget.src = "/lovable-uploads/97ab01bd-fcd1-4430-a732-eb75dcf82497.png";
     } else {
       e.currentTarget.src = "/placeholder.svg"; // Default fallback
     }
@@ -47,17 +47,32 @@ const SoftwareCard = ({
   
   // Special case for Zee5 - use the uploaded image directly
   const imageUrl = name === "Zee5" 
-    ? "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png"
+    ? "/lovable-uploads/97ab01bd-fcd1-4430-a732-eb75dcf82497.png"
     : image;
   
   // Properly handle different types of price values
   const formattedPrice = (() => {
     if (typeof price === 'number') {
+      // Special case for Zee5 to show INR currency
+      if (name === "Zee5") {
+        return `₹${price.toFixed(2)}`;
+      }
       return `$${price.toFixed(2)}`;
     } else if (typeof price === 'string') {
       // If it's already a string, return it or try to format if it's a numeric string
       if (price.trim() === '') return 'Free';
       
+      // Check if it's Zee5 to prefix with ₹ instead of $
+      if (name === "Zee5") {
+        // Try to parse it as a number if it's a numeric string without ₹ sign
+        const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+        if (!isNaN(numericPrice) && !price.includes('₹')) {
+          return `₹${numericPrice.toFixed(2)}`;
+        }
+        return price;
+      }
+      
+      // For other products
       // Try to parse it as a number if it's a numeric string without $ sign
       const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
       if (!isNaN(numericPrice) && !price.includes('$')) {
@@ -112,7 +127,7 @@ const SoftwareCard = ({
             </div>
             <div className="flex flex-col items-end">
               <span className="font-semibold text-razorpay-blue">{formattedPrice}</span>
-              {formattedPrice && formattedPrice.includes('$') && !formattedPrice.includes('%') && (
+              {formattedPrice && (formattedPrice.includes('$') || formattedPrice.includes('₹')) && !formattedPrice.includes('%') && (
                 <span className="text-xs text-razorpay-gray">{pricingLabel}</span>
               )}
             </div>
