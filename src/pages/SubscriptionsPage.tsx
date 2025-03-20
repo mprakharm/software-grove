@@ -103,17 +103,6 @@ const SubscriptionsPage = () => {
       if (!user?.id) return { data: [] };
       console.log("Fetching subscriptions for user:", user.id);
       
-      const { error: deleteError } = await supabase
-        .from('subscriptions')
-        .delete()
-        .eq('user_id', user.id);
-      
-      if (deleteError) {
-        console.error("Error clearing existing subscriptions:", deleteError);
-      } else {
-        console.log("Successfully cleared existing subscriptions for user:", user.id);
-      }
-      
       const response = await supabase
         .from('subscriptions')
         .select('*')
@@ -134,17 +123,6 @@ const SubscriptionsPage = () => {
     queryFn: async () => {
       if (!user?.id) return { data: [] };
       console.log("Fetching purchases for user:", user.id);
-      
-      const { error: deleteError } = await supabase
-        .from('purchases')
-        .delete()
-        .eq('user_id', user.id);
-      
-      if (deleteError) {
-        console.error("Error clearing existing purchases:", deleteError);
-      } else {
-        console.log("Successfully cleared existing purchases for user:", user.id);
-      }
       
       const response = await supabase
         .from('purchases')
@@ -590,3 +568,4 @@ const SubscriptionsPage = () => {
 };
 
 export default SubscriptionsPage;
+

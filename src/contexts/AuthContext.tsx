@@ -32,7 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setSubscriptionsLoading(true);
     try {
+      console.log("AuthContext: Fetching subscriptions for user:", userId);
       const subscriptions = await SubscriptionAPI.getUserSubscriptions(userId);
+      console.log("AuthContext: Received subscriptions:", subscriptions);
       setUserSubscriptions(subscriptions || []);
     } catch (error) {
       console.error('Error fetching user subscriptions:', error);
@@ -49,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to refresh subscriptions (can be called after adding a new subscription)
   const refreshSubscriptions = async () => {
     if (user?.id) {
+      console.log("AuthContext: Refreshing subscriptions for user:", user.id);
       await fetchUserSubscriptions(user.id);
     }
   };

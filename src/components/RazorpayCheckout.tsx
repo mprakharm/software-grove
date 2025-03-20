@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -119,6 +118,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 await SubscriptionService.storeSuccessfulPayment(subscriptionData);
                 console.log('Subscription stored successfully');
                 
+                console.log('Refreshing subscriptions after successful payment');
                 await refreshSubscriptions();
                 
                 toast({
