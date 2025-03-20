@@ -1,3 +1,4 @@
+
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -56,7 +57,7 @@ export function transformProductToSupabase(
     reviews: product.reviews,
     users: product.users,
     in_stock: product.inStock,
-    isHot: product.isHot,
+    is_hot: product.isHot,
     banner: product.banner,
     created_at: new Date().toISOString()
   };

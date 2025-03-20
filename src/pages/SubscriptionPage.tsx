@@ -588,6 +588,8 @@ const SubscriptionPage = () => {
                       currency={selectedVendorPlan.currency}
                       onSuccess={handlePaymentSuccess}
                       onCancel={handlePaymentCancel}
+                      productName={product.name}
+                      productLogo={product.logo}
                     />
                   </div>
                 )}
@@ -601,3 +603,4 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
+

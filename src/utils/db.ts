@@ -1,3 +1,4 @@
+
 // Simple in-memory database for demo purposes
 // In a real application, you would use a proper database like Supabase or Firebase
 
@@ -73,7 +74,7 @@ export type Subscription = {
   currency?: string;
   orderId?: string;
   paymentId?: string;
-  status?: 'active' | 'expired' | 'canceled';
+  status?: 'active' | 'expired' | 'canceled' | 'trial';
   planName?: string;
   productName?: string;
   productImage?: string;
