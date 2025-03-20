@@ -1,4 +1,3 @@
-
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 import { ProductAPI } from './api';
 import { VendorAPI } from './api';
@@ -278,7 +277,7 @@ async function addZee5Product() {
           zee5Product.discount !== "25%" ||
           zee5Product.currency !== "INR") {
         console.log("Updating Zee5 product information...");
-        await ProductAPI.updateProduct({
+        await ProductAPI.updateProduct(zee5Product.id, {
           ...zee5Product,
           logo: "/lovable-uploads/97ab01bd-fcd1-4430-a732-eb75dcf82497.png",
           banner: "/lovable-uploads/97ab01bd-fcd1-4430-a732-eb75dcf82497.png",
@@ -1008,7 +1007,7 @@ export const initializeProducts = async () => {
         ],
         integrations: ["Slack", "Jira", "Google Drive"],
         popularity: 76,
-        trending: true
+        trending: false
       },
       {
         id: "10101010-5b5b-9b9b-1010-010101010101",
