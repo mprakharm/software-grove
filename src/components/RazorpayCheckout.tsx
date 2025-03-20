@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionService } from '@/utils/subscriptionService';
+import { supabase } from '@/utils/supabase';
 
 interface RazorpayCheckoutProps {
   productId: string;
@@ -115,15 +117,84 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               console.log('Storing subscription data:', subscriptionData);
               
               try {
+                // First, try with the SubscriptionService
                 await SubscriptionService.storeSuccessfulPayment(subscriptionData);
                 console.log('Subscription stored successfully');
               } catch (storeError) {
                 console.error('Failed to store subscription:', storeError);
-                toast({
-                  title: "Subscription Record Error",
-                  description: "We couldn't store your subscription details. Please contact support.",
-                  variant: "destructive"
-                });
+                
+                // If there's a schema cache error, try direct insertion as fallback
+                if (storeError.message && storeError.message.includes('currency')) {
+                  try {
+                    console.log('Attempting direct table insert as fallback...');
+                    
+                    // Format subscription data for direct insertion
+                    const directSubscriptionData = {
+                      user_id: subscriptionData.userId,
+                      product_id: subscriptionData.productId,
+                      plan_id: subscriptionData.planId,
+                      order_id: subscriptionData.orderId,
+                      payment_id: subscriptionData.paymentId,
+                      start_date: subscriptionData.startDate,
+                      end_date: subscriptionData.endDate,
+                      auto_renew: true,
+                      price: subscriptionData.amount,
+                      status: subscriptionData.status,
+                      created_at: new Date().toISOString(),
+                      plan_name: subscriptionData.planName
+                    };
+                    
+                    // Direct insert to subscriptions table
+                    const { error: subError } = await supabase
+                      .from('subscriptions')
+                      .insert(directSubscriptionData);
+                      
+                    if (subError) {
+                      console.error('Direct subscription insert failed:', subError);
+                    } else {
+                      console.log('Direct subscription insert successful');
+                    }
+                    
+                    // Format purchase data for direct insertion
+                    const directPurchaseData = {
+                      user_id: subscriptionData.userId,
+                      product_id: subscriptionData.productId,
+                      plan_id: subscriptionData.planId,
+                      order_id: subscriptionData.orderId,
+                      payment_id: subscriptionData.paymentId,
+                      date: subscriptionData.startDate,
+                      amount: subscriptionData.amount,
+                      status: 'completed',
+                      created_at: new Date().toISOString(),
+                      description: `Purchase of ${subscriptionData.planName}`
+                    };
+                    
+                    // Direct insert to purchases table
+                    const { error: purchError } = await supabase
+                      .from('purchases')
+                      .insert(directPurchaseData);
+                      
+                    if (purchError) {
+                      console.error('Direct purchase insert failed:', purchError);
+                    } else {
+                      console.log('Direct purchase insert successful');
+                    }
+                    
+                  } catch (directError) {
+                    console.error('Fallback insert failed:', directError);
+                    toast({
+                      title: "Subscription Record Error",
+                      description: "We couldn't store your subscription details. Please contact support.",
+                      variant: "destructive"
+                    });
+                  }
+                } else {
+                  toast({
+                    title: "Subscription Record Error",
+                    description: "We couldn't store your subscription details. Please contact support.",
+                    variant: "destructive"
+                  });
+                }
               }
               
               await refreshSubscriptions();

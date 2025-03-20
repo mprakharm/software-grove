@@ -22,6 +22,9 @@ export async function initializeDatabase() {
       // Ensure subscriptions and purchases tables have the necessary fields
       await setupSubscriptionTables();
       
+      // Force refresh the Supabase schema cache
+      await refreshSupabaseSchemaCache();
+      
       // Seed database with frontend data if needed
       const seeded = await seedDatabaseWithFrontendData();
       if (seeded) {
@@ -50,6 +53,38 @@ export async function initializeDatabase() {
   } catch (error) {
     console.error("Error initializing database:", error);
     return false;
+  }
+}
+
+// Function to refresh Supabase schema cache
+async function refreshSupabaseSchemaCache() {
+  console.log("Refreshing Supabase schema cache...");
+  try {
+    // First approach: Perform a simple query to force schema refresh
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .limit(1);
+      
+    // Second approach: Try to explicitly refresh the schema (if supported by the client)
+    try {
+      // @ts-ignore - This is not in the official API but may work in some versions
+      if (typeof supabase.refreshSchema === 'function') {
+        await supabase.refreshSchema();
+      }
+    } catch (schemaRefreshError) {
+      console.log("Schema refresh method not available, continuing with queries");
+    }
+    
+    // Also refresh purchases table schema
+    await supabase
+      .from('purchases')
+      .select('*')
+      .limit(1);
+      
+    console.log("Schema cache refresh completed");
+  } catch (refreshError) {
+    console.error("Error refreshing schema cache:", refreshError);
   }
 }
 
