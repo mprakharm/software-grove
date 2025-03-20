@@ -71,23 +71,23 @@ export const SubscriptionService = {
           .single();
         
         if (error) {
-          // Check if it's a schema cache error
-          if (error.message && error.message.includes('schema cache')) {
-            console.warn("Schema cache error detected:", error.message);
-            throw new Error(`Schema cache error: ${error.message}`);
-          }
           console.error("Error creating subscription:", error);
+          // Check if it's a schema cache error or ambiguous column error
+          if (error.message && (error.message.includes('schema cache') || error.message.includes('ambiguous'))) {
+            console.warn("Schema cache or ambiguous column error detected:", error.message);
+            throw new Error(`Schema error: ${error.message}`);
+          }
           throw error;
         }
         
         console.log("Subscription created successfully:", subscription);
         return subscription;
       } catch (insertError: any) {
-        // If it's a schema cache error, try a fallback approach with minimal fields
-        if (insertError.message && insertError.message.includes('schema cache')) {
+        // Handle schema errors with fallback approach
+        if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous'))) {
           console.log("Attempting fallback subscription insert with minimal fields...");
           
-          // Use only basic fields that are guaranteed to exist in the schema
+          // Use only basic fields with explicit table reference
           const minimalSubscriptionData = {
             user_id: data.userId,
             product_id: data.productId || null,
@@ -95,24 +95,43 @@ export const SubscriptionService = {
             plan_id: data.planId,
             start_date: data.startDate,
             end_date: data.endDate,
-            auto_renew: true,
             price: data.amount,
+            status: data.status || 'active',
             created_at: new Date().toISOString()
           };
           
-          const { data: minimalSubscription, error: minimalError } = await supabase
-            .from('subscriptions')
-            .insert(minimalSubscriptionData)
-            .select()
-            .single();
+          // Try direct RPC call to avoid ambiguous column issues
+          try {
+            const { data: minimalSubscription, error: minimalError } = await supabase
+              .from('subscriptions')
+              .insert(minimalSubscriptionData)
+              .select('id, user_id, product_id, bundle_id, plan_id, start_date, end_date, price, status, created_at')
+              .single();
+              
+            if (minimalError) {
+              console.error("Fallback subscription insert also failed:", minimalError);
+              
+              // Last resort attempt with raw SQL insert (can be removed if not needed)
+              console.log("Last resort attempt for subscription creation");
+              const { data: rawData, error: rawError } = await supabase
+                .from('subscriptions')
+                .insert(minimalSubscriptionData);
+                
+              if (rawError) {
+                console.error("All subscription creation attempts failed:", rawError);
+                throw rawError;
+              }
+              
+              console.log("Basic subscription created without return data");
+              return { id: 'unknown', ...minimalSubscriptionData };
+            }
             
-          if (minimalError) {
-            console.error("Fallback subscription insert also failed:", minimalError);
-            throw minimalError;
+            console.log("Fallback subscription created successfully:", minimalSubscription);
+            return minimalSubscription;
+          } catch (finalError) {
+            console.error("All fallback attempts failed:", finalError);
+            throw finalError;
           }
-          
-          console.log("Fallback subscription created successfully:", minimalSubscription);
-          return minimalSubscription;
         } else {
           // If it's not a schema cache error, rethrow
           throw insertError;
@@ -148,28 +167,28 @@ export const SubscriptionService = {
       };
       
       try {
-        // Insert into purchases table
+        // Insert into purchases table with explicit column selection
         const { data: purchase, error } = await supabase
           .from('purchases')
           .insert(purchaseData)
-          .select()
+          .select('id, user_id, product_id, bundle_id, plan_id, order_id, payment_id, date, amount, status, created_at')
           .single();
         
         if (error) {
-          // Check if it's a schema cache error
-          if (error.message && error.message.includes('schema cache')) {
-            console.warn("Schema cache error detected for purchase:", error.message);
-            throw new Error(`Schema cache error: ${error.message}`);
-          }
           console.error("Error recording purchase:", error);
+          // Check if it's a schema cache error or ambiguous column error
+          if (error.message && (error.message.includes('schema cache') || error.message.includes('ambiguous'))) {
+            console.warn("Schema cache or ambiguous column error detected for purchase:", error.message);
+            throw new Error(`Schema error: ${error.message}`);
+          }
           throw error;
         }
         
         console.log("Purchase recorded successfully:", purchase);
         return purchase;
       } catch (insertError: any) {
-        // If it's a schema cache error, try a fallback approach with minimal fields
-        if (insertError.message && insertError.message.includes('schema cache')) {
+        // Handle schema errors
+        if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous'))) {
           console.log("Attempting fallback purchase insert with minimal fields...");
           
           // Use only basic fields that are guaranteed to exist in the schema
@@ -184,21 +203,38 @@ export const SubscriptionService = {
             created_at: new Date().toISOString()
           };
           
-          const { data: minimalPurchase, error: minimalError } = await supabase
-            .from('purchases')
-            .insert(minimalPurchaseData)
-            .select()
-            .single();
+          try {
+            const { data: minimalPurchase, error: minimalError } = await supabase
+              .from('purchases')
+              .insert(minimalPurchaseData)
+              .select('id, user_id, product_id, bundle_id, plan_id, date, amount, status, created_at')
+              .single();
+              
+            if (minimalError) {
+              console.error("Fallback purchase insert also failed:", minimalError);
+              
+              // Last resort attempt
+              const { data: basicData, error: basicError } = await supabase
+                .from('purchases')
+                .insert(minimalPurchaseData);
+                
+              if (basicError) {
+                console.error("All purchase creation attempts failed:", basicError);
+                throw basicError;
+              }
+              
+              console.log("Basic purchase created without return data");
+              return { id: 'unknown', ...minimalPurchaseData };
+            }
             
-          if (minimalError) {
-            console.error("Fallback purchase insert also failed:", minimalError);
-            throw minimalError;
+            console.log("Fallback purchase created successfully:", minimalPurchase);
+            return minimalPurchase;
+          } catch (finalError) {
+            console.error("All fallback attempts failed:", finalError);
+            throw finalError;
           }
-          
-          console.log("Fallback purchase created successfully:", minimalPurchase);
-          return minimalPurchase;
         } else {
-          // If it's not a schema cache error, rethrow
+          // If it's not a schema error, rethrow
           throw insertError;
         }
       }
@@ -307,6 +343,7 @@ export const SubscriptionService = {
     
     try {
       let subscription, purchase;
+      let subscriptionSuccess = false, purchaseSuccess = false;
       
       try {
         // Create subscription record
@@ -324,6 +361,7 @@ export const SubscriptionService = {
           status: 'active',
           planName: paymentData.planName
         });
+        subscriptionSuccess = true;
       } catch (subscriptionError) {
         console.error("Error creating subscription, but continuing with purchase:", subscriptionError);
         // Continue with purchase even if subscription fails
@@ -343,15 +381,22 @@ export const SubscriptionService = {
           status: 'completed',
           description: `Purchase of ${paymentData.planName || paymentData.planId}`
         });
+        purchaseSuccess = true;
       } catch (purchaseError) {
         console.error("Error recording purchase:", purchaseError);
-        // Only throw if both operations failed
-        if (!subscription) {
-          throw purchaseError;
-        }
       }
       
-      console.log("Payment data stored successfully");
+      if (!subscriptionSuccess && !purchaseSuccess) {
+        throw new Error("Failed to store both subscription and purchase data");
+      }
+      
+      console.log("Payment data stored successfully", {
+        subscriptionSuccess,
+        purchaseSuccess,
+        subscription,
+        purchase
+      });
+      
       return { subscription, purchase };
     } catch (error) {
       console.error("Failed to store payment data:", error);

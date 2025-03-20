@@ -132,6 +132,16 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               } catch (storeError: any) {
                 console.error('Failed to store subscription details:', storeError);
                 
+                // Add more diagnostics for troubleshooting
+                if (storeError.message) {
+                  console.error('Error message:', storeError.message);
+                }
+                if (storeError.details) {
+                  console.error('Error details:', storeError.details);
+                }
+                
+                // We'll consider the payment successful even if storage fails
+                // since the payment was processed by Razorpay
                 toast({
                   title: "Payment Processed",
                   description: "Your payment was successful, but we had trouble updating your account. Please contact support if you don't see your subscription.",
