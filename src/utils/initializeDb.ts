@@ -1,3 +1,4 @@
+
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 import { ProductAPI } from './api';
 import { VendorAPI } from './api';
@@ -808,3 +809,339 @@ export const initializeProducts = async () => {
         discount: "15%",
         featured_benefit: "Comprehensive productivity tools",
         benefits: [
+          "Create documents",
+          "Manage email",
+          "Collaborate with team",
+          "Store files in the cloud"
+        ],
+        integrations: ["Microsoft Teams", "SharePoint", "OneDrive"],
+        popularity: 84,
+        trending: true
+      },
+      {
+        id: "8c8c8c8c-7c7c-7c7c-7c7c-7c7c7c7c7c7c",
+        name: "Canva",
+        description: "Graphic design platform for creating visual content.",
+        category: "Design",
+        price: 10,
+        currency: "USD",
+        image: "/lovable-uploads/canva.png",
+        logo: "/lovable-uploads/canva.png",
+        vendor: "Canva Pty Ltd",
+        rating: 4.7,
+        reviewCount: 17000,
+        discount: "20%",
+        featured_benefit: "Easy-to-use design tools",
+        benefits: [
+          "Create social media graphics",
+          "Design presentations",
+          "Edit photos",
+          "Collaborate with team"
+        ],
+        integrations: ["Facebook", "Instagram", "Pinterest"],
+        popularity: 87,
+        trending: true
+      },
+      {
+        id: "9d9d9d9d-8d8d-8d8d-8d8d-8d9d9d9d9d9d",
+        name: "Stack Overflow",
+        description: "Question and answer website for programmers.",
+        category: "Development",
+        price: 0,
+        currency: "USD",
+        image: "/lovable-uploads/stackoverflow.png",
+        logo: "/lovable-uploads/stackoverflow.png",
+        vendor: "Stack Exchange, Inc.",
+        rating: 4.8,
+        reviewCount: 19000,
+        discount: "0%",
+        featured_benefit: "Community-driven knowledge base",
+        benefits: [
+          "Ask questions",
+          "Answer questions",
+          "Share knowledge",
+          "Learn from experts"
+        ],
+        integrations: ["GitHub", "Slack", "Microsoft Teams"],
+        popularity: 91,
+        trending: true
+      },
+      {
+        id: "aeaebfae-9a9a-4a9a-aa9a-9a9a9a9a9a9a",
+        name: "Mailchimp",
+        description: "Email marketing platform for sending newsletters and campaigns.",
+        category: "Marketing",
+        price: 30,
+        currency: "USD",
+        image: "/lovable-uploads/mailchimp.png",
+        logo: "/lovable-uploads/mailchimp.png",
+        vendor: "Mailchimp",
+        rating: 4.6,
+        reviewCount: 16000,
+        discount: "25%",
+        featured_benefit: "Effective email marketing",
+        benefits: [
+          "Send newsletters",
+          "Create campaigns",
+          "Automate emails",
+          "Track results"
+        ],
+        integrations: ["Shopify", "Salesforce", "WordPress"],
+        popularity: 83,
+        trending: true
+      },
+      {
+        id: "bfbfbfbf-0f0f-4f4f-bfbf-fbfbfbfbfbfb",
+        name: "LinkedIn Premium",
+        description: "Professional networking platform with premium features.",
+        category: "Networking",
+        price: 29.99,
+        currency: "USD",
+        image: "/lovable-uploads/linkedin.png",
+        logo: "/lovable-uploads/linkedin.png",
+        vendor: "LinkedIn",
+        rating: 4.5,
+        reviewCount: 15000,
+        discount: "10%",
+        featured_benefit: "Enhanced networking opportunities",
+        benefits: [
+          "See who viewed your profile",
+          "Send InMail messages",
+          "Access LinkedIn Learning",
+          "Get career insights"
+        ],
+        integrations: ["Salesforce", "Microsoft Dynamics 365", "Gmail"],
+        popularity: 78,
+        trending: true
+      },
+      {
+        id: "cfcfcfcf-1f1f-5f5f-cfcf-fcfcfcfcfcfc",
+        name: "Jira",
+        description: "Issue tracking and project management tool for software development.",
+        category: "Development",
+        price: 10,
+        currency: "USD",
+        image: "/lovable-uploads/jira.png",
+        logo: "/lovable-uploads/jira.png",
+        vendor: "Atlassian",
+        rating: 4.7,
+        reviewCount: 17000,
+        discount: "15%",
+        featured_benefit: "Agile project management",
+        benefits: [
+          "Track issues",
+          "Plan sprints",
+          "Manage releases",
+          "Collaborate with team"
+        ],
+        integrations: ["Confluence", "Bitbucket", "Slack"],
+        popularity: 81,
+        trending: true
+      },
+      {
+        id: "dfdfdfdf-2f2f-6f6f-dfdf-fdfdfdfdfdfd",
+        name: "Google Ads",
+        description: "Online advertising platform for promoting businesses and products.",
+        category: "Marketing",
+        price: 0.5,
+        currency: "USD",
+        image: "/lovable-uploads/google-ads.png",
+        logo: "/lovable-uploads/google-ads.png",
+        vendor: "Google",
+        rating: 4.6,
+        reviewCount: 16000,
+        discount: "20%",
+        featured_benefit: "Targeted advertising",
+        benefits: [
+          "Reach potential customers",
+          "Track ad performance",
+          "Optimize campaigns",
+          "Increase conversions"
+        ],
+        integrations: ["Google Analytics", "Google Search Console", "Google My Business"],
+        popularity: 84,
+        trending: true
+      },
+      {
+        id: "efefefef-3f3f-7f7f-efef-fefefefefefe",
+        name: "Tableau",
+        description: "Data visualization software for analyzing and presenting data.",
+        category: "Analytics",
+        price: 70,
+        currency: "USD",
+        image: "/lovable-uploads/tableau.png",
+        logo: "/lovable-uploads/tableau.png",
+        vendor: "Tableau Software",
+        rating: 4.5,
+        reviewCount: 15000,
+        discount: "25%",
+        featured_benefit: "Interactive data visualization",
+        benefits: [
+          "Analyze data",
+          "Create dashboards",
+          "Share insights",
+          "Make data-driven decisions"
+        ],
+        integrations: ["Excel", "SQL Server", "Salesforce"],
+        popularity: 79,
+        trending: true
+      },
+      {
+        id: "fafafafa-4a4a-8a8a-fafa-afafafafafaf",
+        name: "Trello",
+        description: "Project management tool for organizing tasks and projects.",
+        category: "Productivity",
+        price: 5,
+        currency: "USD",
+        image: "/lovable-uploads/trello.png",
+        logo: "/lovable-uploads/trello.png",
+        vendor: "Atlassian",
+        rating: 4.4,
+        reviewCount: 14000,
+        discount: "10%",
+        featured_benefit: "Visual project management",
+        benefits: [
+          "Create boards",
+          "Add cards",
+          "Assign tasks",
+          "Track progress"
+        ],
+        integrations: ["Slack", "Jira", "Google Drive"],
+        popularity: 76,
+        trending: true
+      },
+      {
+        id: "10101010-5b5b-9b9b-1010-010101010101",
+        name: "Sketch",
+        description: "Digital design tool for creating user interfaces and prototypes.",
+        category: "Design",
+        price: 9,
+        currency: "USD",
+        image: "/lovable-uploads/sketch.png",
+        logo: "/lovable-uploads/sketch.png",
+        vendor: "Sketch B.V.",
+        rating: 4.7,
+        reviewCount: 17000,
+        discount: "15%",
+        featured_benefit: "Vector-based design",
+        benefits: [
+          "Design user interfaces",
+          "Create prototypes",
+          "Collaborate with team",
+          "Export assets"
+        ],
+        integrations: ["Abstract", "Zeplin", "InVision"],
+        popularity: 79,
+        trending: true
+      },
+      {
+        id: "21212121-6c6c-acac-2121-121212121212",
+        name: "Docker",
+        description: "Platform for developing, shipping, and running applications in containers.",
+        category: "Development",
+        price: 0,
+        currency: "USD",
+        image: "/lovable-uploads/docker.png",
+        logo: "/lovable-uploads/docker.png",
+        vendor: "Docker, Inc.",
+        rating: 4.8,
+        reviewCount: 19000,
+        discount: "0%",
+        featured_benefit: "Containerization",
+        benefits: [
+          "Package applications",
+          "Isolate dependencies",
+          "Deploy to any environment",
+          "Scale applications"
+        ],
+        integrations: ["GitHub", "Jenkins", "Kubernetes"],
+        popularity: 82,
+        trending: true
+      },
+      {
+        id: "32323232-7d7d-bdbd-3232-232323232323",
+        name: "SEMrush",
+        description: "Online visibility management platform for SEO and content marketing.",
+        category: "Marketing",
+        price: 119.95,
+        currency: "USD",
+        image: "/lovable-uploads/semrush.png",
+        logo: "/lovable-uploads/semrush.png",
+        vendor: "SEMrush",
+        rating: 4.6,
+        reviewCount: 16000,
+        discount: "20%",
+        featured_benefit: "Comprehensive SEO tools",
+        benefits: [
+          "Keyword research",
+          "Competitor analysis",
+          "Site audit",
+          "Rank tracking"
+        ],
+        integrations: ["Google Analytics", "Google Search Console", "Google Ads"],
+        popularity: 85,
+        trending: true
+      },
+      {
+        id: "43434343-8e8e-cece-4343-343434343434",
+        name: "Airtable",
+        description: "Cloud-based platform for creating and sharing relational databases.",
+        category: "Productivity",
+        price: 10,
+        currency: "USD",
+        image: "/lovable-uploads/airtable.png",
+        logo: "/lovable-uploads/airtable.png",
+        vendor: "Airtable, Inc.",
+        rating: 4.5,
+        reviewCount: 15000,
+        discount: "10%",
+        featured_benefit: "Flexible database management",
+        benefits: [
+          "Create databases",
+          "Organize data",
+          "Collaborate with team",
+          "Automate workflows"
+        ],
+        integrations: ["Slack", "Google Workspace", "Zapier"],
+        popularity: 77,
+        trending: true
+      },
+      {
+        id: "54545454-9f9f-dfdf-5454-454545454545",
+        name: "InVision Studio",
+        description: "Screen design tool for creating interactive prototypes.",
+        category: "Design",
+        price: 0,
+        currency: "USD",
+        image: "/lovable-uploads/invision.png",
+        logo: "/lovable-uploads/invision.png",
+        vendor: "InVision",
+        rating: 4.7,
+        reviewCount: 17000,
+        discount: "0%",
+        featured_benefit: "Interactive prototyping",
+        benefits: [
+          "Create interactive prototypes",
+          "Animate transitions",
+          "Share designs",
+          "Gather feedback"
+        ],
+        integrations: ["Sketch", "Adobe XD", "Figma"],
+        popularity: 80,
+        trending: true
+      }
+    ];
+
+    const { error: insertError } = await supabase
+      .from('products')
+      .insert(productSeed);
+
+    if (insertError) {
+      console.error('Error inserting products:', insertError);
+    } else {
+      console.log('Products initialized successfully.');
+    }
+  } catch (error) {
+    console.error('Error initializing products:', error);
+  }
+};
