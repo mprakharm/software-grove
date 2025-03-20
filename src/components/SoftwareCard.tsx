@@ -35,6 +35,21 @@ const SoftwareCard = ({
   // Set a different default color for Entertainment category
   const cardColor = category === 'Entertainment' ? "#8B5CF6" : color;
   
+  // Fix for broken images - add fallback handling
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    // If the product is Zee5, use the uploaded logo
+    if (name === "Zee5") {
+      e.currentTarget.src = "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png";
+    } else {
+      e.currentTarget.src = "/placeholder.svg"; // Default fallback
+    }
+  };
+  
+  // Special case for Zee5 - use the uploaded image directly
+  const imageUrl = name === "Zee5" 
+    ? "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png"
+    : image;
+  
   // Properly handle different types of price values
   const formattedPrice = (() => {
     if (typeof price === 'number') {
@@ -61,9 +76,10 @@ const SoftwareCard = ({
       <Card className="h-full group overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-up border border-gray-100 shadow-sm hover:border-razorpay-blue">
         <div className="relative aspect-video overflow-hidden group-hover:border-2 group-hover:border-razorpay-blue" style={{ backgroundColor: cardColor + '15' }}>
           <img
-            src={image}
+            src={imageUrl}
             alt={name}
             className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
+            onError={handleImageError}
           />
           {discount && discount !== "0%" && (
             <Badge className="absolute top-2 right-2" style={{ backgroundColor: cardColor }}>{discount} OFF</Badge>

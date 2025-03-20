@@ -12,6 +12,7 @@ import { StarIcon } from 'lucide-react';
 import { ProductAPI } from '@/utils/api';
 import { Product } from '@/utils/db';
 import { toast } from '@/components/ui/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ProductPage = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -43,11 +44,48 @@ const ProductPage = () => {
     fetchProduct();
   }, [productId]);
   
+  // Fix image URL for Zee5
+  const getFixedImageUrl = (originalUrl: string, productName: string) => {
+    if (productName === "Zee5") {
+      return "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png";
+    }
+    return originalUrl;
+  };
+  
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (product?.name === "Zee5") {
+      e.currentTarget.src = "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png";
+    } else {
+      e.currentTarget.src = "/placeholder.svg";
+    }
+  };
+  
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-gray-600">Loading product details...</p>
+        <div className="container mx-auto px-4 py-16">
+          <div className="mb-6">
+            <Skeleton className="h-8 w-64 mb-4" />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <Skeleton className="w-full aspect-video" />
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="aspect-video" />
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-1">
+              <Skeleton className="h-72 w-full" />
+            </div>
+          </div>
+          
+          <div className="mt-8">
+            <Skeleton className="h-12 w-full mb-6" />
+            <Skeleton className="h-64 w-full" />
+          </div>
         </div>
       </Layout>
     );
@@ -83,6 +121,9 @@ const ProductPage = () => {
   const currentPrice = product.price;
   const originalPrice = Math.round(currentPrice / (1 - discountPercentage / 100));
   
+  // Use fixed image URL for the product
+  const imageUrl = getFixedImageUrl(product.logo, product.name);
+  
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
@@ -95,15 +136,36 @@ const ProductPage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg overflow-hidden shadow-sm border">
               <img 
-                src={product.logo} 
+                src={imageUrl}
                 alt={product.name} 
                 className="w-full h-auto object-cover"
+                onError={handleImageError}
               />
               <div className="grid grid-cols-4 gap-2 p-2">
-                <img src={product.logo} alt="Screenshot 1" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.logo} alt="Screenshot 2" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.logo} alt="Screenshot 3" className="rounded border cursor-pointer hover:border-primary" />
-                <img src={product.logo} alt="Screenshot 4" className="rounded border cursor-pointer hover:border-primary" />
+                <img 
+                  src={imageUrl} 
+                  alt="Screenshot 1" 
+                  className="rounded border cursor-pointer hover:border-primary"
+                  onError={handleImageError}
+                />
+                <img 
+                  src={imageUrl} 
+                  alt="Screenshot 2" 
+                  className="rounded border cursor-pointer hover:border-primary"
+                  onError={handleImageError}
+                />
+                <img 
+                  src={imageUrl} 
+                  alt="Screenshot 3" 
+                  className="rounded border cursor-pointer hover:border-primary"
+                  onError={handleImageError}
+                />
+                <img 
+                  src={imageUrl} 
+                  alt="Screenshot 4" 
+                  className="rounded border cursor-pointer hover:border-primary"
+                  onError={handleImageError}
+                />
               </div>
             </div>
           </div>
@@ -114,7 +176,7 @@ const ProductPage = () => {
               <div className="mb-4">
                 <Badge className="mb-2">{product.category}</Badge>
                 <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
-                <p className="text-sm text-gray-500 mb-2">by {product.name} Inc.</p>
+                <p className="text-sm text-gray-500 mb-2">by {product.vendor || `${product.name} Inc.`}</p>
                 <div className="flex items-center mb-4">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
