@@ -10,9 +10,11 @@ interface RazorpayCheckoutProps {
   planId: string;
   planName: string;
   amount: number; // in rupees
-  currency?: string; // Added currency prop
+  currency?: string;
   onSuccess: () => void;
   onCancel: () => void;
+  productName?: string; // Added product name
+  productLogo?: string; // Added product logo
 }
 
 const RATAN_NGROK_API_BASE_URL = 'https://8bf8-121-242-131-242.ngrok-free.app/proxy';
@@ -24,7 +26,9 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   amount,
   currency = 'INR', // Default to INR for Razorpay
   onSuccess,
-  onCancel
+  onCancel,
+  productName = '',
+  productLogo = ''
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user, refreshSubscriptions } = useAuth();
@@ -51,7 +55,9 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
           planId: planId,
           planName: planName,
           userId: user.id,
-          userEmail: user.email
+          userEmail: user.email,
+          productName: productName, // Store product name in notes
+          productLogo: productLogo // Store product logo in notes
         }
       };
 
@@ -102,6 +108,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 productId: productId,
                 planId: planId,
                 orderId: order.id,
+                paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
                 startDate: today.toISOString(),
                 endDate: oneMonthLater.toISOString(),
@@ -109,7 +116,9 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 currency: currency,
                 status: 'active',
                 planName: planName,
-                autoRenew: true
+                autoRenew: true,
+                productName: productName, // Pass product name
+                productLogo: productLogo // Pass product logo
               };
               
               console.log('Storing subscription data:', subscriptionData);

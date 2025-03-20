@@ -1,5 +1,3 @@
-
-
 import { Database } from './database.types';
 import { Product, Bundle, BundleProduct, Subscription, Purchase } from './db';
 
@@ -58,7 +56,7 @@ export function transformProductToSupabase(
     reviews: product.reviews,
     users: product.users,
     in_stock: product.inStock,
-    is_hot: product.isHot,
+    isHot: product.isHot,
     banner: product.banner,
     created_at: new Date().toISOString()
   };
@@ -131,7 +129,10 @@ export function transformSubscriptionFromSupabase(
     endDate: new Date(supabaseSub.end_date),
     autoRenew: supabaseSub.auto_renew,
     price: supabaseSub.price,
-    currency: supabaseSub.currency || 'USD'
+    currency: supabaseSub.currency || 'USD',
+    orderId: supabaseSub.order_id,
+    planName: supabaseSub.plan_name,
+    status: supabaseSub.status as 'active' | 'expired' | 'canceled' | 'trial'
   };
 }
 
@@ -149,6 +150,9 @@ export function transformSubscriptionToSupabase(
     auto_renew: subscription.autoRenew,
     price: subscription.price,
     currency: subscription.currency || 'USD',
+    order_id: subscription.orderId,
+    plan_name: subscription.planName,
+    status: subscription.status || 'active',
     created_at: new Date().toISOString()
   };
 }
@@ -186,4 +190,3 @@ export function transformPurchaseToSupabase(
     created_at: new Date().toISOString()
   };
 }
-

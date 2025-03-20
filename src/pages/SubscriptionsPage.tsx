@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -103,9 +104,17 @@ const SubscriptionsPage = () => {
       if (!user?.id) return { data: [] };
       console.log("Fetching subscriptions for user:", user.id);
       
+      // Join with products table to get product information
       const response = await supabase
         .from('subscriptions')
-        .select('*')
+        .select(`
+          *,
+          products:product_id (
+            name,
+            logo,
+            description
+          )
+        `)
         .eq('user_id', user.id);
       
       console.log("Subscriptions response:", response);
@@ -213,6 +222,9 @@ const SubscriptionsPage = () => {
         ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) 
         : undefined;
       
+      // Get product info from joined products data
+      const productInfo = sub.products || {};
+      
       return {
         id: sub.id,
         userId: sub.user_id,
@@ -226,8 +238,8 @@ const SubscriptionsPage = () => {
         status: sub.status || 'active',
         price: sub.price,
         currency: sub.currency,
-        name: sub.product_name || 'Subscription',
-        image: sub.product_image || "https://placehold.co/600x400/e4e4e7/ffffff?text=Software",
+        name: productInfo.name || 'Subscription',
+        image: productInfo.logo || "https://placehold.co/600x400/e4e4e7/ffffff?text=Software",
         plan: sub.plan_name || sub.plan_id,
         users: sub.users || 1,
         monthlyPrice: sub.price / 12,
@@ -568,4 +580,3 @@ const SubscriptionsPage = () => {
 };
 
 export default SubscriptionsPage;
-
