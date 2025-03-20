@@ -101,8 +101,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 userId: user.id,
                 productId: productId,
                 planId: planId,
-                orderId: response.razorpay_order_id,
-                paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
                 startDate: today.toISOString(),
                 endDate: oneMonthLater.toISOString(),

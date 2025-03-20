@@ -8,15 +8,15 @@ interface SubscriptionData {
   bundleId?: string;
   planId: string;
   orderId: string;
-  paymentId: string;
+  paymentId?: string; // Made optional
   signature?: string;
   startDate: string;
   endDate: string;
   amount: number;
   currency?: string;
-  status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial'
+  status: 'active' | 'expired' | 'canceled' | 'trial';
   planName?: string;
-  autoRenew?: boolean; // Made optional in the interface, but will set default
+  autoRenew?: boolean; // Will set default if not provided
 }
 
 // Interface for purchase data
@@ -49,7 +49,8 @@ export const SubscriptionService = {
         bundle_id: data.bundleId,
         plan_id: data.planId,
         order_id: data.orderId,
-        payment_id: data.paymentId,
+        // Only add payment_id if it exists in the data
+        ...(data.paymentId ? { payment_id: data.paymentId } : {}),
         start_date: data.startDate,
         end_date: data.endDate,
         auto_renew: data.autoRenew !== undefined ? data.autoRenew : true, // Ensure auto_renew is always set with a default
@@ -333,14 +334,14 @@ export const SubscriptionService = {
     productId: string;
     planId: string;
     orderId: string;
-    paymentId: string;
+    paymentId?: string; // Made optional
     signature?: string;
     startDate: string;
     endDate: string;
     amount: number;
     currency?: string;
     planName?: string;
-    autoRenew?: boolean; // Added autoRenew parameter
+    autoRenew?: boolean;
   }) {
     console.log("Storing successful payment data:", paymentData);
     
@@ -350,12 +351,13 @@ export const SubscriptionService = {
       
       try {
         // Create subscription record with autoRenew defaulted to true
+        // Note that we don't pass paymentId to createSubscription
         subscription = await this.createSubscription({
           userId: paymentData.userId,
           productId: paymentData.productId,
           planId: paymentData.planId,
           orderId: paymentData.orderId,
-          paymentId: paymentData.paymentId,
+          // Removed paymentId here
           signature: paymentData.signature,
           startDate: paymentData.startDate,
           endDate: paymentData.endDate,
@@ -363,7 +365,7 @@ export const SubscriptionService = {
           currency: paymentData.currency,
           status: 'active',
           planName: paymentData.planName,
-          autoRenew: paymentData.autoRenew !== undefined ? paymentData.autoRenew : true // Default to true if not specified
+          autoRenew: paymentData.autoRenew !== undefined ? paymentData.autoRenew : true
         });
         subscriptionSuccess = true;
       } catch (subscriptionError) {
@@ -371,23 +373,28 @@ export const SubscriptionService = {
         // Continue with purchase even if subscription fails
       }
       
-      try {
-        // Record purchase
-        purchase = await this.recordPurchase({
-          userId: paymentData.userId,
-          productId: paymentData.productId,
-          planId: paymentData.planId,
-          orderId: paymentData.orderId,
-          paymentId: paymentData.paymentId,
-          date: paymentData.startDate,
-          amount: paymentData.amount,
-          currency: paymentData.currency,
-          status: 'completed',
-          description: `Purchase of ${paymentData.planName || paymentData.planId}`
-        });
-        purchaseSuccess = true;
-      } catch (purchaseError) {
-        console.error("Error recording purchase:", purchaseError);
+      // Only try to record the purchase if paymentId is provided
+      if (paymentData.paymentId) {
+        try {
+          // Record purchase
+          purchase = await this.recordPurchase({
+            userId: paymentData.userId,
+            productId: paymentData.productId,
+            planId: paymentData.planId,
+            orderId: paymentData.orderId,
+            paymentId: paymentData.paymentId,
+            date: paymentData.startDate,
+            amount: paymentData.amount,
+            currency: paymentData.currency,
+            status: 'completed',
+            description: `Purchase of ${paymentData.planName || paymentData.planId}`
+          });
+          purchaseSuccess = true;
+        } catch (purchaseError) {
+          console.error("Error recording purchase:", purchaseError);
+        }
+      } else {
+        console.log("No paymentId provided, skipping purchase record");
       }
       
       if (!subscriptionSuccess && !purchaseSuccess) {
