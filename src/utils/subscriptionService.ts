@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase';
 
 // Interface for subscription data
@@ -13,7 +14,7 @@ interface SubscriptionData {
   endDate: string;
   amount: number;
   currency?: string;
-  status: 'active' | 'expired' | 'canceled' | 'trial';
+  status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial'
   planName?: string;
 }
 
@@ -40,7 +41,7 @@ export const SubscriptionService = {
     console.log("Creating subscription with data:", data);
     
     try {
-      // Format data for Supabase, omitting the currency field which doesn't exist in your schema
+      // Format data for Supabase
       const subscriptionData = {
         user_id: data.userId,
         product_id: data.productId,
@@ -51,6 +52,7 @@ export const SubscriptionService = {
         end_date: data.endDate,
         auto_renew: true,
         price: data.amount,
+        currency: data.currency || 'INR',
         status: data.status,
         created_at: new Date().toISOString(),
         // Additional metadata
@@ -85,7 +87,7 @@ export const SubscriptionService = {
     console.log("Recording purchase with data:", data);
     
     try {
-      // Format data for Supabase - keeping currency since purchases table might have it
+      // Format data for Supabase
       const purchaseData = {
         user_id: data.userId,
         product_id: data.productId,
