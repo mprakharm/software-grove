@@ -22,8 +22,8 @@ export async function initializeDatabase() {
       // Ensure subscriptions and purchases tables have the necessary fields
       await setupSubscriptionTables();
       
-      // Force refresh the Supabase schema cache
-      await refreshSupabaseSchemaCache();
+      // Force refresh the Supabase schema cache with multiple approaches
+      await forceSchemaRefresh();
       
       // Seed database with frontend data if needed
       const seeded = await seedDatabaseWithFrontendData();
@@ -56,33 +56,88 @@ export async function initializeDatabase() {
   }
 }
 
-// Function to refresh Supabase schema cache
-async function refreshSupabaseSchemaCache() {
-  console.log("Refreshing Supabase schema cache...");
+// Function to aggressively refresh Supabase schema cache
+async function forceSchemaRefresh() {
+  console.log("Aggressively refreshing Supabase schema cache...");
+  
   try {
-    // Perform simple queries to force schema refresh
-    const { data: subscriptionsData, error: subscriptionsError } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .limit(1);
+    // Try multiple queries to force schema refresh for subscriptions
+    for (let i = 0; i < 3; i++) {
+      console.log(`Schema refresh attempt ${i+1} for subscriptions...`);
       
-    if (subscriptionsError) {
-      console.log("Note: Error querying subscriptions during schema refresh:", subscriptionsError.message);
+      // Query with explicit column selection
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('id, user_id, product_id, bundle_id, plan_id, order_id, payment_id, currency, status, plan_name')
+          .limit(1);
+          
+        if (!error) {
+          console.log("Subscription schema refresh with explicit columns successful");
+          break;
+        }
+      } catch (explicitError) {
+        console.log("Explicit column query failed, trying alternate approach");
+      }
+      
+      // Try with all columns wildcard
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .limit(1);
+          
+        if (!error) {
+          console.log("Subscription schema refresh with wildcard successful");
+        }
+      } catch (wildcardError) {
+        console.log("Wildcard query failed, trying next approach");
+      }
+      
+      // Small delay between attempts
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
-    // Also refresh purchases table schema
-    const { data: purchasesData, error: purchasesError } = await supabase
-      .from('purchases')
-      .select('*')
-      .limit(1);
+    // Repeat for purchases table
+    for (let i = 0; i < 3; i++) {
+      console.log(`Schema refresh attempt ${i+1} for purchases...`);
       
-    if (purchasesError) {
-      console.log("Note: Error querying purchases during schema refresh:", purchasesError.message);
+      // Query with explicit column selection
+      try {
+        const { data, error } = await supabase
+          .from('purchases')
+          .select('id, user_id, product_id, bundle_id, plan_id, order_id, payment_id, currency, description')
+          .limit(1);
+          
+        if (!error) {
+          console.log("Purchases schema refresh with explicit columns successful");
+          break;
+        }
+      } catch (explicitError) {
+        console.log("Explicit column query failed, trying alternate approach");
+      }
+      
+      // Try with all columns wildcard
+      try {
+        const { data, error } = await supabase
+          .from('purchases')
+          .select('*')
+          .limit(1);
+          
+        if (!error) {
+          console.log("Purchases schema refresh with wildcard successful");
+        }
+      } catch (wildcardError) {
+        console.log("Wildcard query failed, trying next approach");
+      }
+      
+      // Small delay between attempts
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
-    console.log("Schema cache refresh completed");
+    console.log("Schema cache refresh attempts completed");
   } catch (refreshError) {
-    console.error("Error refreshing schema cache:", refreshError);
+    console.error("Error during aggressive schema refresh:", refreshError);
   }
 }
 
