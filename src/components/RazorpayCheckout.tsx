@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -110,17 +109,16 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                 amount: amount,
                 currency: currency,
                 status: 'active',
-                planName: planName
+                planName: planName,
+                autoRenew: true // Explicitly set auto_renew to true
               };
               
               console.log('Storing subscription data:', subscriptionData);
               
               try {
-                // Store payment data using the improved SubscriptionService
                 await SubscriptionService.storeSuccessfulPayment(subscriptionData);
                 console.log('Subscription stored successfully');
                 
-                // Refresh user's subscriptions
                 await refreshSubscriptions();
                 
                 toast({
@@ -132,7 +130,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
               } catch (storeError: any) {
                 console.error('Failed to store subscription details:', storeError);
                 
-                // Add more diagnostics for troubleshooting
                 if (storeError.message) {
                   console.error('Error message:', storeError.message);
                 }
@@ -140,15 +137,12 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
                   console.error('Error details:', storeError.details);
                 }
                 
-                // We'll consider the payment successful even if storage fails
-                // since the payment was processed by Razorpay
                 toast({
                   title: "Payment Processed",
                   description: "Your payment was successful, but we had trouble updating your account. Please contact support if you don't see your subscription.",
                   variant: "destructive"
                 });
                 
-                // Still call onSuccess since payment was processed
                 onSuccess();
               }
             } catch (error) {

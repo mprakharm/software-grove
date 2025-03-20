@@ -16,6 +16,7 @@ interface SubscriptionData {
   currency?: string;
   status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial'
   planName?: string;
+  autoRenew?: boolean; // Made optional in the interface, but will set default
 }
 
 // Interface for purchase data
@@ -51,7 +52,7 @@ export const SubscriptionService = {
         payment_id: data.paymentId,
         start_date: data.startDate,
         end_date: data.endDate,
-        auto_renew: true,
+        auto_renew: data.autoRenew !== undefined ? data.autoRenew : true, // Ensure auto_renew is always set with a default
         price: data.amount,
         currency: data.currency || 'INR',
         status: data.status,
@@ -87,7 +88,7 @@ export const SubscriptionService = {
         if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous'))) {
           console.log("Attempting fallback subscription insert with minimal fields...");
           
-          // Use only basic fields with explicit table reference
+          // Use only basic fields with explicit table reference and ensure auto_renew is included
           const minimalSubscriptionData = {
             user_id: data.userId,
             product_id: data.productId || null,
@@ -95,6 +96,7 @@ export const SubscriptionService = {
             plan_id: data.planId,
             start_date: data.startDate,
             end_date: data.endDate,
+            auto_renew: true, // Always set to true - this is required
             price: data.amount,
             status: data.status || 'active',
             created_at: new Date().toISOString()
@@ -105,7 +107,7 @@ export const SubscriptionService = {
             const { data: minimalSubscription, error: minimalError } = await supabase
               .from('subscriptions')
               .insert(minimalSubscriptionData)
-              .select('id, user_id, product_id, bundle_id, plan_id, start_date, end_date, price, status, created_at')
+              .select('id, user_id, product_id, bundle_id, plan_id, start_date, end_date, auto_renew, price, status, created_at')
               .single();
               
             if (minimalError) {
@@ -338,6 +340,7 @@ export const SubscriptionService = {
     amount: number;
     currency?: string;
     planName?: string;
+    autoRenew?: boolean; // Added autoRenew parameter
   }) {
     console.log("Storing successful payment data:", paymentData);
     
@@ -346,7 +349,7 @@ export const SubscriptionService = {
       let subscriptionSuccess = false, purchaseSuccess = false;
       
       try {
-        // Create subscription record
+        // Create subscription record with autoRenew defaulted to true
         subscription = await this.createSubscription({
           userId: paymentData.userId,
           productId: paymentData.productId,
@@ -359,7 +362,8 @@ export const SubscriptionService = {
           amount: paymentData.amount,
           currency: paymentData.currency,
           status: 'active',
-          planName: paymentData.planName
+          planName: paymentData.planName,
+          autoRenew: paymentData.autoRenew !== undefined ? paymentData.autoRenew : true // Default to true if not specified
         });
         subscriptionSuccess = true;
       } catch (subscriptionError) {
