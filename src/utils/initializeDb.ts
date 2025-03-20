@@ -1,3 +1,4 @@
+
 import { setupSupabaseSchema, seedDatabaseWithFrontendData } from './supabase';
 import { ProductAPI } from './api';
 import { VendorAPI } from './api';
@@ -99,24 +100,33 @@ async function setupSubscriptionTables() {
     } else {
       console.log("Subscriptions table exists. Making sure it has the required fields.");
       
-      // Add the currency column to the subscriptions table if it doesn't exist
-      try {
-        console.log("Checking if currency column exists in subscriptions table...");
-        const { error: alterTableError } = await supabase.rpc('add_column_if_not_exists', { 
-          table_name: 'subscriptions',
-          column_name: 'currency',
-          column_type: 'text'
-        });
-        
-        if (alterTableError) {
-          console.error("Error adding currency column:", alterTableError);
-          console.log("You may need to manually add the 'currency' column to the 'subscriptions' table in your Supabase dashboard.");
-        } else {
-          console.log("Currency column exists or was successfully added to subscriptions table.");
+      // Add required columns to the subscriptions table
+      const requiredColumns = [
+        { name: 'currency', type: 'text' },
+        { name: 'order_id', type: 'text' },
+        { name: 'payment_id', type: 'text' },
+        { name: 'status', type: 'text' },
+        { name: 'plan_name', type: 'text' }
+      ];
+      
+      for (const column of requiredColumns) {
+        try {
+          console.log(`Checking if ${column.name} column exists in subscriptions table...`);
+          const { error: alterTableError } = await supabase.rpc('add_column_if_not_exists', { 
+            table_name: 'subscriptions',
+            column_name: column.name,
+            column_type: column.type
+          });
+          
+          if (alterTableError) {
+            console.error(`Error adding ${column.name} column:`, alterTableError);
+            console.log(`You may need to manually add the '${column.name}' column to the 'subscriptions' table in your Supabase dashboard.`);
+          } else {
+            console.log(`${column.name} column exists or was successfully added to subscriptions table.`);
+          }
+        } catch (columnError) {
+          console.error(`Error checking/adding ${column.name} column:`, columnError);
         }
-      } catch (columnError) {
-        console.error("Error checking/adding currency column:", columnError);
-        console.log("You may need to manually add the 'currency' column to the 'subscriptions' table in your Supabase dashboard.");
       }
       
       // Check if the purchases table exists and has all required fields
@@ -130,24 +140,32 @@ async function setupSubscriptionTables() {
       } else {
         console.log("Purchases table exists.");
         
-        // Also check and add currency column to purchases table if needed
-        try {
-          console.log("Checking if currency column exists in purchases table...");
-          const { error: purchaseAlterError } = await supabase.rpc('add_column_if_not_exists', { 
-            table_name: 'purchases',
-            column_name: 'currency',
-            column_type: 'text'
-          });
-          
-          if (purchaseAlterError) {
-            console.error("Error adding currency column to purchases:", purchaseAlterError);
-            console.log("You may need to manually add the 'currency' column to the 'purchases' table in your Supabase dashboard.");
-          } else {
-            console.log("Currency column exists or was successfully added to purchases table.");
+        // Add required columns to the purchases table
+        const purchaseRequiredColumns = [
+          { name: 'currency', type: 'text' },
+          { name: 'order_id', type: 'text' },
+          { name: 'payment_id', type: 'text' },
+          { name: 'description', type: 'text' }
+        ];
+        
+        for (const column of purchaseRequiredColumns) {
+          try {
+            console.log(`Checking if ${column.name} column exists in purchases table...`);
+            const { error: purchaseAlterError } = await supabase.rpc('add_column_if_not_exists', { 
+              table_name: 'purchases',
+              column_name: column.name,
+              column_type: column.type
+            });
+            
+            if (purchaseAlterError) {
+              console.error(`Error adding ${column.name} column to purchases:`, purchaseAlterError);
+              console.log(`You may need to manually add the '${column.name}' column to the 'purchases' table in your Supabase dashboard.`);
+            } else {
+              console.log(`${column.name} column exists or was successfully added to purchases table.`);
+            }
+          } catch (purchaseColumnError) {
+            console.error(`Error checking/adding ${column.name} column to purchases:`, purchaseColumnError);
           }
-        } catch (purchaseColumnError) {
-          console.error("Error checking/adding currency column to purchases:", purchaseColumnError);
-          console.log("You may need to manually add the 'currency' column to the 'purchases' table in your Supabase dashboard.");
         }
       }
     }
