@@ -56,7 +56,7 @@ export async function initializeDatabase() {
 // Function to ensure subscriptions and purchases tables have all required fields
 async function setupSubscriptionTables() {
   try {
-    // Check if the subscriptions table exists and has all required fields
+    // Check if the subscriptions table exists
     const { data: subscriptionFields, error: subscriptionsError } = await supabase
       .from('subscriptions')
       .select('id')
@@ -66,6 +66,26 @@ async function setupSubscriptionTables() {
       console.error("Subscriptions table doesn't exist. Please create it in the Supabase dashboard.");
     } else {
       console.log("Subscriptions table exists. Making sure it has the required fields.");
+      
+      // Add the currency column to the subscriptions table if it doesn't exist
+      try {
+        console.log("Checking if currency column exists in subscriptions table...");
+        const { error: alterTableError } = await supabase.rpc('add_column_if_not_exists', { 
+          table_name: 'subscriptions',
+          column_name: 'currency',
+          column_type: 'text'
+        });
+        
+        if (alterTableError) {
+          console.error("Error adding currency column:", alterTableError);
+          console.log("You may need to manually add the 'currency' column to the 'subscriptions' table in your Supabase dashboard.");
+        } else {
+          console.log("Currency column exists or was successfully added to subscriptions table.");
+        }
+      } catch (columnError) {
+        console.error("Error checking/adding currency column:", columnError);
+        console.log("You may need to manually add the 'currency' column to the 'subscriptions' table in your Supabase dashboard.");
+      }
       
       // Check if the purchases table exists and has all required fields
       const { data: purchaseFields, error: purchasesError } = await supabase
