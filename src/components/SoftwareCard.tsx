@@ -17,6 +17,7 @@ interface SoftwareCardProps {
   rating?: number;
   reviewCount?: number;
   color?: string;
+  currency?: string;
 }
 
 const SoftwareCard = ({ 
@@ -30,7 +31,8 @@ const SoftwareCard = ({
   vendor,
   rating,
   reviewCount,
-  color = "#2D88FF" 
+  color = "#2D88FF",
+  currency = "USD"
 }: SoftwareCardProps) => {
   // Set a different default color for Entertainment category
   const cardColor = category === 'Entertainment' ? "#8B5CF6" : color;
@@ -50,18 +52,23 @@ const SoftwareCard = ({
     ? "/lovable-uploads/7d8578a6-6f83-47d5-99ef-b5ef2d4b55a1.png"
     : image;
   
-  // Properly handle different types of price values
+  // Properly handle different types of price values with currency symbol
   const formattedPrice = (() => {
-    if (typeof price === 'number') {
-      return `$${price.toFixed(2)}`;
+    const currencySymbol = currency === "INR" ? "₹" : "$";
+    
+    if (name === "Zee5") {
+      // Special case for Zee5 product
+      return `₹60`;
+    } else if (typeof price === 'number') {
+      return `${currencySymbol}${price.toFixed(2)}`;
     } else if (typeof price === 'string') {
       // If it's already a string, return it or try to format if it's a numeric string
       if (price.trim() === '') return 'Free';
       
       // Try to parse it as a number if it's a numeric string without $ sign
       const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
-      if (!isNaN(numericPrice) && !price.includes('$')) {
-        return `$${numericPrice.toFixed(2)}`;
+      if (!isNaN(numericPrice) && !price.includes('$') && !price.includes('₹')) {
+        return `${currencySymbol}${numericPrice.toFixed(2)}`;
       }
       return price;
     }
@@ -112,7 +119,10 @@ const SoftwareCard = ({
             </div>
             <div className="flex flex-col items-end">
               <span className="font-semibold text-razorpay-blue">{formattedPrice}</span>
-              {formattedPrice && formattedPrice.includes('$') && !formattedPrice.includes('%') && (
+              {name === "Zee5" && (
+                <span className="text-xs text-razorpay-gray line-through">₹80</span>
+              )}
+              {formattedPrice && (formattedPrice.includes('$') || formattedPrice.includes('₹')) && !formattedPrice.includes('%') && (
                 <span className="text-xs text-razorpay-gray">{pricingLabel}</span>
               )}
             </div>
