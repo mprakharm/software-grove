@@ -16,7 +16,6 @@ interface SubscriptionData {
   currency?: string;
   status: 'active' | 'expired' | 'canceled' | 'trial'; // Added 'trial'
   planName?: string;
-  autoRenew?: boolean; // Added autoRenew field to match DB constraint
 }
 
 // Interface for purchase data
@@ -52,7 +51,7 @@ export const SubscriptionService = {
         payment_id: data.paymentId,
         start_date: data.startDate,
         end_date: data.endDate,
-        auto_renew: data.autoRenew !== undefined ? data.autoRenew : true, // Set default value for auto_renew
+        auto_renew: true,
         price: data.amount,
         currency: data.currency || 'INR',
         status: data.status,
@@ -68,7 +67,7 @@ export const SubscriptionService = {
         const { data: subscription, error } = await supabase
           .from('subscriptions')
           .insert(subscriptionData)
-          .select('id, user_id, product_id, plan_id, start_date, end_date, status, price, currency, auto_renew')
+          .select()
           .single();
         
         if (error) {
@@ -88,7 +87,7 @@ export const SubscriptionService = {
         if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous'))) {
           console.log("Attempting fallback subscription insert with minimal fields...");
           
-          // Use only basic fields with explicit table reference and include auto_renew
+          // Use only basic fields with explicit table reference
           const minimalSubscriptionData = {
             user_id: data.userId,
             product_id: data.productId || null,
@@ -98,8 +97,7 @@ export const SubscriptionService = {
             end_date: data.endDate,
             price: data.amount,
             status: data.status || 'active',
-            created_at: new Date().toISOString(),
-            auto_renew: true // Always set auto_renew to true to satisfy not-null constraint
+            created_at: new Date().toISOString()
           };
           
           // Try direct RPC call to avoid ambiguous column issues
@@ -107,7 +105,7 @@ export const SubscriptionService = {
             const { data: minimalSubscription, error: minimalError } = await supabase
               .from('subscriptions')
               .insert(minimalSubscriptionData)
-              .select('id, user_id, product_id, bundle_id, plan_id, start_date, end_date, price, status, created_at, auto_renew')
+              .select('id, user_id, product_id, bundle_id, plan_id, start_date, end_date, price, status, created_at')
               .single();
               
             if (minimalError) {
@@ -169,7 +167,7 @@ export const SubscriptionService = {
       };
       
       try {
-        // Insert into purchases table with explicit column selection, avoiding description field
+        // Insert into purchases table with explicit column selection
         const { data: purchase, error } = await supabase
           .from('purchases')
           .insert(purchaseData)
@@ -179,7 +177,7 @@ export const SubscriptionService = {
         if (error) {
           console.error("Error recording purchase:", error);
           // Check if it's a schema cache error or ambiguous column error
-          if (error.message && (error.message.includes('schema cache') || error.message.includes('ambiguous') || error.message.includes('description'))) {
+          if (error.message && (error.message.includes('schema cache') || error.message.includes('ambiguous'))) {
             console.warn("Schema cache or ambiguous column error detected for purchase:", error.message);
             throw new Error(`Schema error: ${error.message}`);
           }
@@ -190,10 +188,10 @@ export const SubscriptionService = {
         return purchase;
       } catch (insertError: any) {
         // Handle schema errors
-        if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous') || insertError.message.includes('description'))) {
+        if (insertError.message && (insertError.message.includes('schema') || insertError.message.includes('ambiguous'))) {
           console.log("Attempting fallback purchase insert with minimal fields...");
           
-          // Use only basic fields that are guaranteed to exist in the schema, omitting description
+          // Use only basic fields that are guaranteed to exist in the schema
           const minimalPurchaseData = {
             user_id: data.userId,
             product_id: data.productId || null,
@@ -348,7 +346,7 @@ export const SubscriptionService = {
       let subscriptionSuccess = false, purchaseSuccess = false;
       
       try {
-        // Create subscription record with auto_renew set to true
+        // Create subscription record
         subscription = await this.createSubscription({
           userId: paymentData.userId,
           productId: paymentData.productId,
@@ -361,8 +359,7 @@ export const SubscriptionService = {
           amount: paymentData.amount,
           currency: paymentData.currency,
           status: 'active',
-          planName: paymentData.planName,
-          autoRenew: true // Add autoRenew field with default value
+          planName: paymentData.planName
         });
         subscriptionSuccess = true;
       } catch (subscriptionError) {
@@ -371,7 +368,7 @@ export const SubscriptionService = {
       }
       
       try {
-        // Record purchase without relying on description field
+        // Record purchase
         purchase = await this.recordPurchase({
           userId: paymentData.userId,
           productId: paymentData.productId,
@@ -382,7 +379,7 @@ export const SubscriptionService = {
           amount: paymentData.amount,
           currency: paymentData.currency,
           status: 'completed',
-          // No description field - it's handled in recordPurchase with fallbacks
+          description: `Purchase of ${paymentData.planName || paymentData.planId}`
         });
         purchaseSuccess = true;
       } catch (purchaseError) {
