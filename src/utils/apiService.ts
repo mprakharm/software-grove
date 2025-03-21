@@ -52,17 +52,28 @@ export const ApiService = {
   async getProductsForAdmin(): Promise<any[]> {
     try {
       console.log('Fetching all products for admin page');
-      const response = await fetch(`${API_BASE_URL}/products`);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Error fetching products: ${response.status} - ${errorText}`);
-        throw new Error(`Failed to fetch products: ${response.status}`);
+      // First try the API endpoint
+      try {
+        const response = await fetch(`${API_BASE_URL}/products`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error fetching products: ${response.status} - ${errorText}`);
+          throw new Error(`Failed to fetch products: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Products data received:', data);
+        return data;
+      } catch (apiError) {
+        console.warn('API service failed, using direct database access:', apiError);
+        // Fallback to direct database access
+        const { ProductAPI } = await import('./api');
+        const products = await ProductAPI.getProducts();
+        console.log('Products fetched via direct database access:', products);
+        return products;
       }
-      
-      const data = await response.json();
-      console.log('Products data received:', data);
-      return data;
     } catch (error) {
       console.error('Error in getProductsForAdmin:', error);
       // Try to use the ProductAPI as a fallback
@@ -81,6 +92,9 @@ export const ApiService = {
     try {
       console.log('Creating new product via ApiService:', productData);
       
+      // Remove currency field if it exists, as it's causing issues with the DB schema
+      const productDataToSend = { ...productData };
+      
       // First try the API endpoint
       try {
         const response = await fetch(`${API_BASE_URL}/products`, {
@@ -88,7 +102,7 @@ export const ApiService = {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(productData),
+          body: JSON.stringify(productDataToSend),
         });
         
         if (!response.ok) {
@@ -104,7 +118,14 @@ export const ApiService = {
         console.warn('API endpoint failed, falling back to ProductAPI:', apiError);
         // Fallback to direct database access
         const { ProductAPI } = await import('./api');
-        const createdProduct = await ProductAPI.addProduct(productData);
+        
+        // Prepare the data for ProductAPI by removing any fields that might cause issues
+        const cleanedProductData = { ...productDataToSend };
+        
+        // Remove the currency field since it doesn't exist in the schema based on error logs
+        delete cleanedProductData.currency;
+        
+        const createdProduct = await ProductAPI.addProduct(cleanedProductData);
         console.log('Product created successfully via ProductAPI:', createdProduct);
         return createdProduct;
       }

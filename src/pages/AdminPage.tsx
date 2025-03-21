@@ -137,31 +137,60 @@ const AdminPage = () => {
       
       console.log('Creating product with data:', productData);
       
-      let newProduct: Product;
       try {
-        newProduct = await ApiService.createProduct(productData) as Product;
+        const newProduct = await ApiService.createProduct(productData) as Product;
         console.log('Product created via ApiService:', newProduct);
-      } catch (apiError) {
-        console.warn('API service failed, using direct database access:', apiError);
-        newProduct = await ProductAPI.addProduct(productData);
-        console.log('Product created via ProductAPI:', newProduct);
+        
+        if (newProduct) {
+          setProducts(prevProducts => [...prevProducts, newProduct]);
+          setIsAddingProduct(false);
+          newProductForm.reset();
+          
+          toast({
+            title: 'Success',
+            description: 'Product added successfully!',
+          });
+          
+          await loadData();
+        }
+      } catch (error) {
+        console.error('Error creating product:', error);
+        
+        // Try direct database access as fallback
+        try {
+          // Remove currency field as it's causing issues
+          const cleanedProductData = { ...productData };
+          delete cleanedProductData.currency;
+          
+          const newProduct = await ProductAPI.addProduct(cleanedProductData);
+          console.log('Product created via ProductAPI fallback:', newProduct);
+          
+          if (newProduct) {
+            setProducts(prevProducts => [...prevProducts, newProduct]);
+            setIsAddingProduct(false);
+            newProductForm.reset();
+            
+            toast({
+              title: 'Success',
+              description: 'Product added successfully (via fallback)!',
+            });
+            
+            await loadData();
+          }
+        } catch (fallbackError) {
+          console.error('Fallback creation also failed:', fallbackError);
+          toast({
+            title: 'Error',
+            description: 'Failed to add product. Please check the console for details.',
+            variant: 'destructive'
+          });
+        }
       }
-      
-      setProducts([...products, newProduct]);
-      setIsAddingProduct(false);
-      newProductForm.reset();
-      
-      toast({
-        title: 'Success',
-        description: 'Product added successfully!',
-      });
-      
-      loadData();
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Error in handleAddProduct:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add product. Please try again.',
+        description: 'Failed to process product data. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -413,20 +442,6 @@ const AdminPage = () => {
                       
                       <FormField
                         control={newProductForm.control}
-                        name="currency"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Currency</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="USD" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={newProductForm.control}
                         name="vendor"
                         render={({ field }) => (
                           <FormItem>
@@ -561,7 +576,6 @@ const AdminPage = () => {
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{product.category}</TableCell>
                         <TableCell>
-                          {product.currency === 'INR' ? '₹' : '$'}
                           {product.price}
                         </TableCell>
                         <TableCell>{product.vendor || 'Unknown'}</TableCell>
