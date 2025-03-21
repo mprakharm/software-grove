@@ -42,7 +42,6 @@ const AdminPage = () => {
       category: '',
       logo: 'https://placehold.co/100x100',
       price: 0,
-      currency: 'USD',
       inStock: true,
       vendor: '',
       featuredBenefit: '',
@@ -135,6 +134,8 @@ const AdminPage = () => {
         inStock: true
       };
       
+      delete productData.currency;
+      
       console.log('Creating product with data:', productData);
       
       try {
@@ -156,9 +157,7 @@ const AdminPage = () => {
       } catch (error) {
         console.error('Error creating product:', error);
         
-        // Try direct database access as fallback
         try {
-          // Remove currency field as it's causing issues
           const cleanedProductData = { ...productData };
           delete cleanedProductData.currency;
           

@@ -1,4 +1,3 @@
-
 // Front-end API service that calls our backend proxy endpoints
 const API_BASE_URL = '/api';
 const RATAN_NGROK_BASE_URL = 'https://5b81-223-186-104-97.ngrok-free.app/proxy';
@@ -92,8 +91,9 @@ export const ApiService = {
     try {
       console.log('Creating new product via ApiService:', productData);
       
-      // Remove currency field if it exists, as it's causing issues with the DB schema
+      // Always remove currency field as it's causing issues with the DB schema
       const productDataToSend = { ...productData };
+      delete productDataToSend.currency;
       
       // First try the API endpoint
       try {
@@ -119,10 +119,8 @@ export const ApiService = {
         // Fallback to direct database access
         const { ProductAPI } = await import('./api');
         
-        // Prepare the data for ProductAPI by removing any fields that might cause issues
+        // Double-check that currency field is removed
         const cleanedProductData = { ...productDataToSend };
-        
-        // Remove the currency field since it doesn't exist in the schema based on error logs
         delete cleanedProductData.currency;
         
         const createdProduct = await ProductAPI.addProduct(cleanedProductData);
