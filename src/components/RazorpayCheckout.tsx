@@ -17,7 +17,7 @@ interface RazorpayCheckoutProps {
   productLogo?: string; // Added product logo
 }
 
-const RATAN_NGROK_API_BASE_URL = 'https://8bf8-121-242-131-242.ngrok-free.app/proxy';
+const RATAN_NGROK_API_BASE_URL = 'https://5b81-223-186-104-97.ngrok-free.app/proxy';
 
 const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
   productId,
