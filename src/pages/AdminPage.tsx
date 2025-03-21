@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +33,7 @@ const AdminPage = () => {
   const [isBulkUploadingProducts, setIsBulkUploadingProducts] = useState(false);
   const [isBulkUploadingBundles, setIsBulkUploadingBundles] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const newProductForm = useForm({
     defaultValues: {
@@ -82,7 +82,6 @@ const AdminPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Try to use ApiService first, then fall back to direct database access
       let productsData: Product[] = [];
       try {
         productsData = await ApiService.getProductsForAdmin() as Product[];
@@ -114,16 +113,16 @@ const AdminPage = () => {
   }, []);
 
   const handleAddProduct = async (data: any) => {
+    console.log('Handling add product with data:', data);
+    setIsSubmitting(true);
+    
     try {
-      // Convert string benefits to array if needed
       let benefitsArray = data.benefits;
       if (typeof data.benefits === 'string') {
         try {
-          // Try to parse if it's a JSON string
           benefitsArray = JSON.parse(data.benefits);
         } catch (e) {
-          // If not a valid JSON, split by commas
-          benefitsArray = data.benefits.split(',').map((b: string) => b.trim());
+          benefitsArray = data.benefits.split(',').map((b: string) => b.trim()).filter(Boolean);
         }
       } else if (!Array.isArray(data.benefits)) {
         benefitsArray = [];
@@ -138,13 +137,14 @@ const AdminPage = () => {
       
       console.log('Creating product with data:', productData);
       
-      // Try ApiService first, then fall back to direct database access
       let newProduct: Product;
       try {
         newProduct = await ApiService.createProduct(productData) as Product;
+        console.log('Product created via ApiService:', newProduct);
       } catch (apiError) {
         console.warn('API service failed, using direct database access:', apiError);
         newProduct = await ProductAPI.addProduct(productData);
+        console.log('Product created via ProductAPI:', newProduct);
       }
       
       setProducts([...products, newProduct]);
@@ -156,7 +156,6 @@ const AdminPage = () => {
         description: 'Product added successfully!',
       });
       
-      // Refresh data to ensure it appears in the list
       loadData();
     } catch (error) {
       console.error('Error adding product:', error);
@@ -165,6 +164,8 @@ const AdminPage = () => {
         description: 'Failed to add product. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -178,7 +179,6 @@ const AdminPage = () => {
           description: 'Product deleted successfully!',
         });
         
-        // Refresh data to ensure it's removed from the list
         loadData();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -202,7 +202,6 @@ const AdminPage = () => {
           description: 'Product updated successfully!',
         });
         
-        // Refresh data to ensure it shows the latest changes
         loadData();
       }
     } catch (error) {
@@ -224,7 +223,6 @@ const AdminPage = () => {
         description: `${addedProducts.length} products added successfully!`,
       });
       
-      // Refresh data to ensure it shows the latest changes
       loadData();
     } catch (error) {
       console.error('Error bulk uploading products:', error);
@@ -361,19 +359,109 @@ const AdminPage = () => {
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-              <h3 className="text-xl font-bold mb-4">Add New Product</h3>
-              <Form {...newProductForm}>
-                <form onSubmit={newProductForm.handleSubmit(handleAddProduct)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isAddingProduct && (
+              <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+                <h3 className="text-xl font-bold mb-4">Add New Product</h3>
+                <Form {...newProductForm}>
+                  <form onSubmit={newProductForm.handleSubmit(handleAddProduct)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={newProductForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Product name" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={newProductForm.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Category" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={newProductForm.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                placeholder="Price" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={newProductForm.control}
+                        name="currency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Currency</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="USD" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={newProductForm.control}
+                        name="vendor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Vendor</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Vendor name" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={newProductForm.control}
+                        name="logo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Logo URL</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Logo URL" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <FormField
                       control={newProductForm.control}
-                      name="name"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Name</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Product name" />
+                            <Input {...field} placeholder="Product description" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -382,12 +470,12 @@ const AdminPage = () => {
                     
                     <FormField
                       control={newProductForm.control}
-                      name="category"
+                      name="featuredBenefit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel>Featured Benefit</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Category" />
+                            <Input {...field} placeholder="Main selling point" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -396,124 +484,47 @@ const AdminPage = () => {
                     
                     <FormField
                       control={newProductForm.control}
-                      name="price"
+                      name="benefits"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price</FormLabel>
+                          <FormLabel>Benefits (comma-separated list)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              {...field} 
-                              onChange={e => field.onChange(parseFloat(e.target.value))}
-                              placeholder="Price" 
-                            />
+                            <Input {...field} placeholder="Benefit 1, Benefit 2, Benefit 3" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    <FormField
-                      control={newProductForm.control}
-                      name="currency"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Currency</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="USD" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={newProductForm.control}
-                      name="vendor"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Vendor</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Vendor name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={newProductForm.control}
-                      name="logo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Logo URL</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Logo URL" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={newProductForm.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Product description" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={newProductForm.control}
-                    name="featuredBenefit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Featured Benefit</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Main selling point" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={newProductForm.control}
-                    name="benefits"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Benefits (comma-separated list)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Benefit 1, Benefit 2, Benefit 3" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsAddingProduct(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Product
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsAddingProduct(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Product
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+            )}
             
             <BulkUploadDialog
               isOpen={isBulkUploadingProducts}

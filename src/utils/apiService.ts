@@ -79,7 +79,7 @@ export const ApiService = {
   // Create a new product
   async createProduct(productData: any): Promise<any> {
     try {
-      console.log('Creating new product:', productData);
+      console.log('Creating new product via ApiService:', productData);
       
       // First try the API endpoint
       try {
@@ -92,17 +92,21 @@ export const ApiService = {
         });
         
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error creating product: ${response.status} - ${errorText}`);
           throw new Error(`Failed to create product: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Product created successfully:', data);
+        console.log('Product created successfully via API:', data);
         return data;
       } catch (apiError) {
         console.warn('API endpoint failed, falling back to ProductAPI:', apiError);
         // Fallback to direct database access
         const { ProductAPI } = await import('./api');
-        return await ProductAPI.addProduct(productData);
+        const createdProduct = await ProductAPI.addProduct(productData);
+        console.log('Product created successfully via ProductAPI:', createdProduct);
+        return createdProduct;
       }
     } catch (error) {
       console.error('Error in createProduct:', error);
