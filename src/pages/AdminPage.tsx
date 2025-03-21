@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ProductAPI, BundleAPI } from '@/utils/api';
+import { ApiService } from '@/utils/apiService';
 import { Product, Bundle, BundleProduct } from '@/utils/db';
 import { initializeDatabase } from '@/utils/initializeDb';
 import { 
@@ -40,7 +42,11 @@ const AdminPage = () => {
       category: '',
       logo: 'https://placehold.co/100x100',
       price: 0,
-      inStock: true
+      currency: 'USD',
+      inStock: true,
+      vendor: '',
+      featuredBenefit: '',
+      benefits: []
     }
   });
 
@@ -76,12 +82,21 @@ const AdminPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [productsData, bundlesData] = await Promise.all([
-        ProductAPI.getProducts(),
-        BundleAPI.getBundles()
-      ]);
+      // Try to use ApiService first, then fall back to direct database access
+      let productsData: Product[] = [];
+      try {
+        productsData = await ApiService.getProductsForAdmin() as Product[];
+      } catch (apiError) {
+        console.warn('API service failed, using direct database access:', apiError);
+        productsData = await ProductAPI.getProducts();
+      }
+      
+      const bundlesData = await BundleAPI.getBundles();
+      
       setProducts(productsData);
       setBundles(bundlesData);
+      
+      console.log(`Loaded ${productsData.length} products and ${bundlesData.length} bundles`);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -98,16 +113,51 @@ const AdminPage = () => {
     initDb();
   }, []);
 
-  const handleAddProduct = async (data: Omit<Product, 'id'>) => {
+  const handleAddProduct = async (data: any) => {
     try {
-      const newProduct = await ProductAPI.addProduct(data);
+      // Convert string benefits to array if needed
+      let benefitsArray = data.benefits;
+      if (typeof data.benefits === 'string') {
+        try {
+          // Try to parse if it's a JSON string
+          benefitsArray = JSON.parse(data.benefits);
+        } catch (e) {
+          // If not a valid JSON, split by commas
+          benefitsArray = data.benefits.split(',').map((b: string) => b.trim());
+        }
+      } else if (!Array.isArray(data.benefits)) {
+        benefitsArray = [];
+      }
+      
+      const productData = {
+        ...data,
+        benefits: benefitsArray,
+        price: parseFloat(data.price),
+        inStock: true
+      };
+      
+      console.log('Creating product with data:', productData);
+      
+      // Try ApiService first, then fall back to direct database access
+      let newProduct: Product;
+      try {
+        newProduct = await ApiService.createProduct(productData) as Product;
+      } catch (apiError) {
+        console.warn('API service failed, using direct database access:', apiError);
+        newProduct = await ProductAPI.addProduct(productData);
+      }
+      
       setProducts([...products, newProduct]);
       setIsAddingProduct(false);
       newProductForm.reset();
+      
       toast({
         title: 'Success',
         description: 'Product added successfully!',
       });
+      
+      // Refresh data to ensure it appears in the list
+      loadData();
     } catch (error) {
       console.error('Error adding product:', error);
       toast({
@@ -127,6 +177,9 @@ const AdminPage = () => {
           title: 'Success',
           description: 'Product deleted successfully!',
         });
+        
+        // Refresh data to ensure it's removed from the list
+        loadData();
       } catch (error) {
         console.error('Error deleting product:', error);
         toast({
@@ -148,6 +201,9 @@ const AdminPage = () => {
           title: 'Success',
           description: 'Product updated successfully!',
         });
+        
+        // Refresh data to ensure it shows the latest changes
+        loadData();
       }
     } catch (error) {
       console.error('Error updating product:', error);
@@ -167,6 +223,9 @@ const AdminPage = () => {
         title: 'Success',
         description: `${addedProducts.length} products added successfully!`,
       });
+      
+      // Refresh data to ensure it shows the latest changes
+      loadData();
     } catch (error) {
       console.error('Error bulk uploading products:', error);
       toast({
@@ -356,6 +415,34 @@ const AdminPage = () => {
                     
                     <FormField
                       control={newProductForm.control}
+                      name="currency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Currency</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="USD" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={newProductForm.control}
+                      name="vendor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vendor</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Vendor name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={newProductForm.control}
                       name="logo"
                       render={({ field }) => (
                         <FormItem>
@@ -377,6 +464,34 @@ const AdminPage = () => {
                         <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Product description" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={newProductForm.control}
+                    name="featuredBenefit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Featured Benefit</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Main selling point" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={newProductForm.control}
+                    name="benefits"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Benefits (comma-separated list)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Benefit 1, Benefit 2, Benefit 3" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -415,6 +530,7 @@ const AdminPage = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>Vendor</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -422,18 +538,22 @@ const AdminPage = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">Loading products...</TableCell>
+                      <TableCell colSpan={6} className="text-center py-4">Loading products...</TableCell>
                     </TableRow>
                   ) : products.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">No products found</TableCell>
+                      <TableCell colSpan={6} className="text-center py-4">No products found</TableCell>
                     </TableRow>
                   ) : (
                     products.map(product => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{product.category}</TableCell>
-                        <TableCell>${product.price}</TableCell>
+                        <TableCell>
+                          {product.currency === 'INR' ? '₹' : '$'}
+                          {product.price}
+                        </TableCell>
+                        <TableCell>{product.vendor || 'Unknown'}</TableCell>
                         <TableCell className="max-w-xs truncate">{product.description}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">

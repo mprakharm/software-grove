@@ -48,6 +48,68 @@ export const ApiService = {
     }
   },
   
+  // Get all products for the admin page
+  async getProductsForAdmin(): Promise<any[]> {
+    try {
+      console.log('Fetching all products for admin page');
+      const response = await fetch(`${API_BASE_URL}/products`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error fetching products: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to fetch products: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Products data received:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in getProductsForAdmin:', error);
+      // Try to use the ProductAPI as a fallback
+      try {
+        const { ProductAPI } = await import('./api');
+        return await ProductAPI.getProducts();
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        throw error;
+      }
+    }
+  },
+  
+  // Create a new product
+  async createProduct(productData: any): Promise<any> {
+    try {
+      console.log('Creating new product:', productData);
+      
+      // First try the API endpoint
+      try {
+        const response = await fetch(`${API_BASE_URL}/products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to create product: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Product created successfully:', data);
+        return data;
+      } catch (apiError) {
+        console.warn('API endpoint failed, falling back to ProductAPI:', apiError);
+        // Fallback to direct database access
+        const { ProductAPI } = await import('./api');
+        return await ProductAPI.addProduct(productData);
+      }
+    } catch (error) {
+      console.error('Error in createProduct:', error);
+      throw error;
+    }
+  },
+  
   // Create a Razorpay order
   async createRazorpayOrder(orderData: {
     amount: number;      // Amount in smallest currency unit (paise for INR)

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -15,6 +14,7 @@ import { initializeDatabase } from '@/utils/initializeDb';
 import { toast } from '@/components/ui/use-toast';
 import { ProductAPI } from '@/utils/api';
 import { Product } from '@/utils/db';
+import { ApiService } from '@/utils/apiService';
 
 const CategoryPage = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
@@ -65,7 +65,17 @@ const CategoryPage = () => {
           filters = { category: formatCategoryName(categoryName) };
         }
         
-        const data = await ProductAPI.getProducts(filters);
+        // Try using ApiService first, then fall back to direct database access
+        let data: Product[] = [];
+        try {
+          data = await ApiService.getProductsForAdmin() as Product[];
+          if (filters && filters.category) {
+            data = data.filter(p => p.category === filters.category);
+          }
+        } catch (apiError) {
+          console.warn('API service failed, using direct database access:', apiError);
+          data = await ProductAPI.getProducts(filters);
+        }
         
         // Log products for debugging
         console.log(`Fetched ${data.length} products`);
@@ -90,7 +100,6 @@ const CategoryPage = () => {
     fetchProducts();
   }, [categoryName]);
 
-  // Function to format the category name for display
   const formatCategoryName = (name: string | undefined) => {
     if (!name) return '';
     return name.charAt(0).toUpperCase() + name.slice(1);
@@ -103,38 +112,33 @@ const CategoryPage = () => {
     },
   ];
   
-  // Sort products based on the selected sorting option
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
       case 'price-low-high':
-        // Parse the price strings and compare numerically
         return parseFloat(String(a.price)) - parseFloat(String(b.price));
       case 'price-high-low':
-        // Parse the price strings and compare numerically (reversed)
         return parseFloat(String(b.price)) - parseFloat(String(a.price));
       case 'alphabetical':
-        // Sort alphabetically by name
         return a.name.localeCompare(b.name);
       case 'rating':
-        // Sort by rating (highest first)
         return (b.rating || 0) - (a.rating || 0);
       case 'popularity':
       default:
-        // Sort by review count (highest first) for popularity
         return (b.reviews || 0) - (a.reviews || 0);
     }
   });
 
-  // Transform Product objects to SoftwareCard props
   const softwareCardItems = sortedProducts.map(product => ({
     id: product.id,
     name: product.name,
     description: product.description,
     category: product.category,
-    price: typeof product.price === 'number' ? `$${product.price}` : product.price,
-    discount: product.featuredBenefit ? "10%" : "0%", // Example discount logic
+    price: product.currency === 'INR' 
+      ? `₹${product.price}` 
+      : `$${product.price}`,
+    discount: product.discount || "0%",
     image: product.logo,
-    vendor: product.vendor || "Unknown vendor", // Use vendor from product or default
+    vendor: product.vendor || "Unknown vendor",
     rating: product.rating,
     reviewCount: product.reviews,
   }));
