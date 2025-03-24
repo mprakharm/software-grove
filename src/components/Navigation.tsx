@@ -28,8 +28,10 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
   const [isSearching, setIsSearching] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const searchRef = useRef<HTMLDivElement>(null);
-  const { user, signOut, subscriptions } = useAuth();
+  const { user, signOut, activeSubscriptions } = useAuth();
   
+  const subscriptionCount = activeSubscriptions?.length || 0;
+
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
@@ -108,9 +110,6 @@ const Navigation = ({ searchQuery = '', onSearchChange }: NavigationProps) => {
     await signOut();
     navigate('/');
   };
-
-  const subscriptionCount = subscriptions?.length || 0;
-  const isProductPage = location.pathname.includes('/product/');
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b z-50">

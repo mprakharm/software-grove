@@ -10,7 +10,8 @@ type AuthContextType = {
   loading: boolean;
   userSubscriptions: any[];
   subscriptionsLoading: boolean;
-  subscriptions: any[]; // Add this as an alias for userSubscriptions
+  subscriptions: any[]; // All subscriptions
+  activeSubscriptions: any[]; // Only active subscriptions
   signIn: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ user: any | null; error: string | null }>;
   signOut: () => Promise<{ error: string | null }>;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [userSubscriptions, setUserSubscriptions] = useState<any[]>([]);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -35,7 +37,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("AuthContext: Fetching subscriptions for user:", userId);
       const subscriptions = await SubscriptionAPI.getUserSubscriptions(userId);
       console.log("AuthContext: Received subscriptions:", subscriptions);
+      
+      // Store all subscriptions
       setUserSubscriptions(subscriptions || []);
+      
+      // Filter and store only active subscriptions
+      const active = subscriptions?.filter(sub => sub.status === 'active') || [];
+      console.log("AuthContext: Active subscriptions:", active.length);
+      setActiveSubscriptions(active);
     } catch (error) {
       console.error('Error fetching user subscriptions:', error);
       toast({
@@ -90,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setUserSubscriptions([]);
+          setActiveSubscriptions([]);
         }
       }
     );
@@ -107,7 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         loading,
         userSubscriptions,
-        subscriptions: userSubscriptions, // Add this alias for backward compatibility
+        subscriptions: userSubscriptions, // Keep this for backward compatibility
+        activeSubscriptions, // Add the active subscriptions
         subscriptionsLoading,
         signIn,
         signUp,
