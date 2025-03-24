@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { signIn } from '@/utils/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -19,9 +20,9 @@ const signInSchema = z.object({
 type SignInFormValues = z.infer<typeof signInSchema>;
 
 const SignInPage = () => {
-  const { signIn } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -37,7 +38,20 @@ const SignInPage = () => {
       const { user, error } = await signIn(values.email, values.password);
       if (user && !error) {
         navigate('/subscriptions');
+      } else if (error) {
+        toast({
+          title: "Sign in failed",
+          description: error,
+          variant: "destructive"
+        });
       }
+    } catch (error) {
+      console.error("Sign in error:", error);
+      toast({
+        title: "Sign in failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }

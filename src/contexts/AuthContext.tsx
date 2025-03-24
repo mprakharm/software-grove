@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { AuthUser, signIn, signUp, signOut } from '@/utils/auth';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { SubscriptionAPI } from '@/utils/api';
 
 type AuthContextType = {
