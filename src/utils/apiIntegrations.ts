@@ -34,7 +34,7 @@ export function initializeApiIntegrations() {
     console.log('Server-side: Calling LinkedIn Premium API for product:', product.name);
     try {
       // Correct API URL - this is a server-side call
-      const apiUrl = 'https://5b81-223-186-104-97.ngrok-free.app/proxy/getfleek_list';
+      const apiUrl = 'https://205e-101-0-62-174.ngrok-free.app/proxy/getfleek_list';
       console.log('Server-side: Attempting to fetch from:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -191,7 +191,7 @@ export function initializeApiIntegrations() {
     console.log('Server-side: Using Zee5 API handler with real API endpoint');
     try {
       // Use the same API endpoint as LinkedIn Premium
-      const apiUrl = 'https://5b81-223-186-104-97.ngrok-free.app/proxy/getfleek_list';
+      const apiUrl = 'https://205e-101-0-62-174.ngrok-free.app/proxy/getfleek_list';
       console.log('Server-side: Attempting to fetch from:', apiUrl, 'for Zee5');
       
       const response = await fetch(apiUrl, {

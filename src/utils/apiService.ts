@@ -1,7 +1,7 @@
 
 // Front-end API service that calls our backend proxy endpoints
 const API_BASE_URL = '/api';
-const RATAN_NGROK_BASE_URL = 'https://5b81-223-186-104-97.ngrok-free.app/proxy';
+const RATAN_NGROK_BASE_URL = 'https://205e-101-0-62-174.ngrok-free.app/proxy';
 
 // Front-end API service that calls our backend proxy endpoints
 export const ApiService = {
